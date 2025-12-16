@@ -1,8 +1,6 @@
 import { sdk } from 'https://esm.sh/@farcaster/miniapp-sdk';
 
-const BACKEND_URL = window.location.hostname === 'localhost'
-    ? 'http://localhost:8000'
-    : 'https://learn-base-backend.vercel.app';
+const BACKEND_URL = 'https://learn-base-backend.vercel.app';
 
 const YOUR_WALLET = '0x02D6cB44CF2B0539B5d5F72a7a0B22Ac73031117';
 const USDC_ADDRESS = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913';
