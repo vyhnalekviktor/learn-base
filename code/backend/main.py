@@ -7,19 +7,18 @@ import functions_testnet, functions_mainnet
 load_dotenv()
 app = FastAPI()
 
-# ✅ CORS pro Vercel - povolí requesty z frontendu
+# CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Pro production omez na svou doménu
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# In-memory storage (při restartu se vymažou)
 messages = []
 
-# ENDPOINTS
+# ENDPOINTS (všechny stejné jako předtím)
 @app.get("/")
 @app.get("/api")
 def is_up():
@@ -84,5 +83,5 @@ async def save_message(request: Request):
 def get_messages():
     return {"messages": messages, "count": len(messages)}
 
-from mangum import Mangum
-handler = Mangum(app)
+# ✅ BEZ Mangum - Vercel to nepotřebuje!
+# Prostě nech FastAPI app
