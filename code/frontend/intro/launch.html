@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BaseCamp - launch</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/tutorial.css">
+</head>
+<body>
+    <div class="container">
+        <div class="hero">
+            <h1>Launch Token</h1>
+            <p class="subtitle">Subtitle description here</p>
+
+            <!-- Expandable Section 1 -->
+            <div class="accordion-item">
+                <button class="accordion-header" onclick="toggleAccordion('section1')">
+                    <span>Section 1 Title</span>
+                    <span class="accordion-icon" id="icon-section1">▼</span>
+                </button>
+                <div class="accordion-content" id="content-section1">
+                    <p>Content for section 1 goes here...</p>
+                    <p>Add more paragraphs as needed.</p>
+                </div>
+            </div>
+
+            <!-- Expandable Section 2 -->
+            <div class="accordion-item">
+                <button class="accordion-header" onclick="toggleAccordion('section2')">
+                    <span>Section 2 Title</span>
+                    <span class="accordion-icon" id="icon-section2">▼</span>
+                </button>
+                <div class="accordion-content" id="content-section2">
+                    <p>Content for section 2 goes here...</p>
+                </div>
+            </div>
+
+            <!-- Expandable Section 3 -->
+            <div class="accordion-item">
+                <button class="accordion-header" onclick="toggleAccordion('section3')">
+                    <span>Section 3 Title</span>
+                    <span class="accordion-icon" id="icon-section3">▼</span>
+                </button>
+                <div class="accordion-content" id="content-section3">
+                    <p>Content for section 3 goes here...</p>
+                </div>
+            </div>
+
+            <!-- Try it Section (Optional) -->
+            <div class="try-section">
+                <h3>Try it yourself!</h3>
+                <p>Description of what to try...</p>
+                <a href="https://example.com"
+                   target="_blank"
+                   class="cta-button">
+                    Button Text
+                </a>
+            </div>
+
+            <!-- Navigation Footer -->
+            <div class="nav-footer">
+                <a href="mint.html" class="nav-btn back-btn">
+                    <span>Previous</span>
+                    <span class="nav-label">Faucet</span>
+                </a>
+
+                <a href="../transactions.html" class="nav-btn next-btn">
+                    <span>Finish</span>
+                    <span class="nav-label">Menu</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleAccordion(id) {
+            const content = document.getElementById('content-' + id);
+            const icon = document.getElementById('icon-' + id);
+
+            if (content.style.maxHeight) {
+                content.style.maxHeight = null;
+                icon.textContent = '▼';
+            } else {
+                content.style.maxHeight = content.scrollHeight + 'px';
+                icon.textContent = '▲';
+            }
+        }
+    </script>
+</body>
+</html>
