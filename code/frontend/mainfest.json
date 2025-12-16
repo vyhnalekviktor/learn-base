@@ -1,0 +1,16 @@
+{
+  "name": "BaseCamp Learning",
+  "short_name": "BaseCamp",
+  "description": "Learn to send your first Base transaction",
+  "start_url": "/intro/send.html",
+  "display": "standalone",
+  "background_color": "#0052FF",
+  "theme_color": "#0052FF",
+  "icons": [
+    {
+      "src": "/icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
