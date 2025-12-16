@@ -84,5 +84,5 @@ async def save_message(request: Request):
 def get_messages():
     return {"messages": messages, "count": len(messages)}
 
-# ✅ Vercel handler - DŮLEŽITÉ pro Vercel deployment
-handler = app
+from mangum import Mangum
+handler = Mangum(app)
