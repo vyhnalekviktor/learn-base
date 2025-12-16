@@ -59,25 +59,31 @@
         </footer>
     </div>
 
-    <!-- Base SDK -->
-    <script src="https://unpkg.com/@base-org/app-sdk@latest/dist/base-app-sdk.js"></script>
+    <!-- Farcaster Mini App SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@farcaster/frame-sdk@0.0.19/dist/index.js"></script>
     <script>
-        // Initialize Base SDK
-        if (typeof BaseApp !== 'undefined') {
-            console.log('✅ Base SDK loaded');
-            BaseApp.ready();
-        } else {
-            // Fallback
-            console.log('⚠️ Base SDK not loaded, using fallback');
-            window.addEventListener('load', () => {
-                if (window.parent !== window) {
-                    window.parent.postMessage({
-                        type: 'base:miniapp:ready',
-                        data: { ready: true }
-                    }, '*');
+        document.addEventListener('DOMContentLoaded', async () => {
+            console.log('🚀 Page loaded');
+
+            try {
+                // Wait for SDK to be available
+                if (window.frame && window.frame.sdk) {
+                    await window.frame.sdk.actions.ready();
+                    console.log('✅ Farcaster Frame SDK ready');
+                } else {
+                    console.log('⚠️ Frame SDK not available, sending postMessage');
+                    // Fallback
+                    if (window.parent !== window) {
+                        window.parent.postMessage({
+                            type: 'fc:frame:ready',
+                            data: {}
+                        }, '*');
+                    }
                 }
-            });
-        }
+            } catch (error) {
+                console.error('❌ Error calling SDK ready:', error);
+            }
+        });
     </script>
 </body>
 </html>
