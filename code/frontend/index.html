@@ -3,22 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-
-    <!-- ✅ Base mini app security -->
-    <meta http-equiv="Content-Security-Policy" content="frame-ancestors https://*.base.org https://base.org">
-
     <title>BASECAMP - learn BASE ecosystem</title>
     <link rel="stylesheet" href="css/landing.css">
-
-    <!-- ✅ Base SDK pro ready signal -->
-    <script>
-        window.addEventListener('load', () => {
-            // Signal to Base App that page is ready
-            if (window.parent !== window) {
-                window.parent.postMessage({ type: 'miniapp-ready' }, '*');
-            }
-        });
-    </script>
 </head>
 <body>
     <div class="container">
@@ -41,28 +27,28 @@
 
         <!-- Menu Buttons -->
         <nav class="menu">
-            <a href="theory.html" class="menu-item">
-                <h3>Learn About Base</h3>
-                <p>Understand blockchain basics and Base network</p>
-            </a>
-
-            <a href="transactions.html" class="menu-item">
-                <h3>Try Transactions</h3>
+            <a href="intro/send.html" class="menu-item">
+                <h3>📤 Try Transactions</h3>
                 <p>Practice sending and receiving crypto safely</p>
             </a>
 
+            <a href="theory.html" class="menu-item">
+                <h3>📚 Learn About Base</h3>
+                <p>Understand blockchain basics and Base network</p>
+            </a>
+
             <a href="security.html" class="menu-item">
-                <h3>Security & Scam Test</h3>
+                <h3>🔒 Security & Scam Test</h3>
                 <p>Learn to identify and avoid common scams</p>
             </a>
 
             <a href="experience.html" class="menu-item">
-                <h3>My Experience</h3>
+                <h3>🎯 My Experience</h3>
                 <p>Track your learning journey and achievements</p>
             </a>
 
             <a href="support.html" class="menu-item highlight">
-                <h3>Support the creator</h3>
+                <h3>💝 Support the creator</h3>
                 <p>Support me if you like BASECAMP!</p>
             </a>
         </nav>
@@ -72,5 +58,26 @@
             <p>Created by <strong>vikiase</strong> • 2025</p>
         </footer>
     </div>
+
+    <!-- Base SDK -->
+    <script src="https://unpkg.com/@base-org/app-sdk@latest/dist/base-app-sdk.js"></script>
+    <script>
+        // Initialize Base SDK
+        if (typeof BaseApp !== 'undefined') {
+            console.log('✅ Base SDK loaded');
+            BaseApp.ready();
+        } else {
+            // Fallback
+            console.log('⚠️ Base SDK not loaded, using fallback');
+            window.addEventListener('load', () => {
+                if (window.parent !== window) {
+                    window.parent.postMessage({
+                        type: 'base:miniapp:ready',
+                        data: { ready: true }
+                    }, '*');
+                }
+            });
+        }
+    </script>
 </body>
 </html>
