@@ -4,18 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
-    <!-- ✅ FC:miniapp metadata pro embeds -->
+    <!-- ✅ FC:miniapp metadata - REQUIRED for Base App -->
     <meta name="fc:miniapp" content='{
         "version":"next",
-        "imageUrl":"https://learn-base-mu.vercel.app/images/hero.png",
+        "imageUrl":"https://placehold.co/1200x630/0052FF/FFFFFF/png?text=BaseCamp",
         "button":{
             "title":"Open BaseCamp",
             "action":{
                 "type":"launch_miniapp",
                 "name":"BaseCamp Learning",
-                "url":"https://learn-base-mu.vercel.app",
-                "splashImageUrl":"https://learn-base-mu.vercel.app/images/splash.png",
-                "splashBackgroundColor":"#0052FF"
+                "url":"https://learn-base-mu.vercel.app"
             }
         }
     }' />
@@ -44,28 +42,28 @@
 
         <!-- Menu Buttons -->
         <nav class="menu">
-            <a href="intro/send.html" class="menu-item">
-                <h3>📤 Try Transactions</h3>
-                <p>Practice sending and receiving crypto safely</p>
-            </a>
-
             <a href="theory.html" class="menu-item">
-                <h3>📚 Learn About Base</h3>
+                <h3>Learn About Base</h3>
                 <p>Understand blockchain basics and Base network</p>
             </a>
 
+            <a href="intro/send.html" class="menu-item">
+                <h3>Try Transactions</h3>
+                <p>Practice sending and receiving crypto safely</p>
+            </a>
+
             <a href="security.html" class="menu-item">
-                <h3>🔒 Security & Scam Test</h3>
+                <h3>Security & Scam Test</h3>
                 <p>Learn to identify and avoid common scams</p>
             </a>
 
             <a href="experience.html" class="menu-item">
-                <h3>🎯 My Experience</h3>
+                <h3>My Experience</h3>
                 <p>Track your learning journey and achievements</p>
             </a>
 
             <a href="support.html" class="menu-item highlight">
-                <h3>💝 Support the creator</h3>
+                <h3>Support the creator</h3>
                 <p>Support me if you like BASECAMP!</p>
             </a>
         </nav>
@@ -76,17 +74,16 @@
         </footer>
     </div>
 
-    <!-- ✅ MiniApp SDK module -->
+    <!-- ✅ Farcaster MiniApp SDK -->
     <script type="module">
         import { sdk } from 'https://cdn.jsdelivr.net/npm/@farcaster/miniapp-sdk@latest/+esm';
 
         window.addEventListener('load', async () => {
             try {
-                console.log('✅ Calling sdk.actions.ready()');
                 await sdk.actions.ready();
-                console.log('✅ SDK ready signal sent!');
+                console.log('✅ BaseCamp mini app ready!');
             } catch (error) {
-                console.error('❌ Error:', error);
+                console.error('❌ SDK error:', error);
             }
         });
     </script>
