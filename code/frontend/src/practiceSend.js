@@ -1,5 +1,5 @@
 // Configuration
-const BACKEND_URL = 'http://localhost:8000';
+const BACKEND_URL = 'https://learn-base-backend.vercel.app';
 const NETWORK = 'testnet';
 const BASE_SEPOLIA_CHAIN_ID = 84532;
 const RECIPIENT_ADDRESS = '0x02D6cB44CF2B0539B5d5F72a7a0B22Ac73031117';
