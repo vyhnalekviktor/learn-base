@@ -65,31 +65,20 @@
         </footer>
     </div>
 
-    <!-- ✅ UMD bundle místo ES module -->
-    <script src="https://unpkg.com/@farcaster/frame-sdk@0.0.5/dist/index.umd.js"></script>
-    <script>
-        (function() {
-            console.log('🚀 Initializing BaseCamp...');
+    <!-- ✅ Podle oficiální Farcaster docs -->
+    <script type="module">
+        import { sdk } from 'https://esm.sh/@farcaster/miniapp-sdk';
 
-            // Wait for SDK to be available
-            function initSDK() {
-                if (window.frameSDK && window.frameSDK.sdk) {
-                    console.log('✅ SDK found, calling ready()');
-                    window.frameSDK.sdk.actions.ready()
-                        .then(() => console.log('✅ Ready signal sent!'))
-                        .catch(err => console.error('❌ Ready error:', err));
-                } else {
-                    console.log('⏳ Waiting for SDK...');
-                    setTimeout(initSDK, 100);
-                }
+        // Wait for page to be fully loaded
+        window.addEventListener('load', async () => {
+            try {
+                console.log('🚀 Page loaded, calling ready()...');
+                await sdk.actions.ready();
+                console.log('✅ BaseCamp mini app is ready!');
+            } catch (error) {
+                console.error('❌ Error calling ready():', error);
             }
-
-            if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', initSDK);
-            } else {
-                initSDK();
-            }
-        })();
+        });
     </script>
 </body>
 </html>
