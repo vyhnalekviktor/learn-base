@@ -3,21 +3,25 @@ import { sdk } from 'https://esm.sh/@farcaster/miniapp-sdk';
 const BACKEND_URL = 'https://learn-base-backend.vercel.app';
 const YOUR_WALLET = '0x02D6cB44CF2B0539B5d5F72a7a0B22Ac73031117';
 const USDC_ADDRESS = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913';
-const BASE_CHAIN_ID = 8453;
+const BASE_CHAIN_ID = '0x2105'; // 8453 in hex
 
 let isPaid = false;
+let ethProvider = null;
 
 async function initApp() {
     try {
         console.log('Initializing Base App...');
 
-        // Aktivuj tlacitka - wallet je automaticky pripojena v Base App
+        // Get Ethereum provider from SDK
+        ethProvider = await sdk.wallet.ethProvider;
+        console.log('Provider:', ethProvider);
+
+        // Aktivuj tlacitka
         document.getElementById('paymentButtons').style.opacity = '1';
         document.getElementById('paymentButtons').style.pointerEvents = 'auto';
         document.getElementById('customPayment').style.opacity = '1';
         document.getElementById('customPayment').style.pointerEvents = 'auto';
 
-        // Skryj connect button - nepotrebujes ho
         const connectBtn = document.getElementById('connectBtn');
         if (connectBtn) connectBtn.style.display = 'none';
 
@@ -34,6 +38,22 @@ async function donate(amount) {
     statusDiv.innerHTML = 'Processing payment...';
 
     try {
+        if (!ethProvider) {
+            throw new Error('Provider not available');
+        }
+
+        // Get user accounts
+        const accounts = await ethProvider.request({
+            method: 'eth_accounts'
+        });
+
+        if (!accounts || accounts.length === 0) {
+            throw new Error('No account connected');
+        }
+
+        const userAddress = accounts[0];
+        console.log('User address:', userAddress);
+
         // Amount in wei (USDC has 6 decimals)
         const amountInWei = BigInt(Math.floor(parseFloat(amount) * 1000000));
 
@@ -45,19 +65,19 @@ async function donate(amount) {
 
         console.log('Sending USDC transaction...');
 
-        // Send transaction using Base Account
-        const result = await sdk.wallet.sendTransaction({
-            to: USDC_ADDRESS,
-            data: data,
-            chainId: BASE_CHAIN_ID
+        // Send transaction using eth_sendTransaction
+        const txHash = await ethProvider.request({
+            method: 'eth_sendTransaction',
+            params: [{
+                from: userAddress,
+                to: USDC_ADDRESS,
+                data: data,
+                chainId: BASE_CHAIN_ID
+            }]
         });
 
-        console.log('Transaction result:', result);
+        console.log('Transaction sent:', txHash);
         statusDiv.innerHTML = 'Verifying transaction...';
-
-        // Get user address from result or context
-        const context = await sdk.context;
-        const userAddress = context?.user?.wallet?.address || result.from || 'unknown';
 
         // Verify with backend
         const response = await fetch(`${BACKEND_URL}/api/sme/verify`, {
@@ -65,7 +85,7 @@ async function donate(amount) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 address_from: userAddress,
-                tx_hash: result.hash || result,
+                tx_hash: txHash,
                 token: 'USDC',
                 amount: parseFloat(amount)
             })
@@ -89,8 +109,7 @@ async function donate(amount) {
 function unlockMessageField(userAddress) {
     isPaid = true;
 
-    // Show user address if we have it
-    if (userAddress && userAddress !== 'unknown') {
+    if (userAddress) {
         document.getElementById('walletInfo').style.display = 'block';
         document.getElementById('address').textContent =
             userAddress.substring(0, 6) + '...' + userAddress.substring(38);
@@ -100,14 +119,6 @@ function unlockMessageField(userAddress) {
     document.getElementById('messageField').disabled = false;
     document.getElementById('sendMessageBtn').disabled = false;
     document.getElementById('messageField').focus();
-}
-
-function lockMessageField() {
-    isPaid = false;
-    document.getElementById('lockedOverlay').style.display = 'flex';
-    document.getElementById('messageField').disabled = true;
-    document.getElementById('sendMessageBtn').disabled = true;
-    document.getElementById('messageField').value = '';
 }
 
 async function sendMessage() {
@@ -124,8 +135,8 @@ async function sendMessage() {
     }
 
     try {
-        const context = await sdk.context;
-        const userAddress = context?.user?.wallet?.address || 'anonymous';
+        const accounts = await ethProvider.request({ method: 'eth_accounts' });
+        const userAddress = accounts[0] || 'anonymous';
 
         const response = await fetch(`${BACKEND_URL}/api/messages`, {
             method: 'POST',
@@ -159,7 +170,6 @@ function donateCustom() {
     }
 }
 
-// Make functions global for onclick handlers
 window.donate = donate;
 window.donateCustom = donateCustom;
 window.sendMessage = sendMessage;
