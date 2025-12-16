@@ -2,60 +2,44 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Support Me - BASECAMP</title>
-    <link rel="stylesheet" href="css/style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Support BaseCamp</title>
+    <link rel="stylesheet" href="../css/style.css">
 </head>
 <body>
     <div class="container">
-        <h1>Support my work</h1>
-        <p>Send me USDC on Base network</p>
+        <h1>Support the Creator</h1>
+        <p>Help me keep BaseCamp free and awesome!</p>
 
-        <!-- Base Wallet Connect -->
-        <div id="walletStatus" class="wallet-status">
-            <button id="connectBtn" onclick="connectBaseWallet()">
-                Connect with Base Wallet
-            </button>
-            <div id="walletInfo" style="display: none;">
-                <p>Connected: <span id="address"></span></p>
-                <button onclick="disconnectWallet()">Disconnect</button>
-            </div>
+        <!-- Wallet Info (auto-connected in Base App) -->
+        <div id="walletInfo" style="display:none;">
+            <p>Connected: <strong id="address">-</strong></p>
         </div>
 
-        <div class="buttons" id="paymentButtons" style="opacity: 0.5; pointer-events: none;">
-            <button onclick="donate('3.00')">3 USDC</button>
-            <button onclick="donate('5.00')">5 USDC</button>
+        <!-- Payment Buttons -->
+        <div id="paymentButtons" style="opacity:0.5;pointer-events:none;">
+            <button onclick="donate('1')">Donate $1</button>
+            <button onclick="donate('5')">Donate $5</button>
+            <button onclick="donate('10')">Donate $10</button>
         </div>
 
-        <div class="custom-amount" id="customPayment" style="opacity: 0.5; pointer-events: none;">
-            <input type="number" id="customAmount" placeholder="Custom amount" min="0.50" step="0.25">
-            <button onclick="donateCustom()">Send</button>
+        <div id="customPayment" style="opacity:0.5;pointer-events:none;">
+            <input type="number" id="customAmount" placeholder="Custom amount" min="0.5" step="0.1">
+            <button onclick="donateCustom()">Send Custom</button>
         </div>
-
-        <div class="message-section" id="messageSection">
-            <div class="locked-overlay" id="lockedOverlay">
-                <p>Leave a message (unlocks after payment) ...</p>
-            </div>
-            <textarea
-                id="messageField"
-                placeholder="Leave a message (unlocks after payment)..."
-                rows="4"
-                disabled
-            ></textarea>
-            <button id="sendMessageBtn" onclick="sendMessage()" disabled>
-                Send Message
-            </button>
-            </div>
 
         <div id="status"></div>
-        <a href="index.html" style="color: #0052FF; text-decoration: none; font-weight: bold;">Back to Home</a>
 
+        <!-- Message Field (locked until payment) -->
+        <div style="position:relative;margin-top:20px;">
+            <div id="lockedOverlay" style="display:flex;">
+                <p>🔒 Send a payment to unlock messaging</p>
+            </div>
+            <textarea id="messageField" disabled placeholder="Leave a message..."></textarea>
+            <button id="sendMessageBtn" disabled onclick="sendMessage()">Send Message</button>
+        </div>
     </div>
 
-    <!-- Coinbase Wallet SDK (podporuje Base Smart Wallet) -->
-    <script src="https://cdn.jsdelivr.net/npm/@coinbase/wallet-sdk@3.7.1/dist/index.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
-    <script src="src/payment.js"></script>
-    <script src="src/main.js"></script>
+    <script type="module" src="src/payment.js"></script>
 </body>
 </html>

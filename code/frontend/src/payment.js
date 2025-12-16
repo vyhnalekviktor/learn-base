@@ -1,125 +1,107 @@
-const BACKEND_URL = 'http://localhost:8000';
-const YOUR_WALLET = '0xYOUR_WALLET_ADDRESS';
+import { sdk } from 'https://esm.sh/@farcaster/miniapp-sdk';
+
+const BACKEND_URL = window.location.hostname === 'localhost'
+    ? 'http://localhost:8000'
+    : 'https://learn-base-backend.vercel.app';
+
+const YOUR_WALLET = '0x02D6cB44CF2B0539B5d5F72a7a0B22Ac73031117';
 const USDC_ADDRESS = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913';
-const BASE_CHAIN_ID = 8453; // Base mainnet
+const BASE_CHAIN_ID = 8453;
 
 let userAccount = null;
 let isPaid = false;
-let coinbaseWallet = null;
-let web3 = null;
 
-// Initialize Coinbase Wallet SDK (Base Smart Wallet)
-function initCoinbaseWallet() {
-    coinbaseWallet = new CoinbaseWalletSDK({
-        appName: 'Base Support App',
-        appLogoUrl: 'https://your-logo-url.com/logo.png', // Optional
-        darkMode: false
-    });
-
-    // Connect to Base mainnet
-    const ethereum = coinbaseWallet.makeWeb3Provider(
-        `https://mainnet.base.org`,
-        BASE_CHAIN_ID
-    );
-
-    web3 = new Web3(ethereum);
-
-    return ethereum;
-}
-
-// Connect Base Wallet (Smart Wallet - no seed phrase!)
-async function connectBaseWallet() {
+// ✅ Initialize with Base App context
+async function initApp() {
     try {
-        const ethereum = initCoinbaseWallet();
+        console.log('Initializing Base App...');
 
-        // Request accounts (triggers Base Wallet login)
-        const accounts = await ethereum.request({
-            method: 'eth_requestAccounts'
-        });
+        // Get user wallet from Base App
+        const context = await sdk.context;
 
-        userAccount = accounts[0];
+        if (context?.user?.wallet?.address) {
+            userAccount = context.user.wallet.address;
+            console.log('User wallet:', userAccount);
 
-        // Check if on Base network
-        const chainId = await ethereum.request({ method: 'eth_chainId' });
-        if (parseInt(chainId, 16) !== BASE_CHAIN_ID) {
-            // Switch to Base
-            await switchToBase(ethereum);
+            // Update UI - already connected!
+            document.getElementById('connectBtn').style.display = 'none';
+            document.getElementById('walletInfo').style.display = 'block';
+            document.getElementById('address').textContent =
+                userAccount.substring(0, 6) + '...' + userAccount.substring(38);
+
+            // Enable payment buttons
+            document.getElementById('paymentButtons').style.opacity = '1';
+            document.getElementById('paymentButtons').style.pointerEvents = 'auto';
+            document.getElementById('customPayment').style.opacity = '1';
+            document.getElementById('customPayment').style.pointerEvents = 'auto';
+        } else {
+            console.log('⚠No wallet in context');
+            alert('Please open this app in Base App to use wallet features');
         }
 
-        // Update UI
-        document.getElementById('connectBtn').style.display = 'none';
-        document.getElementById('walletInfo').style.display = 'block';
-        document.getElementById('address').textContent =
-            userAccount.substring(0, 6) + '...' + userAccount.substring(38);
-
-        // Enable payment buttons
-        document.getElementById('paymentButtons').style.opacity = '1';
-        document.getElementById('paymentButtons').style.pointerEvents = 'auto';
-        document.getElementById('customPayment').style.opacity = '1';
-        document.getElementById('customPayment').style.pointerEvents = 'auto';
-
-        console.log('Base Wallet connected:', userAccount);
-
-        // Listen for disconnection
-        ethereum.on('accountsChanged', (accounts) => {
-            if (accounts.length === 0) {
-                disconnectWallet();
-            } else {
-                userAccount = accounts[0];
-                updateAddressDisplay();
-            }
-        });
+        // Signal ready
+        await sdk.actions.ready();
 
     } catch (error) {
-        console.error('Connection error:', error);
-        alert('Failed to connect Base Wallet');
+        console.error('Init error:', error);
     }
 }
 
-// Switch to Base network
-async function switchToBase(ethereum) {
+// ✅ No need for connectBaseWallet - Base App provides wallet automatically!
+
+async function donate(amount) {
+    if (!userAccount) {
+        alert('Wallet not available. Please open in Base App.');
+        return;
+    }
+
+    const statusDiv = document.getElementById('status');
+    statusDiv.innerHTML = 'Processing payment...';
+
     try {
-        await ethereum.request({
-            method: 'wallet_switchEthereumChain',
-            params: [{ chainId: '0x2105' }], // Base mainnet = 8453 = 0x2105
+        // Amount in smallest unit (USDC has 6 decimals)
+        const amountInWei = Math.floor(parseFloat(amount) * 1000000).toString(16);
+
+        // Prepare USDC transfer transaction data
+        const transferData = '0xa9059cbb' + // transfer(address,uint256) function selector
+            YOUR_WALLET.substring(2).padStart(64, '0') + // recipient address
+            amountInWei.padStart(64, '0'); // amount
+
+        // Send transaction via Base App wallet
+        const txHash = await sdk.wallet.sendTransaction({
+            to: USDC_ADDRESS,
+            data: transferData,
+            chainId: BASE_CHAIN_ID
         });
-    } catch (switchError) {
-        // Chain not added, add it
-        if (switchError.code === 4902) {
-            await ethereum.request({
-                method: 'wallet_addEthereumChain',
-                params: [{
-                    chainId: '0x2105',
-                    chainName: 'Base',
-                    nativeCurrency: {
-                        name: 'Ethereum',
-                        symbol: 'ETH',
-                        decimals: 18
-                    },
-                    rpcUrls: ['https://mainnet.base.org'],
-                    blockExplorerUrls: ['https://basescan.org']
-                }]
-            });
+
+        console.log('Transaction sent:', txHash);
+        statusDiv.innerHTML = '⏳ Verifying transaction...';
+
+        // Verify with backend
+        const response = await fetch(`${BACKEND_URL}/api/sme/verify`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                address_from: userAccount,
+                tx_hash: txHash,
+                token: 'USDC',
+                amount: parseFloat(amount)
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            statusDiv.innerHTML = `Thank you for ${amount} USDC support! 🙏`;
+            unlockMessageField();
+        } else {
+            statusDiv.innerHTML = `Verification failed: ${result.msg}`;
         }
+
+    } catch (error) {
+        console.error('Payment error:', error);
+        statusDiv.innerHTML = `Payment failed: ${error.message}`;
     }
-}
-
-function disconnectWallet() {
-    userAccount = null;
-    isPaid = false;
-    coinbaseWallet = null;
-    web3 = null;
-
-    document.getElementById('connectBtn').style.display = 'block';
-    document.getElementById('walletInfo').style.display = 'none';
-
-    document.getElementById('paymentButtons').style.opacity = '0.5';
-    document.getElementById('paymentButtons').style.pointerEvents = 'none';
-    document.getElementById('customPayment').style.opacity = '0.5';
-    document.getElementById('customPayment').style.pointerEvents = 'none';
-
-    lockMessageField();
-    document.getElementById('status').innerHTML = '';
 }
 
 function unlockMessageField() {
@@ -168,65 +150,10 @@ async function sendMessage() {
         } else {
             alert('Failed to send message');
         }
+
     } catch (error) {
         console.error('Send message error:', error);
         alert('Failed to send message');
-    }
-}
-
-async function donate(amount) {
-    if (!userAccount || !web3) {
-        alert('Please connect your Base Wallet first!');
-        return;
-    }
-
-    const statusDiv = document.getElementById('status');
-    statusDiv.innerHTML = 'Processing payment...';
-
-    try {
-        const usdcABI = [{
-            "constant": false,
-            "inputs": [
-                {"name": "_to", "type": "address"},
-                {"name": "_value", "type": "uint256"}
-            ],
-            "name": "transfer",
-            "outputs": [{"name": "", "type": "bool"}],
-            "type": "function"
-        }];
-
-        const usdcContract = new web3.eth.Contract(usdcABI, USDC_ADDRESS);
-        const amountInSmallestUnit = Math.floor(parseFloat(amount) * 1000000);
-
-        const tx = await usdcContract.methods
-            .transfer(YOUR_WALLET, amountInSmallestUnit)
-            .send({ from: userAccount });
-
-        statusDiv.innerHTML = '⏳ Verifying transaction...';
-
-        const response = await fetch(`${BACKEND_URL}/api/sme/verify`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                address_from: userAccount,
-                tx_hash: tx.transactionHash,
-                token: 'USDC',
-                amount: parseFloat(amount)
-            })
-        });
-
-        const result = await response.json();
-
-        if (result.success) {
-            statusDiv.innerHTML = `Thank you for ${amount} USDC support! 🙏`;
-            unlockMessageField();
-        } else {
-            statusDiv.innerHTML = `Verification failed: ${result.msg}`;
-        }
-
-    } catch (error) {
-        console.error('Payment error:', error);
-        statusDiv.innerHTML = `Payment failed: ${error.message}`;
     }
 }
 
@@ -239,9 +166,5 @@ function donateCustom() {
     }
 }
 
-function updateAddressDisplay() {
-    if (userAccount) {
-        document.getElementById('address').textContent =
-            userAccount.substring(0, 6) + '...' + userAccount.substring(38);
-    }
-}
+// Initialize on load
+initApp();
