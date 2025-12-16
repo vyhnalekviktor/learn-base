@@ -1,99 +1,83 @@
 import { sdk } from 'https://esm.sh/@farcaster/miniapp-sdk';
 
 const BACKEND_URL = 'https://learn-base-backend.vercel.app';
-
 const YOUR_WALLET = '0x02D6cB44CF2B0539B5d5F72a7a0B22Ac73031117';
 const USDC_ADDRESS = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913';
 const BASE_CHAIN_ID = 8453;
 
-let userAccount = null;
 let isPaid = false;
 
-// ✅ Initialize with Base App context
 async function initApp() {
     try {
         console.log('Initializing Base App...');
 
-        // Get user wallet from Base App
-        const context = await sdk.context;
+        // Aktivuj tlacitka - wallet je automaticky pripojena v Base App
+        document.getElementById('paymentButtons').style.opacity = '1';
+        document.getElementById('paymentButtons').style.pointerEvents = 'auto';
+        document.getElementById('customPayment').style.opacity = '1';
+        document.getElementById('customPayment').style.pointerEvents = 'auto';
 
-        if (context?.user?.wallet?.address) {
-            userAccount = context.user.wallet.address;
-            console.log('User wallet:', userAccount);
+        // Skryj connect button - nepotrebujes ho
+        const connectBtn = document.getElementById('connectBtn');
+        if (connectBtn) connectBtn.style.display = 'none';
 
-            // Update UI - already connected!
-            document.getElementById('connectBtn').style.display = 'none';
-            document.getElementById('walletInfo').style.display = 'block';
-            document.getElementById('address').textContent =
-                userAccount.substring(0, 6) + '...' + userAccount.substring(38);
-
-            // Enable payment buttons
-            document.getElementById('paymentButtons').style.opacity = '1';
-            document.getElementById('paymentButtons').style.pointerEvents = 'auto';
-            document.getElementById('customPayment').style.opacity = '1';
-            document.getElementById('customPayment').style.pointerEvents = 'auto';
-        } else {
-            console.log('⚠No wallet in context');
-            alert('Please open this app in Base App to use wallet features');
-        }
-
-        // Signal ready
         await sdk.actions.ready();
+        console.log('Base App ready');
 
     } catch (error) {
         console.error('Init error:', error);
     }
 }
 
-// ✅ No need for connectBaseWallet - Base App provides wallet automatically!
-
 async function donate(amount) {
-    if (!userAccount) {
-        alert('Wallet not available. Please open in Base App.');
-        return;
-    }
-
     const statusDiv = document.getElementById('status');
     statusDiv.innerHTML = 'Processing payment...';
 
     try {
-        // Amount in smallest unit (USDC has 6 decimals)
-        const amountInWei = Math.floor(parseFloat(amount) * 1000000).toString(16);
+        // Amount in wei (USDC has 6 decimals)
+        const amountInWei = BigInt(Math.floor(parseFloat(amount) * 1000000));
 
-        // Prepare USDC transfer transaction data
-        const transferData = '0xa9059cbb' + // transfer(address,uint256) function selector
-            YOUR_WALLET.substring(2).padStart(64, '0') + // recipient address
-            amountInWei.padStart(64, '0'); // amount
+        // Encode transfer function call
+        const transferFunctionSelector = '0xa9059cbb';
+        const recipientPadded = YOUR_WALLET.substring(2).padStart(64, '0');
+        const amountPadded = amountInWei.toString(16).padStart(64, '0');
+        const data = transferFunctionSelector + recipientPadded + amountPadded;
 
-        // Send transaction via Base App wallet
-        const txHash = await sdk.wallet.sendTransaction({
+        console.log('Sending USDC transaction...');
+
+        // Send transaction using Base Account
+        const result = await sdk.wallet.sendTransaction({
             to: USDC_ADDRESS,
-            data: transferData,
+            data: data,
             chainId: BASE_CHAIN_ID
         });
 
-        console.log('Transaction sent:', txHash);
-        statusDiv.innerHTML = '⏳ Verifying transaction...';
+        console.log('Transaction result:', result);
+        statusDiv.innerHTML = 'Verifying transaction...';
+
+        // Get user address from result or context
+        const context = await sdk.context;
+        const userAddress = context?.user?.wallet?.address || result.from || 'unknown';
 
         // Verify with backend
         const response = await fetch(`${BACKEND_URL}/api/sme/verify`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                address_from: userAccount,
-                tx_hash: txHash,
+                address_from: userAddress,
+                tx_hash: result.hash || result,
                 token: 'USDC',
                 amount: parseFloat(amount)
             })
         });
 
-        const result = await response.json();
+        const verifyResult = await response.json();
 
-        if (result.success) {
-            statusDiv.innerHTML = `Thank you for ${amount} USDC support! 🙏`;
-            unlockMessageField();
+        if (verifyResult.success) {
+            statusDiv.innerHTML = `Thank you for ${amount} USDC support!`;
+            unlockMessageField(userAddress);
         } else {
-            statusDiv.innerHTML = `Verification failed: ${result.msg}`;
+            statusDiv.innerHTML = `Verification failed: ${verifyResult.msg}`;
         }
 
     } catch (error) {
@@ -102,8 +86,16 @@ async function donate(amount) {
     }
 }
 
-function unlockMessageField() {
+function unlockMessageField(userAddress) {
     isPaid = true;
+
+    // Show user address if we have it
+    if (userAddress && userAddress !== 'unknown') {
+        document.getElementById('walletInfo').style.display = 'block';
+        document.getElementById('address').textContent =
+            userAddress.substring(0, 6) + '...' + userAddress.substring(38);
+    }
+
     document.getElementById('lockedOverlay').style.display = 'none';
     document.getElementById('messageField').disabled = false;
     document.getElementById('sendMessageBtn').disabled = false;
@@ -132,11 +124,14 @@ async function sendMessage() {
     }
 
     try {
+        const context = await sdk.context;
+        const userAddress = context?.user?.wallet?.address || 'anonymous';
+
         const response = await fetch(`${BACKEND_URL}/api/messages`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                from_address: userAccount,
+                from_address: userAddress,
                 message: message,
                 timestamp: new Date().toISOString()
             })
@@ -164,5 +159,9 @@ function donateCustom() {
     }
 }
 
-// Initialize on load
+// Make functions global for onclick handlers
+window.donate = donate;
+window.donateCustom = donateCustom;
+window.sendMessage = sendMessage;
+
 initApp();
