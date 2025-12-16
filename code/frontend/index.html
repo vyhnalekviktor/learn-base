@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
-    <!-- ✅ FC:miniapp metadata - REQUIRED for Base App -->
     <meta name="fc:miniapp" content='{
         "version":"next",
         "imageUrl":"https://placehold.co/1200x630/0052FF/FFFFFF/png?text=BaseCamp",
@@ -23,7 +22,6 @@
 </head>
 <body>
     <div class="container">
-        <!-- Hero Section -->
         <div class="hero">
             <div class="logo">
                 <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
@@ -31,7 +29,6 @@
                     <path d="M40 20C28.954 20 20 28.954 20 40C20 51.046 28.954 60 40 60C51.046 60 60 51.046 60 40C60 28.954 51.046 20 40 20Z" fill="white"/>
                 </svg>
             </div>
-
             <h1>BASECAMP - learn BASE ecosystem</h1>
             <p class="subtitle">A safe testnet environment for beginners</p>
             <p class="description">
@@ -40,52 +37,59 @@
             </p>
         </div>
 
-        <!-- Menu Buttons -->
         <nav class="menu">
             <a href="theory.html" class="menu-item">
                 <h3>Learn About Base</h3>
                 <p>Understand blockchain basics and Base network</p>
             </a>
-
             <a href="intro/send.html" class="menu-item">
                 <h3>Try Transactions</h3>
                 <p>Practice sending and receiving crypto safely</p>
             </a>
-
             <a href="security.html" class="menu-item">
                 <h3>Security & Scam Test</h3>
                 <p>Learn to identify and avoid common scams</p>
             </a>
-
             <a href="experience.html" class="menu-item">
                 <h3>My Experience</h3>
                 <p>Track your learning journey and achievements</p>
             </a>
-
             <a href="support.html" class="menu-item highlight">
                 <h3>Support the creator</h3>
                 <p>Support me if you like BASECAMP!</p>
             </a>
         </nav>
 
-        <!-- Footer -->
         <footer>
             <p>Created by <strong>vikiase</strong> • 2025</p>
         </footer>
     </div>
 
-    <!-- ✅ Farcaster MiniApp SDK -->
-    <script type="module">
-        import { sdk } from 'https://cdn.jsdelivr.net/npm/@farcaster/miniapp-sdk@latest/+esm';
+    <!-- ✅ UMD bundle místo ES module -->
+    <script src="https://unpkg.com/@farcaster/frame-sdk@0.0.5/dist/index.umd.js"></script>
+    <script>
+        (function() {
+            console.log('🚀 Initializing BaseCamp...');
 
-        window.addEventListener('load', async () => {
-            try {
-                await sdk.actions.ready();
-                console.log('✅ BaseCamp mini app ready!');
-            } catch (error) {
-                console.error('❌ SDK error:', error);
+            // Wait for SDK to be available
+            function initSDK() {
+                if (window.frameSDK && window.frameSDK.sdk) {
+                    console.log('✅ SDK found, calling ready()');
+                    window.frameSDK.sdk.actions.ready()
+                        .then(() => console.log('✅ Ready signal sent!'))
+                        .catch(err => console.error('❌ Ready error:', err));
+                } else {
+                    console.log('⏳ Waiting for SDK...');
+                    setTimeout(initSDK, 100);
+                }
             }
-        });
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initSDK);
+            } else {
+                initSDK();
+            }
+        })();
     </script>
 </body>
 </html>
