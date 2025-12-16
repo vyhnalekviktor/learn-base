@@ -1,0 +1,29 @@
+{
+  "accountAssociation": {
+    "header": "",
+    "payload": "",
+    "signature": ""
+  },
+  "miniapp": {
+    "version": "1",
+    "name": "BaseCamp Learning",
+    "homeUrl": "https://learn-base-mu.vercel.app/index.html",
+    "iconUrl": "https://learn-base-mu.vercel.app/images/icon.png",
+    "splashImageUrl": "https://learn-base-mu.vercel.app/images/splash.png",
+    "splashBackgroundColor": "#0052FF",
+    "subtitle": "Learn Base transactions",
+    "description": "Interactive tutorial for sending your first transaction on Base Sepolia testnet. Practice with test ETH safely.",
+    "screenshotUrls": [
+      "https://learn-base-mu.vercel.app/images/screenshot1.png"
+    ],
+    "primaryCategory": "education",
+    "tags": ["education", "blockchain", "base", "tutorial", "crypto"],
+    "heroImageUrl": "https://learn-base-mu.vercel.app/images/hero.png",
+    "tagline": "Learn Base the easy way",
+    "ogTitle": "BaseCamp Learning - Base Tutorial",
+    "ogDescription": "Learn to send your first Base transaction with our interactive tutorial.",
+    "ogImageUrl": "https://learn-base-mu.vercel.app/images/og.png",
+    "noindex": true
+  }
+}
+
