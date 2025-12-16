@@ -3,6 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <!-- ✅ FC:miniapp metadata pro embeds -->
+    <meta name="fc:miniapp" content='{
+        "version":"next",
+        "imageUrl":"https://learn-base-mu.vercel.app/images/hero.png",
+        "button":{
+            "title":"Open BaseCamp",
+            "action":{
+                "type":"launch_miniapp",
+                "name":"BaseCamp Learning",
+                "url":"https://learn-base-mu.vercel.app",
+                "splashImageUrl":"https://learn-base-mu.vercel.app/images/splash.png",
+                "splashBackgroundColor":"#0052FF"
+            }
+        }
+    }' />
+
     <title>BASECAMP - learn BASE ecosystem</title>
     <link rel="stylesheet" href="css/landing.css">
 </head>
@@ -59,29 +76,17 @@
         </footer>
     </div>
 
-    <!-- Farcaster Mini App SDK -->
-    <script src="https://cdn.jsdelivr.net/npm/@farcaster/frame-sdk@0.0.19/dist/index.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', async () => {
-            console.log('🚀 Page loaded');
+    <!-- ✅ MiniApp SDK module -->
+    <script type="module">
+        import { sdk } from 'https://cdn.jsdelivr.net/npm/@farcaster/miniapp-sdk@latest/+esm';
 
+        window.addEventListener('load', async () => {
             try {
-                // Wait for SDK to be available
-                if (window.frame && window.frame.sdk) {
-                    await window.frame.sdk.actions.ready();
-                    console.log('✅ Farcaster Frame SDK ready');
-                } else {
-                    console.log('⚠️ Frame SDK not available, sending postMessage');
-                    // Fallback
-                    if (window.parent !== window) {
-                        window.parent.postMessage({
-                            type: 'fc:frame:ready',
-                            data: {}
-                        }, '*');
-                    }
-                }
+                console.log('✅ Calling sdk.actions.ready()');
+                await sdk.actions.ready();
+                console.log('✅ SDK ready signal sent!');
             } catch (error) {
-                console.error('❌ Error calling SDK ready:', error);
+                console.error('❌ Error:', error);
             }
         });
     </script>
