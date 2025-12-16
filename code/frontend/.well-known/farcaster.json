@@ -8,21 +8,19 @@
     "version": "1",
     "name": "BaseCamp Learning",
     "homeUrl": "https://learn-base-mu.vercel.app/index.html",
-    "iconUrl": "https://learn-base-mu.vercel.app/images/icon.png",
-    "splashImageUrl": "https://learn-base-mu.vercel.app/images/splash.png",
+    "iconUrl": "https://placehold.co/1024x1024/0052FF/FFFFFF/png?text=BC",
+    "splashImageUrl": "https://placehold.co/200x200/0052FF/FFFFFF/png?text=BC",
     "splashBackgroundColor": "#0052FF",
     "subtitle": "Learn Base transactions",
-    "description": "Interactive tutorial for sending your first transaction on Base Sepolia testnet. Practice with test ETH safely.",
-    "screenshotUrls": [
-      "https://learn-base-mu.vercel.app/images/screenshot1.png"
-    ],
+    "description": "Interactive tutorial for sending your first transaction on Base Sepolia testnet.",
+    "screenshotUrls": [],
     "primaryCategory": "education",
-    "tags": ["education", "blockchain", "base", "tutorial", "crypto"],
-    "heroImageUrl": "https://learn-base-mu.vercel.app/images/hero.png",
+    "tags": ["education", "base"],
+    "heroImageUrl": "https://placehold.co/1200x630/0052FF/FFFFFF/png?text=BaseCamp",
     "tagline": "Learn Base the easy way",
-    "ogTitle": "BaseCamp Learning - Base Tutorial",
-    "ogDescription": "Learn to send your first Base transaction with our interactive tutorial.",
-    "ogImageUrl": "https://learn-base-mu.vercel.app/images/og.png",
+    "ogTitle": "BaseCamp Learning",
+    "ogDescription": "Learn to send your first Base transaction.",
+    "ogImageUrl": "https://placehold.co/1200x630/0052FF/FFFFFF/png?text=BaseCamp",
     "noindex": true
   }
 }

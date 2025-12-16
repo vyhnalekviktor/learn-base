@@ -1,11 +1,24 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <!--<meta name="base:app_id" content="69419e4bd77c069a945bdf69" />-->
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <!-- ✅ Base mini app security -->
+    <meta http-equiv="Content-Security-Policy" content="frame-ancestors https://*.base.org https://base.org">
+
     <title>BASECAMP - learn BASE ecosystem</title>
     <link rel="stylesheet" href="css/landing.css">
+
+    <!-- ✅ Base SDK pro ready signal -->
+    <script>
+        window.addEventListener('load', () => {
+            // Signal to Base App that page is ready
+            if (window.parent !== window) {
+                window.parent.postMessage({ type: 'miniapp-ready' }, '*');
+            }
+        });
+    </script>
 </head>
 <body>
     <div class="container">
