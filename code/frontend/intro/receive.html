@@ -53,7 +53,7 @@
                     </ul>
 
                     <div class="warning-box">
-                        <p>⚠️ <strong>Important:</strong> Make sure the sender knows to use the <strong>Base network</strong>, not Ethereum or another chain. USDC sent on the wrong network won't appear in your Base wallet!</p>
+                        <p><strong>Important:</strong> Make sure the sender knows to use the <strong>Base network</strong>, not Ethereum or another chain. USDC sent on the wrong network won't appear in your Base wallet!</p>
                     </div>
                 </div>
             </div>
@@ -141,20 +141,6 @@
         </div>
     </div>
 
-    <script>
-        function toggleAccordion(id) {
-            const content = document.getElementById('content-' + id);
-            const icon = document.getElementById('icon-' + id);
-
-            if (content.style.maxHeight) {
-                content.style.maxHeight = null;
-                icon.textContent = '▼';
-            } else {
-                content.style.maxHeight = content.scrollHeight + 'px';
-                icon.textContent = '▲';
-            }
-        }
-    </script>
     <script type="module" src="../src/practiceReceive.js"></script>
 </body>
 </html>
