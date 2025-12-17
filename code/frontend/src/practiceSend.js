@@ -54,12 +54,7 @@ window.sendTransaction = async function() {
         statusDiv.innerHTML = `
             <strong>Payment Sent!</strong><br><br>
             <strong>Amount:</strong> ${AMOUNT_USDC} USDC<br>
-            <strong>To:</strong> ${RECIPIENT_ADDRESS.substring(0, 6)}...${RECIPIENT_ADDRESS.substring(38)}<br>
-            <strong>Payment ID:</strong> ${payment.id.substring(0, 10)}...${payment.id.substring(payment.id.length - 8)}
-            <button onclick="navigator.clipboard.writeText('${payment.id}').then(() => this.textContent='Copied!').catch(() => this.textContent='Failed')"
-                    style="margin-left: 8px; padding: 4px 8px; background: #0052FF; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12px;">
-                Copy
-            </button><br><br>
+            <strong>To:</strong> ${RECIPIENT_ADDRESS.substring(0, 6)}...${RECIPIENT_ADDRESS.substring(38)}<br><br>
             <small style="color: #666;">Payment successfully processed on Base Sepolia testnet</small>
         `;
 
