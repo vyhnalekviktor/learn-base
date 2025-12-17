@@ -16,8 +16,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-messages = []
-
 # ENDPOINTS (všechny stejné jako předtím)
 @app.get("/")
 @app.get("/api")
@@ -61,5 +59,26 @@ async def testnet_verify(request: Request):
 
 @app.post("api/testnet/send-test")
 async def testnet_send(request: Request):
-    # todo!!!!
+    '''
+    todo check available funds:
+        if 0: return {"success": False, "msg": "Donate testnet funds, i am empty!"}
+    check user sent status in DB - true/false
+        if false : return {"success": False, "msg": "Already sent you!"}
+    connect to wallet
+    send 1 USDC on sepolia
+    '''
+
+    data = await request.json()
+    user_address = data.get("user_address")
+
+    result = functions_testnet.validateAddress(user_address)
+    if not result.get("success"):
+        raise HTTPException(status_code=400, detail=result.get("msg"))
+
+    send = functions_testnet.send_testnet(user_address)
+    if not send.get("success"):
+        raise HTTPException(status_code=400, detail=send.get("msg"))
+    #default:
     return {"success": False, "msg": "Not enough funds!"}
+    #after getting wallet
+    #return send
