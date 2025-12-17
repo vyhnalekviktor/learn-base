@@ -38,9 +38,9 @@ window.sendTransaction = async function() {
     try {
         statusDiv.style.display = 'block';
         statusDiv.className = 'info-box';
-        statusDiv.innerHTML = '⏳ Preparing USDC payment...';
+        statusDiv.innerHTML = 'Preparing USDC payment...';
 
-        statusDiv.innerHTML = '🔐 Please confirm the payment in your wallet...';
+        statusDiv.innerHTML = 'Please confirm the payment in your wallet...';
 
         // Použití Base Pay podle guide
         const payment = await pay({
@@ -64,14 +64,18 @@ window.sendTransaction = async function() {
 
             statusDiv.className = 'info-box';
             statusDiv.innerHTML = `
-                ✅ <strong>Payment Confirmed!</strong><br><br>
+                <strong>Payment Confirmed!</strong><br><br>
                 <strong>Amount:</strong> ${AMOUNT_USDC} USDC<br>
                 <strong>To:</strong> ${RECIPIENT_ADDRESS.substring(0, 6)}...${RECIPIENT_ADDRESS.substring(38)}<br>
-                <strong>Payment ID:</strong> ${payment.id}<br><br>
+                <strong>Payment ID:</strong> ${payment.id.substring(0, 6)}...${payment.id.substring(payment.id.length - 4)}
+                <button onclick="navigator.clipboard.writeText('${payment.id}').then(() => alert('Payment ID copied!'))"
+                style="margin-left: 8px; padding: 4px 8px; background: #0052FF; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12px;">
+                    Copy
+                </button><br><br>
                 <small style="color: #666;">Payment successfully processed on Base Sepolia testnet</small>
             `;
         } else {
-            statusDiv.innerHTML = `⏳ Payment status: ${status}. Waiting for confirmation...`;
+            statusDiv.innerHTML = `Payment status: ${status}. Waiting for confirmation...`;
         }
 
     } catch (error) {
@@ -79,11 +83,11 @@ window.sendTransaction = async function() {
 
         statusDiv.className = 'error-box';
         if (error.message.includes('User rejected') || error.message.includes('rejected')) {
-            statusDiv.innerHTML = '❌ Payment rejected by user';
+            statusDiv.innerHTML = 'Payment rejected by user';
         } else if (error.message.includes('insufficient')) {
-            statusDiv.innerHTML = '❌ Insufficient USDC balance. Get testnet USDC from <a href="https://faucet.circle.com" target="_blank" class="learn-more">Circle Faucet</a>.';
+            statusDiv.innerHTML = 'Insufficient USDC balance. Get testnet USDC from <a href="https://faucet.circle.com" target="_blank" class="learn-more">Circle Faucet</a>.';
         } else {
-            statusDiv.innerHTML = `❌ Payment failed: ${error.message}`;
+            statusDiv.innerHTML = `Payment failed: ${error.message}`;
         }
     }
 };
