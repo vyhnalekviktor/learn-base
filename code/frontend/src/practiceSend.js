@@ -50,8 +50,7 @@ window.sendTransaction = async function() {
         });
 
         console.log('Payment sent! ID:', payment.id);
-        //view data
-        console.log('Payment object:', payment);
+
         statusDiv.innerHTML = 'Checking payment status...';
 
         // Kontrola statusu
