@@ -11,6 +11,7 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
+    padding: 20px;
 }
 
 .container {
@@ -19,47 +20,57 @@ body {
     border-radius: 20px;
     box-shadow: 0 20px 60px rgba(0,0,0,0.3);
     max-width: 500px;
-    width: 90%;
+    width: 100%;
     text-align: center;
 }
 
 h1 {
     color: #333;
     margin-bottom: 10px;
+    font-size: 32px;
 }
 
 p {
     color: #666;
     margin-bottom: 30px;
+    font-size: 16px;
 }
 
 .buttons {
     display: flex;
     gap: 15px;
-    margin-bottom: 20px;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
 }
 
 button {
     flex: 1;
+    min-width: 120px;
     padding: 15px 20px;
     font-size: 16px;
+    font-weight: 600;
     background: #0052FF;
     color: white;
     border: none;
     border-radius: 10px;
     cursor: pointer;
-    transition: transform 0.2s;
+    transition: all 0.2s ease;
 }
 
 button:hover {
-    transform: scale(1.05);
+    transform: translateY(-2px);
     background: #0041CC;
+    box-shadow: 0 5px 15px rgba(0, 82, 255, 0.3);
+}
+
+button:active {
+    transform: translateY(0);
 }
 
 .custom-amount {
     display: flex;
     gap: 10px;
-    margin-bottom: 20px;
+    margin-bottom: 40px;
 }
 
 input {
@@ -68,6 +79,16 @@ input {
     font-size: 16px;
     border: 2px solid #ddd;
     border-radius: 10px;
+    transition: border-color 0.3s ease;
+}
+
+input:focus {
+    outline: none;
+    border-color: #0052FF;
+}
+
+input::placeholder {
+    color: #999;
 }
 
 #status {
@@ -93,6 +114,26 @@ input {
 #address {
     font-family: monospace;
     color: #0052FF;
+}
+
+/* Back to Home link - oddělený od ostatních prvků */
+.back-link {
+    margin-top: 40px;
+    padding-top: 30px;
+    border-top: 2px solid #f0f0f0;
+}
+
+.back-link a {
+    color: #0052FF;
+    text-decoration: none;
+    font-size: 16px;
+    font-weight: 500;
+    transition: color 0.3s ease;
+}
+
+.back-link a:hover {
+    color: #0041CC;
+    text-decoration: underline;
 }
 
 /* Message section styles */
@@ -132,6 +173,12 @@ input {
     border-radius: 10px;
     resize: vertical;
     margin-bottom: 10px;
+    min-height: 100px;
+}
+
+#messageField:focus {
+    outline: none;
+    border-color: #0052FF;
 }
 
 #messageField:disabled {
@@ -143,11 +190,13 @@ input {
     width: 100%;
     padding: 15px;
     font-size: 16px;
+    font-weight: 600;
     background: #0052FF;
     color: white;
     border: none;
     border-radius: 10px;
     cursor: pointer;
+    transition: all 0.2s ease;
 }
 
 #sendMessageBtn:disabled {
@@ -157,4 +206,25 @@ input {
 
 #sendMessageBtn:not(:disabled):hover {
     background: #0041CC;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 82, 255, 0.3);
+}
+
+#sendMessageBtn:not(:disabled):active {
+    transform: translateY(0);
+}
+
+/* Responsive design */
+@media (max-width: 480px) {
+    .container {
+        padding: 30px 20px;
+    }
+
+    .buttons {
+        flex-direction: column;
+    }
+
+    button {
+        width: 100%;
+    }
 }
