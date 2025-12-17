@@ -2,37 +2,50 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Support BaseCamp</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Support the Creator</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
     <div class="container">
-        <h1>Support the Creator</h1>
-        <p>Help me keep BaseCamp free and awesome!</p>
-
-        <!-- Wallet Info (auto-connected in Base App) -->
-        <div id="walletInfo" style="display:none;">
-            <p>Connected: <strong id="address">-</strong></p>
+        <!-- Hero Section -->
+        <div class="hero">
+            <h1>Support the Creator</h1>
+            <p class="subtitle">Help me keep BaseCamp free and awesome!</p>
         </div>
 
-        <!-- Payment Buttons -->
-        <div id="paymentButtons" style="opacity:0.5;pointer-events:none;">
-            <button onclick="donate('1')">Donate $1</button>
-            <button onclick="donate('5')">Donate $5</button>
-            <button onclick="donate('10')">Donate $10</button>
-        </div>
+        <!-- Payment Section -->
+        <div class="payment-section">
+            <!-- Donation Buttons -->
+            <div class="donation-grid">
+                <button class="donation-btn" onclick="donate('1')">Donate $1</button>
+                <button class="donation-btn" onclick="donate('5')">Donate $5</button>
+                <button class="donation-btn" onclick="donate('10')">Donate $10</button>
+            </div>
 
-        <div id="customPayment" style="opacity:0.5;pointer-events:none;">
-            <input type="number" id="customAmount" placeholder="Custom amount" min="0.5" step="0.1">
-            <button onclick="donateCustom()">Send Custom</button>
-        </div>
+            <!-- Custom Amount -->
+            <div class="custom-section">
+                <h3>Custom Amount</h3>
+                <div class="custom-input-group">
+                    <input type="number" id="customAmount" placeholder="Enter amount" min="0.50" step="0.01">
+                    <button onclick="donateCustom()">Send Custom</button>
+                </div>
+            </div>
 
-        <div class="back-link">
-            <a href="/">Back to Home</a>
-        </div>
+            <!-- Status Message -->
+            <div id="status"></div>
 
-        <div id="status"></div>
+            <!-- Wallet Info -->
+            <div class="wallet-status" id="walletInfo" style="display: none;">
+                <p>Connected Wallet:</p>
+                <p id="address"></p>
+            </div>
+
+            <!-- Navigation -->
+            <div class="nav-footer">
+                <a href="index.html" class="back-link">Back to Home</a>
+            </div>
+        </div>
     </div>
 
     <script type="module" src="src/payment.js"></script>
