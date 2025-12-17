@@ -11,7 +11,7 @@
     <div class="container">
         <div class="hero">
             <h1>Send Funds</h1>
-            <p class="subtitle">Guide to your first transaction on Base Mainnet</p>
+            <p class="subtitle">Guide to your first transaction on Base</p>
 
             <!-- Step 1 -->
             <div class="accordion-item completed">
@@ -24,7 +24,7 @@
 
                     <p><strong>For Mainnet:</strong> You can bridge USDC from Ethereum to Base using <a href="https://bridge.base.org" target="_blank">bridge.base.org</a>, or buy USDC directly on an exchange and withdraw it to your Base wallet address.</p>
 
-                    <p><strong>For Testnet:</strong> We're using Base Sepolia testnet, so you don't have to buy anything! You already got free test ETH from the faucet in the previous step.</p>
+                    <p><strong>For Testnet:</strong> We're using Base Sepolia testnet, so you don't have to buy anything! Get free test USDC from <a href="https://faucet.circle.com" target="_blank">Circle Faucet</a> (select "Base Sepolia"). You already got free test ETH from the faucet in the previous step.</p>
                 </div>
             </div>
 
@@ -38,10 +38,10 @@
                     <p>In your wallet (Coinbase Wallet or MetaMask), follow these steps:</p>
 
                     <ol>
-                        <li>Open your wallet and ensure <strong>Base</strong> network is selected</li>
+                        <li>Open your wallet and ensure <strong>Base Sepolia</strong> network is selected</li>
                         <li>Tap <strong>"Send"</strong> button</li>
                         <li>Choose <strong>USDC</strong> token from your asset list</li>
-                        <li>Enter the <strong>recipient's wallet address</strong>, starting with "0x"</li>
+                        <li>Enter the <strong>recipient's wallet address</strong> - a 42-character code starting with "0x"</li>
                         <li>Specify the <strong>amount</strong> of USDC you want to send</li>
                     </ol>
 
@@ -63,10 +63,10 @@
                         <li>Recipient address (first 6 and last 4 characters)</li>
                         <li>Amount of USDC you're sending</li>
                         <li>Estimated gas fee (paid in ETH)</li>
-                        <li>Network (should be "Base")</li>
+                        <li>Network (should be "Base Sepolia")</li>
                     </ul>
 
-                    <p>When everything looks correct, tap <strong>"Transfer"</strong> or <strong>"Send"</strong>.</p>
+                    <p>When everything looks correct, tap <strong>"Confirm"</strong> or <strong>"Send"</strong>.</p>
 
                     <h4>What is a Digital Signature?</h4>
                     <p>When you approve, your wallet uses your <strong>private key to create a digital signature</strong>. This signature proves:</p>
@@ -176,8 +176,9 @@
                 <button id="sendTxBtn" onclick="sendTransaction()" class="cta-button">
                     Send Transaction
                 </button>
-                <div id="txStatus" class="status" style="display: none; margin-top: 20px; padding: 15px; border-radius: 10px; font-weight: 600;"></div>
+                <div id="txStatus" style="display: none; margin-top: 20px;"></div>
             </div>
+
             <!-- Navigation Footer -->
             <div class="nav-footer">
                 <a href="faucet.html" class="nav-btn back-btn">
@@ -186,28 +187,13 @@
                 </a>
 
                 <a href="receive.html" class="nav-btn next-btn">
-                    <span>Next</span>
                     <span class="nav-label">Receive Funds</span>
+                    <span>Next</span>
                 </a>
             </div>
         </div>
     </div>
 
-    <script>
-        function toggleAccordion(id) {
-            const content = document.getElementById('content-' + id);
-            const icon = document.getElementById('icon-' + id);
-
-            if (content.style.maxHeight) {
-                content.style.maxHeight = null;
-                icon.textContent = '▼';
-            } else {
-                content.style.maxHeight = content.scrollHeight + 'px';
-                icon.textContent = '▲';
-            }
-        }
-    </script>
-    <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
     <script type="module" src="../src/practiceSend.js"></script>
 </body>
 </html>

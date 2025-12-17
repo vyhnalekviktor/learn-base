@@ -1,32 +1,25 @@
 import { sdk } from 'https://esm.sh/@farcaster/miniapp-sdk';
 
-// Hardcoded hodnoty z HTML
 const RECIPIENT_ADDRESS = '0x02D6cB44CF2B0539B5d5F72a7a0B22Ac73031117';
 const AMOUNT_USDC = '1';
-
-// Base Sepolia Testnet
-const USDC_TESTNET_ADDRESS = '0x036CbD53842c5426634e7929541eC2318f3dCF7e'; // Base Sepolia USDC
-const BASE_SEPOLIA_CHAIN_ID = '0x14a34'; // 84532 in hex
+const USDC_TESTNET_ADDRESS = '0x036CbD53842c5426634e7929541eC2318f3dCF7e';
+const BASE_SEPOLIA_CHAIN_ID = '0x14a34';
 
 let ethProvider = null;
 
-// Inicializace aplikace
 async function initApp() {
     try {
         console.log('Initializing Base App...');
         ethProvider = await sdk.wallet.ethProvider;
         console.log('Provider initialized:', ethProvider);
-
         await sdk.actions.ready();
         console.log('Base App ready');
     } catch (error) {
         console.error('Init error:', error);
-        showStatus('Failed to initialize app: ' + error.message, 'error');
     }
 }
 
-// Funkce pro accordion (zachováno z původního kódu)
-function toggleAccordion(id) {
+window.toggleAccordion = function(id) {
     const content = document.getElementById('content-' + id);
     const icon = document.getElementById('icon-' + id);
 
@@ -37,21 +30,21 @@ function toggleAccordion(id) {
         content.style.maxHeight = content.scrollHeight + 'px';
         icon.textContent = '▲';
     }
-}
+};
 
-// Hlavní funkce pro odeslání USDC transakce (stejně jako payment.js)
-async function sendTransaction() {
+window.sendTransaction = async function() {
     console.log('Send transaction clicked!');
     const statusDiv = document.getElementById('txStatus');
 
     try {
-        showStatus('Preparing USDC transaction...', 'processing');
+        statusDiv.style.display = 'block';
+        statusDiv.className = 'info-box';
+        statusDiv.innerHTML = '⏳ Preparing USDC transaction...';
 
         if (!ethProvider) {
             throw new Error('Provider not available. Please reload the app.');
         }
 
-        // Získání účtu
         const accounts = await ethProvider.request({
             method: 'eth_accounts'
         });
@@ -63,10 +56,7 @@ async function sendTransaction() {
         const userAddress = accounts[0];
         console.log('User address:', userAddress);
 
-        // Konverze USDC na nejmenší jednotku (6 decimals pro USDC)
         const amountInSmallestUnit = BigInt(Math.floor(parseFloat(AMOUNT_USDC) * 1000000));
-
-        // ERC-20 transfer function signature: transfer(address,uint256)
         const transferFunctionSelector = '0xa9059cbb';
         const recipientPadded = RECIPIENT_ADDRESS.substring(2).padStart(64, '0');
         const amountPadded = amountInSmallestUnit.toString(16).padStart(64, '0');
@@ -79,9 +69,8 @@ async function sendTransaction() {
             recipient: RECIPIENT_ADDRESS
         });
 
-        showStatus('Please confirm the transaction in your wallet...', 'processing');
+        statusDiv.innerHTML = 'Please confirm the transaction in your wallet...';
 
-        // Odeslání USDC transakce
         const txHash = await ethProvider.request({
             method: 'eth_sendTransaction',
             params: [{
@@ -93,67 +82,30 @@ async function sendTransaction() {
         });
 
         console.log('Transaction sent! Hash:', txHash);
-        showStatus(`✅ Success! Sending ${AMOUNT_USDC} USDC...`, 'success');
 
-        // Zobrazení odkazu na block explorer
         const explorerLink = `https://sepolia.basescan.org/tx/${txHash}`;
+        statusDiv.className = 'info-box';
         statusDiv.innerHTML = `
-            ✅ <strong>Transaction Sent!</strong><br>
-            Amount: ${AMOUNT_USDC} USDC<br>
-            To: ${RECIPIENT_ADDRESS.substring(0, 6)}...${RECIPIENT_ADDRESS.substring(38)}<br>
-            <br>
-            <strong>TX Hash:</strong> ${txHash.substring(0, 10)}...${txHash.substring(txHash.length - 8)}<br>
-            <a href="${explorerLink}" target="_blank" style="color: #0052FF; text-decoration: underline; font-weight: bold;">
-                View on BaseScan →
-            </a>
-            <br><br>
+            <strong>Transaction Sent!</strong><br><br>
+            <strong>Amount:</strong> ${AMOUNT_USDC} USDC<br>
+            <strong>To:</strong> ${RECIPIENT_ADDRESS.substring(0, 6)}...${RECIPIENT_ADDRESS.substring(38)}<br>
+            <strong>TX Hash:</strong> ${txHash.substring(0, 10)}...${txHash.substring(txHash.length - 8)}<br><br>
+            <a href="${explorerLink}" target="_blank" class="learn-more">View on BaseScan →</a><br><br>
             <small style="color: #666;">Transaction is processing on Base Sepolia testnet...</small>
         `;
-
-        // Zobrazení informace o uživateli
-        const walletInfo = document.getElementById('walletInfo');
-        if (walletInfo) {
-            walletInfo.style.display = 'block';
-            const addressSpan = document.getElementById('userAddress');
-            if (addressSpan) {
-                addressSpan.textContent = userAddress.substring(0, 6) + '...' + userAddress.substring(38);
-            }
-        }
 
     } catch (error) {
         console.error('Transaction error:', error);
 
+        statusDiv.className = 'error-box';
         if (error.code === 4001 || error.message.includes('User rejected')) {
-            showStatus('❌ Transaction rejected by user', 'error');
+            statusDiv.innerHTML = 'Transaction rejected by user';
         } else if (error.message.includes('insufficient funds')) {
-            showStatus('❌ Insufficient USDC balance. Get testnet USDC from Circle Faucet first.', 'error');
+            statusDiv.innerHTML = 'Insufficient USDC balance. Get testnet USDC from <a href="https://faucet.circle.com" target="_blank">Circle Faucet</a> first.';
         } else {
-            showStatus(`❌ Transaction failed: ${error.message}`, 'error');
+            statusDiv.innerHTML = `Transaction failed: ${error.message}`;
         }
     }
-}
+};
 
-// Pomocná funkce pro zobrazení statusu
-function showStatus(message, type) {
-    const statusDiv = document.getElementById('txStatus');
-    if (!statusDiv) {
-        console.warn('Status div not found');
-        return;
-    }
-    statusDiv.innerHTML = message;
-    statusDiv.className = `status ${type}`;
-    statusDiv.style.display = 'block';
-}
-
-// Exportování funkcí pro použití v HTML
-window.toggleAccordion = toggleAccordion;
-window.sendTransaction = sendTransaction;
-
-// Inicializace při načtení stránky
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('DOM loaded, initializing...');
-    initApp();
-});
-
-// Export pro případné použití jako modul
-export { sendTransaction, toggleAccordion };
+initApp();
