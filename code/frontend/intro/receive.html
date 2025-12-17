@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BaseCamp - Receive</title>
+    <title>BaseCamp - Receive Funds</title>
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="../css/tutorial.css">
 </head>
@@ -11,63 +11,131 @@
     <div class="container">
         <div class="hero">
             <h1>Receive Funds</h1>
-            <p class="subtitle">Subtitle description here</p>
+            <p class="subtitle">Learn how to receive USDC on Base network</p>
 
-            <!-- Expandable Section 1 -->
+            <!-- Step 1 -->
             <div class="accordion-item">
                 <button class="accordion-header" onclick="toggleAccordion('section1')">
-                    <span>Section 1 Title</span>
+                    <span>Step 1: Find Your Wallet Address</span>
                     <span class="accordion-icon" id="icon-section1">▼</span>
                 </button>
                 <div class="accordion-content" id="content-section1">
-                    <p>Content for section 1 goes here...</p>
-                    <p>Add more paragraphs as needed.</p>
+                    <p>Your wallet address is your unique identifier on the blockchain. Here's how to find it:</p>
+
+                    <ol>
+                        <li>Open your Base Wallet or Coinbase Wallet app</li>
+                        <li>Tap on your profile or username at the top</li>
+                        <li>Look for your wallet address - a 42-character code starting with "0x"</li>
+                        <li>Tap the address to copy it to your clipboard</li>
+                    </ol>
+
+                    <div class="info-box">
+                        <p><strong>Note:</strong> Your address is the same on both mainnet and testnet. The difference is which network the sender uses when sending funds.</p>
+                    </div>
+
+                    <p>It really is that simple!</p>
                 </div>
             </div>
 
-            <!-- Expandable Section 2 -->
+            <!-- Step 2 -->
             <div class="accordion-item">
                 <button class="accordion-header" onclick="toggleAccordion('section2')">
-                    <span>Section 2 Title</span>
+                    <span>Step 2: Share Your Address</span>
                     <span class="accordion-icon" id="icon-section2">▼</span>
                 </button>
                 <div class="accordion-content" id="content-section2">
-                    <p>Content for section 2 goes here...</p>
+                    <p>Send your wallet address to the person or platform that will send you USDC. You can share it by:</p>
+
+                    <ul>
+                        <li>Copying and pasting the address</li>
+                        <li>Showing a QR code (available in most wallets)</li>
+                        <li>Sharing your Base username (if using Base Wallet)</li>
+                    </ul>
+
+                    <div class="warning-box">
+                        <p>⚠️ <strong>Important:</strong> Make sure the sender knows to use the <strong>Base network</strong>, not Ethereum or another chain. USDC sent on the wrong network won't appear in your Base wallet!</p>
+                    </div>
                 </div>
             </div>
 
-            <!-- Expandable Section 3 -->
+            <!-- Step 3 -->
             <div class="accordion-item">
                 <button class="accordion-header" onclick="toggleAccordion('section3')">
-                    <span>Section 3 Title</span>
+                    <span>Step 3: Receive the Transfer</span>
                     <span class="accordion-icon" id="icon-section3">▼</span>
                 </button>
                 <div class="accordion-content" id="content-section3">
-                    <p>Content for section 3 goes here...</p>
+                    <p>Once the sender initiates the transaction, you'll typically see the USDC in your wallet within <strong>1-5 seconds</strong>. Base processes transactions much faster than Ethereum mainnet.</p>
+
+                    <p>You can verify the transaction by:</p>
+                    <ul>
+                        <li>Checking your wallet's activity history</li>
+                        <li>Viewing it on <a href="https://basescan.org" target="_blank" class="learn-more">BaseScan explorer</a> (mainnet) or <a href="https://sepolia.basescan.org" target="_blank" class="learn-more">Sepolia BaseScan</a> (testnet)</li>
+                    </ul>
                 </div>
             </div>
 
-            <!-- Try it Section (Optional) -->
+            <!-- Troubleshooting -->
+            <div class="accordion-item">
+                <button class="accordion-header" onclick="toggleAccordion('section4')">
+                    <span>USDC Not Appearing in Your Wallet?</span>
+                    <span class="accordion-icon" id="icon-section4">▼</span>
+                </button>
+                <div class="accordion-content" id="content-section4">
+                    <p>If you don't see your USDC after a few minutes, try these troubleshooting steps:</p>
+
+                    <h4>In Your Base Wallet:</h4>
+                    <ul>
+                        <li>Check if you have any networks filtered out - make sure Base network is visible</li>
+                        <li>If using testnet, go to Settings and enable "Show testnet balances"</li>
+                        <li>Try refreshing your wallet or closing and reopening the app</li>
+                    </ul>
+
+                    <h4>Verify with Sender:</h4>
+                    <ul>
+                        <li>Confirm they used the correct wallet address (ask them to double-check)</li>
+                        <li>Make sure they sent on <strong>Base network</strong>, not Ethereum or another chain</li>
+                        <li>Ask for the transaction hash to verify on BaseScan</li>
+                    </ul>
+
+                    <div class="info-box">
+                        <p><strong>Still having issues?</strong> Check the transaction on BaseScan using the transaction hash. It will show if the transaction was successful and which address received the funds.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Try it Section -->
             <div class="try-section">
                 <h3>Try it yourself!</h3>
-                <p>Description of what to try...</p>
-                <a href="https://example.com"
-                   target="_blank"
-                   class="cta-button">
-                    Button Text
-                </a>
+                <p>Practice receiving 1 test USDC on Base Sepolia testnet:</p>
+
+                <div class="practice-info">
+                    <p><strong>Enter your wallet address:</strong></p>
+                    <input type="text" id="walletInput" placeholder="0x..." class="wallet-input">
+                    <p class="input-hint">Double-check your address before submitting!</p>
+                </div>
+
+                <button id="receiveBtn" onclick="requestTestUSDC()" class="cta-button">
+                    Request Test USDC
+                </button>
+
+                <div id="receiveStatus"></div>
+
+                <p class="practice-hint">
+                    <strong>Hint:</strong> This is testnet only - no real value, purely for practice!
+                </p>
             </div>
 
             <!-- Navigation Footer -->
             <div class="nav-footer">
                 <a href="send.html" class="nav-btn back-btn">
                     <span>Previous</span>
-                    <span class="nav-label">Send</span>
+                    <span class="nav-label">Send Funds</span>
                 </a>
 
                 <a href="mint.html" class="nav-btn next-btn">
-                    <span>Next</span>
                     <span class="nav-label">Mint NFT</span>
+                    <span>Next</span>
                 </a>
             </div>
         </div>
@@ -87,5 +155,6 @@
             }
         }
     </script>
+    <script type="module" src="../src/practiceReceive.js"></script>
 </body>
 </html>
