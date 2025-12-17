@@ -302,10 +302,11 @@
     text-decoration: underline;
 }
 
-/* Navigation Footer */
+/* Navigation Footer - OPRAVENO */
 .nav-footer {
     display: flex;
     justify-content: space-between;
+    align-items: flex-start;
     margin-top: 50px;
     padding-top: 30px;
     border-top: 2px solid #e9ecef;
@@ -323,7 +324,10 @@
     color: #333;
     font-weight: 600;
     transition: all 0.3s ease;
+    flex: 0 1 auto;
+    width: auto;
     min-width: 140px;
+    max-width: 200px;
     font-size: 15px;
 }
 
@@ -425,6 +429,7 @@
 
     .nav-btn {
         width: 100%;
+        max-width: 100%;
         min-width: auto;
         align-items: center !important;
         text-align: center !important;
@@ -474,14 +479,7 @@
     }
 }
 
-.info-box {
-    background: #d1ecf1;
-    border-left: 4px solid #0c5460;
-    padding: 15px;
-    border-radius: 8px;
-    margin: 15px 0;
-}
-
+/* Additional Boxes */
 .error-box {
     background: #f8d7da;
     border-left: 4px solid #dc3545;
