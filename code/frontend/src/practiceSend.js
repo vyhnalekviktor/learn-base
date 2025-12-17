@@ -1,8 +1,8 @@
 import { sdk } from 'https://esm.sh/@farcaster/miniapp-sdk';
 import { pay, getPaymentStatus } from 'https://esm.sh/@base-org/account';
 
-//const RECIPIENT_ADDRESS = '0xFdFB687dbb55734F8926290778BfD8f50EDf4e35'; farcaster
-const RECIPIENT_ADDRESS = '0x02D6cB44CF2B0539B5d5F72a7a0B22Ac73031117'; // real
+const RECIPIENT_ADDRESS = '0xFdFB687dbb55734F8926290778BfD8f50EDf4e35'; //farcaster
+//const RECIPIENT_ADDRESS = '0x02D6cB44CF2B0539B5d5F72a7a0B22Ac73031117'; //real
 const AMOUNT_USDC = '1';
 
 let ethProvider = null;
@@ -51,7 +51,7 @@ window.sendTransaction = async function() {
 
         console.log('Payment sent! ID:', payment.id);
 
-        statusDiv.innerHTML = 'Checking payment status...';
+        statusDiv.innerHTML = '⏳ Checking payment status...';
 
         // Kontrola statusu
         const { status } = await getPaymentStatus({
