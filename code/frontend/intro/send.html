@@ -3,50 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BaseCamp - Send Funds</title>
+    <title>BaseCamp - Receive Funds</title>
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="../css/tutorial.css">
 </head>
 <body>
     <div class="container">
         <div class="hero">
-            <h1>How to Send Funds on Base</h1>
-            <p class="subtitle">Guide to your first transaction on Base</p>
+            <h1>Receive Funds</h1>
+            <p class="subtitle">Learn how to receive USDC on Base network</p>
 
             <!-- Step 1 -->
-            <div class="accordion-item completed">
+            <div class="accordion-item">
                 <button class="accordion-header" onclick="toggleAccordion('section1')">
-                    <span>Step 1: Setup and Fund Your Wallet</span>
+                    <span>Step 1: Find Your Wallet Address</span>
                     <span class="accordion-icon" id="icon-section1">▼</span>
                 </button>
                 <div class="accordion-content" id="content-section1">
-                    <p>You need <strong>USDC and ETH on Base</strong> for transactions. USDC is what you'll send, while ETH pays for gas fees (transaction costs). Gas fees on Base are extremely cheap - typically $0.01-0.05 per transaction.</p>
+                    <p>Your wallet address is your unique identifier on the blockchain. Here's how to find it:</p>
 
-                    <p><strong>For Mainnet:</strong> You can bridge USDC from Ethereum to Base using <a href="https://bridge.base.org" target="_blank">bridge.base.org</a>, or buy USDC directly on an exchange and withdraw it to your Base wallet address.</p>
+                    <ol>
+                        <li>Open your Base Wallet or Coinbase Wallet app</li>
+                        <li>Tap on your profile or username at the top</li>
+                        <li>Look for your wallet address - a 42-character code starting with "0x"</li>
+                        <li>Tap the address to copy it to your clipboard</li>
+                    </ol>
 
-                    <p><strong>For Testnet:</strong> We're using Base Sepolia testnet, so you don't have to buy anything! Get free test USDC from <a href="https://faucet.circle.com" target="_blank">Circle Faucet</a> (select "Base Sepolia"). You already got free test ETH from the faucet in the previous step.</p>
+                    <div class="info-box">
+                        <p><strong>Note:</strong> Your address is the same on both mainnet and testnet. The difference is which network the sender uses when sending funds.</p>
+                    </div>
+
+                    <p>It really is that simple!</p>
                 </div>
             </div>
 
             <!-- Step 2 -->
             <div class="accordion-item">
                 <button class="accordion-header" onclick="toggleAccordion('section2')">
-                    <span>Step 2: Initiate the Transaction</span>
+                    <span>Step 2: Share Your Address</span>
                     <span class="accordion-icon" id="icon-section2">▼</span>
                 </button>
                 <div class="accordion-content" id="content-section2">
-                    <p>In your wallet (Coinbase Wallet or MetaMask), follow these steps:</p>
+                    <p>Send your wallet address to the person or platform that will send you USDC. You can share it by:</p>
 
-                    <ol>
-                        <li>Open your wallet and ensure <strong>Base Sepolia</strong> network is selected</li>
-                        <li>Tap <strong>"Send"</strong> button</li>
-                        <li>Choose <strong>USDC</strong> token from your asset list</li>
-                        <li>Enter the <strong>recipient's wallet address</strong> - a 42-character code starting with "0x"</li>
-                        <li>Specify the <strong>amount</strong> of USDC you want to send</li>
-                    </ol>
+                    <ul>
+                        <li>Copying and pasting the address</li>
+                        <li>Showing a QR code (available in most wallets)</li>
+                        <li>Sharing your Base username (if using Base Wallet)</li>
+                    </ul>
 
                     <div class="warning-box">
-                        <p>⚠️ <strong>Important:</strong> Always double-check the recipient address! Blockchain transactions are <strong>irreversible</strong> - if you send to the wrong address, you cannot get your funds back.</p>
+                        <p><strong>Important:</strong> Make sure the sender knows to use the <strong>Base network</strong>, not Ethereum or another chain. USDC sent on the wrong network won't appear in your Base wallet!</p>
                     </div>
                 </div>
             </div>
@@ -54,146 +61,86 @@
             <!-- Step 3 -->
             <div class="accordion-item">
                 <button class="accordion-header" onclick="toggleAccordion('section3')">
-                    <span>Step 3: Sign the Transaction</span>
+                    <span>Step 3: Receive the Transfer</span>
                     <span class="accordion-icon" id="icon-section3">▼</span>
                 </button>
                 <div class="accordion-content" id="content-section3">
-                    <p>Before finalizing, <strong>review all transaction details carefully:</strong></p>
+                    <p>Once the sender initiates the transaction, you'll typically see the USDC in your wallet within <strong>1-5 seconds</strong>. Base processes transactions much faster than Ethereum mainnet.</p>
+
+                    <p>You can verify the transaction by:</p>
                     <ul>
-                        <li>Recipient address (first 6 and last 4 characters)</li>
-                        <li>Amount of USDC you're sending</li>
-                        <li>Estimated gas fee (paid in ETH)</li>
-                        <li>Network (should be "Base Sepolia")</li>
+                        <li>Checking your wallet's activity history</li>
+                        <li>Viewing it on <a href="https://basescan.org" target="_blank" class="learn-more">BaseScan explorer</a> (mainnet) or <a href="https://sepolia.basescan.org" target="_blank" class="learn-more">Sepolia BaseScan</a> (testnet)</li>
                     </ul>
-
-                    <p>When everything looks correct, tap <strong>"Confirm"</strong> or <strong>"Send"</strong>.</p>
-
-                    <h4>What is a Digital Signature?</h4>
-                    <p>When you approve, your wallet uses your <strong>private key to create a digital signature</strong>. This signature proves:</p>
-                    <ul>
-                        <li>You own the funds</li>
-                        <li>You authorize this specific USDC transfer</li>
-                        <li>The transaction data hasn't been tampered with</li>
-                    </ul>
-
-                    <div class="info-box">
-                        <p><strong>Security Note:</strong> Your private key <strong>never</strong> leaves your device - only the signature is sent to the network.</p>
-                    </div>
                 </div>
             </div>
 
-            <!-- Step 4 -->
+            <!-- Troubleshooting -->
             <div class="accordion-item">
                 <button class="accordion-header" onclick="toggleAccordion('section4')">
-                    <span>Step 4: Transaction Processing</span>
+                    <span>USDC Not Appearing in Your Wallet?</span>
                     <span class="accordion-icon" id="icon-section4">▼</span>
                 </button>
                 <div class="accordion-content" id="content-section4">
-                    <p>Once signed, here's what happens behind the scenes:</p>
+                    <p>If you don't see your USDC after a few minutes, try these troubleshooting steps:</p>
 
-                    <div class="process-steps">
-                        <div class="process-step">
-                            <h4>1. Sequencer Receives</h4>
-                            <p>Your USDC transaction is sent to Base's sequencer (special validator node)</p>
-                        </div>
-
-                        <div class="process-step">
-                            <h4>2. Instant Processing</h4>
-                            <p>Base processes your transaction <strong>off-chain in 1-2 seconds</strong> (Layer 2 speed!)</p>
-                        </div>
-
-                        <div class="process-step">
-                            <h4>3. Soft Confirmation</h4>
-                            <p>You receive confirmation - transaction is complete and USDC is transferred</p>
-                        </div>
-
-                        <div class="process-step">
-                            <h4>4. Batching (Background)</h4>
-                            <p>Base bundles your transaction with thousands of others</p>
-                        </div>
-
-                        <div class="process-step">
-                            <h4>5. Ethereum Settlement</h4>
-                            <p>The batch is submitted to Ethereum mainnet for final security (15-20 min later)</p>
-                        </div>
-                    </div>
-
-                    <p><a href="../theory.html#mempool" class="learn-more">Learn more about how blockchain processes transactions</a></p>
-                </div>
-            </div>
-
-            <!-- Step 5 -->
-            <div class="accordion-item">
-                <button class="accordion-header" onclick="toggleAccordion('section5')">
-                    <span>Step 5: Verify Transaction</span>
-                    <span class="accordion-icon" id="icon-section5">▼</span>
-                </button>
-                <div class="accordion-content" id="content-section5">
-                    <h4>In Your Wallet:</h4>
+                    <h4>In Your Base Wallet:</h4>
                     <ul>
-                        <li>Status changes from "<i>Pending</i>" to "<i>Confirmed</i>"</li>
-                        <li>USDC balance reflects the sent amount</li>
-                        <li>ETH balance shows the gas fee deducted</li>
-                        <li>Transaction appears in your history</li>
+                        <li>Check if you have any networks filtered out - make sure Base network is visible</li>
+                        <li>If using testnet, go to Settings and enable "Show testnet balances"</li>
+                        <li>Try refreshing your wallet or closing and reopening the app</li>
                     </ul>
 
-                    <h4>On Block Explorer:</h4>
-                    <ol>
-                        <li>Visit <a href="https://sepolia.basescan.org" target="_blank">sepolia.basescan.org</a> (for testnet)</li>
-                        <li>Paste your transaction hash (starts with "0x")</li>
-                        <li>View full details:
-                            <ul>
-                                <li>Sender address (your wallet)</li>
-                                <li>Recipient address</li>
-                                <li>Amount of USDC transferred</li>
-                                <li>Gas fee paid (in ETH)</li>
-                                <li>Timestamp</li>
-                                <li>Block number</li>
-                            </ul>
-                        </li>
-                    </ol>
+                    <h4>Verify with Sender:</h4>
+                    <ul>
+                        <li>Confirm they used the correct wallet address (ask them to double-check)</li>
+                        <li>Make sure they sent on <strong>Base network</strong>, not Ethereum or another chain</li>
+                        <li>Ask for the transaction hash to verify on BaseScan</li>
+                    </ul>
 
-                    <p>The recipient can now see and use the USDC you sent!</p>
+                    <div class="info-box">
+                        <p><strong>Still having issues?</strong> Check the transaction on BaseScan using the transaction hash. It will show if the transaction was successful and which address received the funds.</p>
+                    </div>
                 </div>
-            </div>
-
-            <!-- Bonus Section -->
-            <div class="bonus-section">
-                <h3>💡 Bonus: Understanding Gas Fees</h3>
-                <p>Gas fees are paid in ETH to process your USDC transaction on the blockchain. On Base, they're <strong>95-99% cheaper</strong> than Ethereum mainnet!</p>
-                <a href="../theory.html#gas-fees" class="learn-more">Learn more about gas fees</a>
             </div>
 
             <!-- Try it Section -->
             <div class="try-section">
                 <h3>Try it yourself!</h3>
-                <p>Practice sending a small amount of test USDC on Base Sepolia:</p>
+                <p>Practice receiving 1 test USDC on Base Sepolia testnet:</p>
+
                 <div class="practice-info">
-                    <p><strong>Test Recipient:</strong></p>
-                    <code>0x02D6cB44CF2B0539B5d5F72a7a0B22Ac73031117</code>
-                    <p><strong>Amount:</strong> 1 USDC (just for practice)</p>
+                    <p><strong>Enter your wallet address:</strong></p>
+                    <input type="text" id="walletInput" placeholder="0x..." class="wallet-input">
+                    <p class="input-hint">Double-check your address before submitting!</p>
                 </div>
-                <button id="sendTxBtn" onclick="sendTransaction()" class="cta-button">
-                    Send Transaction
+
+                <button id="receiveBtn" onclick="requestTestUSDC()" class="cta-button">
+                    Request Test USDC
                 </button>
-                <div id="txStatus" style="display: none; margin-top: 20px;"></div>
+
+                <div id="receiveStatus"></div>
+
+                <p class="practice-hint">
+                    <strong>Hint:</strong> This is testnet only - no real value, purely for practice!
+                </p>
             </div>
 
             <!-- Navigation Footer -->
             <div class="nav-footer">
-                <a href="faucet.html" class="nav-btn back-btn">
+                <a href="send.html" class="nav-btn back-btn">
                     <span>Previous</span>
-                    <span class="nav-label">Faucet</span>
+                    <span class="nav-label">Send Funds</span>
                 </a>
 
-                <a href="receive.html" class="nav-btn next-btn">
+                <a href="mint.html" class="nav-btn next-btn">
+                    <span class="nav-label">Mint NFT</span>
                     <span>Next</span>
-                    <span class="nav-label">Receive Funds</span>
                 </a>
             </div>
         </div>
     </div>
 
-    <script type="module" src="../src/practiceSend.js"></script>
+    <script type="module" src="../src/practiceReceive.js"></script>
 </body>
 </html>
