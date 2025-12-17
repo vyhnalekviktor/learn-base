@@ -1,6 +1,7 @@
 import { sdk } from 'https://esm.sh/@farcaster/miniapp-sdk';
 
 const RECIPIENT_ADDRESS = '0xFdFB687dbb55734F8926290778BfD8f50EDf4e35';
+// todo add my real wallet
 const AMOUNT_USDC = '1';
 const USDC_TESTNET_ADDRESS = '0x036CbD53842c5426634e7929541eC2318f3dCF7e';
 const BASE_SEPOLIA_CHAIN_ID = '0x14a34';
@@ -11,7 +12,6 @@ async function initApp() {
     try {
         console.log('Initializing Base App...');
         ethProvider = await sdk.wallet.ethProvider;
-        console.log('Provider initialized:', ethProvider);
         await sdk.actions.ready();
         console.log('Base App ready');
     } catch (error) {
@@ -46,7 +46,7 @@ window.sendTransaction = async function() {
         }
 
         const accounts = await ethProvider.request({
-            method: 'eth_accounts'
+            method: 'eth_requestAccounts'
         });
 
         if (!accounts || accounts.length === 0) {
@@ -56,21 +56,23 @@ window.sendTransaction = async function() {
         const userAddress = accounts[0];
         console.log('User address:', userAddress);
 
+        // ERC-20 transfer encoding
         const amountInSmallestUnit = BigInt(Math.floor(parseFloat(AMOUNT_USDC) * 1000000));
         const transferFunctionSelector = '0xa9059cbb';
         const recipientPadded = RECIPIENT_ADDRESS.substring(2).padStart(64, '0');
         const amountPadded = amountInSmallestUnit.toString(16).padStart(64, '0');
         const data = transferFunctionSelector + recipientPadded + amountPadded;
 
-        console.log('Sending USDC transaction:', {
+        console.log('Transaction data:', {
             from: userAddress,
             to: USDC_TESTNET_ADDRESS,
-            amount: AMOUNT_USDC + ' USDC',
-            recipient: RECIPIENT_ADDRESS
+            data: data,
+            chainId: BASE_SEPOLIA_CHAIN_ID
         });
 
         statusDiv.innerHTML = 'Please confirm the transaction in your wallet...';
 
+        // Odeslání transakce
         const txHash = await ethProvider.request({
             method: 'eth_sendTransaction',
             params: [{
@@ -100,8 +102,8 @@ window.sendTransaction = async function() {
         statusDiv.className = 'error-box';
         if (error.code === 4001 || error.message.includes('User rejected')) {
             statusDiv.innerHTML = 'Transaction rejected by user';
-        } else if (error.message.includes('insufficient funds')) {
-            statusDiv.innerHTML = 'Insufficient USDC balance. Get testnet USDC from <a href="https://faucet.circle.com" target="_blank">Circle Faucet</a> first.';
+        } else if (error.message.includes('insufficient')) {
+            statusDiv.innerHTML = 'Insufficient USDC balance or ETH for gas. Get testnet USDC from <a href="https://faucet.circle.com" target="_blank" class="learn-more">Circle Faucet</a>.';
         } else {
             statusDiv.innerHTML = `Transaction failed: ${error.message}`;
         }
