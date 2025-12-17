@@ -1,10 +1,9 @@
 import { sdk } from 'https://esm.sh/@farcaster/miniapp-sdk';
+import { pay } from 'https://esm.sh/@base-org/account';
 
-// const RECIPIENT_ADDRESS = '0xFdFB687dbb55734F8926290778BfD8f50EDf4e35'; // farcaster
+//const RECIPIENT_ADDRESS = '0xFdFB687dbb55734F8926290778BfD8f50EDf4e35'; // farcaster
 const RECIPIENT_ADDRESS = '0x02D6cB44CF2B0539B5d5F72a7a0B22Ac73031117'; // real
 const AMOUNT_USDC = '1';
-const USDC_TESTNET_ADDRESS = '0x036CbD53842c5426634e7929541eC2318f3dCF7e';
-const BASE_SEPOLIA_CHAIN_ID = '0x14a34';
 
 let ethProvider = null;
 
@@ -41,61 +40,38 @@ window.sendTransaction = async function() {
         statusDiv.className = 'info-box';
         statusDiv.innerHTML = 'Preparing USDC payment...';
 
-        if (!ethProvider) {
-            throw new Error('Provider not available. Please reload the app.');
-        }
+        statusDiv.innerHTML = 'Please confirm the payment in your wallet...';
 
-        const accounts = await ethProvider.request({
-            method: 'eth_requestAccounts'
+        const payment = await pay({
+            amount: AMOUNT_USDC,
+            to: RECIPIENT_ADDRESS,
+            testnet: true
         });
 
-        const userAddress = accounts[0];
-        console.log('User address:', userAddress);
+        console.log('Payment sent!', payment);
 
-        const amountInSmallestUnit = BigInt(Math.floor(parseFloat(AMOUNT_USDC) * 1000000));
-        const transferFunctionSelector = '0xa9059cbb';
-        const recipientPadded = RECIPIENT_ADDRESS.substring(2).padStart(64, '0');
-        const amountPadded = amountInSmallestUnit.toString(16).padStart(64, '0');
-        const data = transferFunctionSelector + recipientPadded + amountPadded;
-
-        statusDiv.innerHTML = 'Please confirm the transaction in your wallet...';
-
-        const txHash = await ethProvider.request({
-            method: 'eth_sendTransaction',
-            params: [{
-                from: userAddress,
-                to: USDC_TESTNET_ADDRESS,
-                data: data,
-                chainId: BASE_SEPOLIA_CHAIN_ID
-            }]
-        });
-
-        console.log('Transaction Hash:', txHash);
-
-        const explorerLink = `https://sepolia.basescan.org/tx/${txHash}`;
         statusDiv.className = 'info-box';
         statusDiv.innerHTML = `
             <strong>Payment Sent!</strong><br><br>
             <strong>Amount:</strong> ${AMOUNT_USDC} USDC<br>
-            <strong>To:</strong> ${RECIPIENT_ADDRESS.substring(0, 6)}...${RECIPIENT_ADDRESS.substring(38)}<br>
-            <strong>TX Hash:</strong> ${txHash.substring(0, 10)}...${txHash.substring(txHash.length - 8)}
-            <button onclick="window.open('${explorerLink}', '_blank')"
-                    style="margin-left: 8px; padding: 4px 8px; background: #0052FF; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12px;">
-                View
+            <strong>To:</strong> ${RECIPIENT_ADDRESS.substring(0, 6)}...${RECIPIENT_ADDRESS.substring(38)}<br><br>
+            <button onclick="window.open('https://account.base.app/activity', '_blank')"
+                    style="padding: 8px 16px; background: #0052FF; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600;">
+                View in Wallet
             </button><br><br>
-            <small style="color: #666;">Transaction confirmed on Base Sepolia testnet</small>
+            <small style="color: #666;">Payment successfully processed on Base Sepolia testnet</small>
         `;
 
     } catch (error) {
-        console.error('Transaction error:', error);
+        console.error('Payment error:', error);
 
         statusDiv.className = 'error-box';
-        if (error.code === 4001 || error.message.includes('User rejected')) {
-            statusDiv.innerHTML = 'Transaction rejected by user';
+        if (error.message.includes('User rejected') || error.message.includes('rejected')) {
+            statusDiv.innerHTML = 'Payment rejected by user';
         } else if (error.message.includes('insufficient')) {
-            statusDiv.innerHTML = 'Insufficient USDC balance or ETH for gas. Get testnet USDC from <a href="https://faucet.circle.com" target="_blank" class="learn-more">Circle Faucet</a>.';
+            statusDiv.innerHTML = 'Insufficient USDC balance. Get testnet USDC from <a href="https://faucet.circle.com" target="_blank" class="learn-more">Circle Faucet</a>.';
         } else {
-            statusDiv.innerHTML = `Transaction failed: ${error.message}`;
+            statusDiv.innerHTML = `Payment failed: ${error.message}`;
         }
     }
 };
