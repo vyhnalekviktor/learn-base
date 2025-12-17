@@ -52,31 +52,38 @@ window.requestTestUSDC = async function() {
         statusDiv.className = 'info-box';
         statusDiv.innerHTML = '<p>Asking your friend to send you USDC...</p>';
 
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        await new Promise(resolve => setTimeout(resolve, 1000));
 
         statusDiv.innerHTML = '<p>Your friend confirmed! Sending 1 USDC...</p>';
 
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        const response = await fetch('https://learn-base-backend.vercel.app/api/testnet/send-test', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ address: address })
+        });
+
+        const result = await response.json();
+
+        if (!result.success) {
+            throw new Error(result.msg || 'Failed to send USDC');
+        }
 
         statusDiv.className = 'info-box';
         statusDiv.innerHTML = `
-            <p><strong>USDC is on the way!</strong></p>
-            <p>Your friend sent you <strong>1 USDC</strong> on Base Sepolia.</p>
-            <p><strong>Your address:</strong><br>
-            <code style="font-size: 11px; word-break: break-all; display: block; background: #f1f3f5; padding: 8px; border-radius: 6px; margin: 10px 0;">${address}</code></p>
-            <p>Check your wallet in 10-30 seconds!</p>
+            <p><strong>Payment Received!</strong></p>
+            <p>Your friend sent you <strong>1 USDC</strong> on Base Sepolia!</p>
+            <p><strong>To:</strong> ${address.substring(0, 6)}...${address.substring(38)}</p>
+            <p>Check your wallet now!</p>
             <p><a href="https://sepolia.basescan.org/address/${address}" target="_blank" class="learn-more">View on BaseScan</a></p>
-            <div style="margin-top: 20px; padding: 15px; background: #fff3cd; border-left: 4px solid #ffc107; border-radius: 6px; font-size: 13px;">
-                <strong>Note:</strong> For practice purposes, you can get testnet USDC from
-                <a href="https://www.alchemy.com/faucets/base-sepolia" target="_blank" style="color: #0052FF; text-decoration: underline;">Alchemy Faucet</a>
-                or ask a friend who has Base Sepolia USDC.
-            </div>
+            <p style="margin-top: 15px;"><small style="color: #666;">Transaction should appear in your wallet within 10-30 seconds</small></p>
         `;
 
     } catch (error) {
         console.error('Error:', error);
         statusDiv.className = 'error-box';
-        statusDiv.innerHTML = '<p>Something went wrong. Please try again.</p>';
+        statusDiv.innerHTML = `<p>Failed to send USDC: ${error.message}</p>`;
     } finally {
         receiveBtn.disabled = false;
     }
