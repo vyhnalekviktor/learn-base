@@ -41,7 +41,7 @@
                 <h3>Learn About Base</h3>
                 <p>Understand blockchain basics and Base network</p>
             </a>
-            <a href="intro/send.html" class="menu-item">
+            <a href="intro/launch.html" class="menu-item">
                 <h3>Try basics yourself</h3>
                 <p>Practice crypto operations safely!</p>
             </a>
@@ -71,11 +71,11 @@
         // Wait for page to be fully loaded
         window.addEventListener('load', async () => {
             try {
-                console.log('🚀 Page loaded, calling ready()...');
+                console.log('Page loaded, calling ready()...');
                 await sdk.actions.ready();
-                console.log('✅ BaseCamp mini app is ready!');
+                console.log('BaseCamp mini app is ready!');
             } catch (error) {
-                console.error('❌ Error calling ready():', error);
+                console.error('Error calling ready():', error);
             }
         });
     </script>
