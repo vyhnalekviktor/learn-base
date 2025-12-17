@@ -59,29 +59,7 @@ async def testnet_verify(request: Request):
         raise HTTPException(status_code=400, detail=result.get("msg"))
     return result
 
-@app.post("/api/messages")
-async def save_message(request: Request):
-    data = await request.json()
-    from_address = data.get("from_address")
-    message = data.get("message")
-    timestamp = data.get("timestamp")
-
-    if not from_address or not message:
-        raise HTTPException(status_code=400, detail="Missing from_address or message")
-
-    messages.append({
-        "from": from_address,
-        "message": message,
-        "timestamp": timestamp or datetime.utcnow().isoformat()
-    })
-
-    print(f"New message from {from_address}: {message}")
-
-    return {"success": True, "message_count": len(messages)}
-
-@app.get("/api/messages")
-def get_messages():
-    return {"messages": messages, "count": len(messages)}
-
-# ✅ BEZ Mangum - Vercel to nepotřebuje!
-# Prostě nech FastAPI app
+@app.post("api/testnet/send-test")
+async def testnet_send(request: Request):
+    # todo!!!!
+    return {"success": False, "msg": "Not enough funds!"}
