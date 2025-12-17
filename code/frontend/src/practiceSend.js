@@ -1,7 +1,6 @@
 import { sdk } from 'https://esm.sh/@farcaster/miniapp-sdk';
 import { pay } from 'https://esm.sh/@base-org/account';
 
-// todo add tx_hash + viewer!
 //const RECIPIENT_ADDRESS = '0xFdFB687dbb55734F8926290778BfD8f50EDf4e35'; // farcaster
 const RECIPIENT_ADDRESS = '0x02D6cB44CF2B0539B5d5F72a7a0B22Ac73031117'; // real
 const AMOUNT_USDC = '1';
@@ -51,11 +50,17 @@ window.sendTransaction = async function() {
 
         console.log('Payment sent!', payment);
 
+        const explorerLink = `https://sepolia.basescan.org/tx/${payment.id}`;
         statusDiv.className = 'info-box';
         statusDiv.innerHTML = `
             <strong>Payment Sent!</strong><br><br>
             <strong>Amount:</strong> ${AMOUNT_USDC} USDC<br>
-            <strong>To:</strong> ${RECIPIENT_ADDRESS.substring(0, 6)}...${RECIPIENT_ADDRESS.substring(38)}<br><br>
+            <strong>To:</strong> ${RECIPIENT_ADDRESS.substring(0, 6)}...${RECIPIENT_ADDRESS.substring(38)}<br>
+            <strong>TX Hash:</strong> ${payment.id.substring(0, 10)}...${payment.id.substring(payment.id.length - 8)}
+            <button onclick="window.open('${explorerLink}', '_blank')"
+                    style="margin-left: 8px; padding: 4px 8px; background: #0052FF; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12px;">
+                View
+            </button><br><br>
             <small style="color: #666;">Payment successfully processed on Base Sepolia testnet</small>
         `;
 
