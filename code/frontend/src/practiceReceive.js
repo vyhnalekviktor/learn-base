@@ -61,7 +61,7 @@ window.requestTestUSDC = async function() {
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ address: address })
+            body: JSON.stringify({ user_address: address })
         });
 
         const result = await response.json();
