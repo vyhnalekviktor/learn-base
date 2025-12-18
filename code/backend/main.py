@@ -57,7 +57,7 @@ async def testnet_verify(request: Request):
         raise HTTPException(status_code=400, detail=result.get("msg"))
     return result
 
-@app.post("api/testnet/send-test")
+@app.post("/api/testnet/send-test")
 async def testnet_send(request: Request):
     '''
     todo check available funds:
