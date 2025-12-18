@@ -83,7 +83,8 @@ window.requestTestUSDC = async function() {
     } catch (error) {
         console.error('Error:', error);
         statusDiv.className = 'error-box';
-        statusDiv.innerHTML = `<p>Failed to send USDC: ${error.message}</p>`;
+        statusDiv.style.display = 'block';
+        statusDiv.innerHTML = `<p>${error.message || 'Failed to send USDC. Please try again later.'}</p>`;
     } finally {
         receiveBtn.disabled = false;
     }
