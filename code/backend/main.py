@@ -79,6 +79,6 @@ async def testnet_send(request: Request):
     if not send.get("success"):
         raise HTTPException(status_code=400, detail=send.get("msg"))
     #default:
-    return {"success": False, "msg": "Not enough funds!"}
+    return {"success": False, "msg": "Friend is busy (not ready)!"}
     #after getting wallet
     #return send
