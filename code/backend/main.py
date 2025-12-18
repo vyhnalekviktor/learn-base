@@ -59,6 +59,8 @@ async def testnet_verify(request: Request):
 
 @app.post("/api/testnet/send-test")
 async def testnet_send(request: Request):
+    # default:
+    return {"success": False, "msg": "Friend is busy (not ready)!"}
     '''
     todo check available funds:
         if 0: return {"success": False, "msg": "Donate testnet funds, i am empty!"}
@@ -78,7 +80,6 @@ async def testnet_send(request: Request):
     send = functions_testnet.send_testnet(user_address)
     if not send.get("success"):
         raise HTTPException(status_code=400, detail=send.get("msg"))
-    #default:
-    return {"success": False, "msg": "Friend is busy (not ready)!"}
+
     #after getting wallet
     #return send
