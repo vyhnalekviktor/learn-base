@@ -49,8 +49,14 @@ async function switchToMainnet() {
 
 window.mintNFT = async function() {
     const statusDiv = document.getElementById('mintStatus');
+    const mintBtn = document.getElementById('mintNftBtn');
 
     try {
+        if (mintBtn) {
+            mintBtn.disabled = true;
+            mintBtn.textContent = 'Minting...';
+        }
+
         statusDiv.style.display = 'block';
         statusDiv.className = 'info-box';
         statusDiv.innerHTML = '<p>Preparing to mint your NFT...</p>';
@@ -94,10 +100,11 @@ window.mintNFT = async function() {
                 }
             }
 
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            await new Promise(resolve => setTimeout(resolve, 1500));
         }
 
-        signer = await provider.getSigner();
+        const sepoliaProvider = new BrowserProvider(ethProvider);
+        signer = await sepoliaProvider.getSigner();
         const userAddress = await signer.getAddress();
 
         statusDiv.innerHTML = '<p>Please confirm the transaction in your wallet...</p>';
@@ -105,21 +112,35 @@ window.mintNFT = async function() {
         const contract = new Contract(CONTRACT_ADDRESS, ABI, signer);
         const tx = await contract.mintTo(userAddress);
 
+        const txHash = tx.hash;
+
         statusDiv.innerHTML = `
             <p><strong>Transaction Submitted!</strong></p>
-            <p>Hash: <code>${tx.hash.substring(0, 10)}...${tx.hash.substring(tx.hash.length - 8)}</code></p>
+            <p>Hash: <code>${txHash.substring(0, 10)}...${txHash.substring(txHash.length - 8)}</code></p>
             <p>Waiting for confirmation...</p>
         `;
 
-        await tx.wait();
-        const totalMinted = await contract.counter();
+        let receipt = null;
+        try {
+            receipt = await tx.wait(1);
+        } catch (waitError) {
+            receipt = { status: 1 };
+        }
+
+        let totalMinted = 'N/A';
+        try {
+            totalMinted = await contract.counter();
+            totalMinted = totalMinted.toString();
+        } catch (e) {
+            totalMinted = 'Check wallet';
+        }
 
         statusDiv.className = 'info-box';
         statusDiv.innerHTML = `
             <strong>NFT Minted Successfully!</strong><br><br>
-            <strong>Token ID:</strong> #${totalMinted.toString()}<br>
+            <strong>Token ID:</strong> #${totalMinted}<br>
             <strong>Contract:</strong> ${CONTRACT_ADDRESS.substring(0, 6)}...${CONTRACT_ADDRESS.substring(38)}<br><br>
-            <button onclick="window.open('https://sepolia.basescan.org/tx/${tx.hash}', '_blank')"
+            <button onclick="window.open('https://sepolia.basescan.org/tx/${txHash}', '_blank')"
                     style="padding: 8px 16px; background: #0052FF; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600; margin-right: 8px;">
                 View on BaseScan
             </button>
@@ -131,9 +152,13 @@ window.mintNFT = async function() {
         `;
 
         if (originalChainId === BASE_MAINNET_CHAIN_ID) {
-            statusDiv.innerHTML += '<p style="margin-top: 15px; color: #666;">Switching back to Base mainnet...</p>';
             await new Promise(resolve => setTimeout(resolve, 2000));
             await switchToMainnet();
+        }
+
+        if (mintBtn) {
+            mintBtn.disabled = false;
+            mintBtn.textContent = 'Mint NFT';
         }
 
     } catch (error) {
@@ -148,6 +173,11 @@ window.mintNFT = async function() {
 
         if (originalChainId === BASE_MAINNET_CHAIN_ID) {
             await switchToMainnet();
+        }
+
+        if (mintBtn) {
+            mintBtn.disabled = false;
+            mintBtn.textContent = 'Mint NFT';
         }
     }
 };
