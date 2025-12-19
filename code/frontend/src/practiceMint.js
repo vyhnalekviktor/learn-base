@@ -1,6 +1,9 @@
 import { sdk } from 'https://esm.sh/@farcaster/miniapp-sdk';
 
 const CONTRACT_ADDRESS = '0x726107014C8F10d372D59882dDF126ea02c3c6d4';
+const BASE_SEPOLIA_CHAIN_ID = 84532;
+const BASE_MAINNET_CHAIN_ID = 8453;
+
 const ABI = [
     'function mintTo(address _to) public',
     'function counter() public view returns (uint256)'
@@ -8,14 +11,12 @@ const ABI = [
 
 let ethProvider = null;
 let signer = null;
+let originalChainId = null;
 
 async function initApp() {
     try {
-        console.log('Initializing Base App...');
         ethProvider = await sdk.wallet.ethProvider;
         await sdk.actions.ready();
-        console.log('Base App ready');
-
         document.getElementById('nftContract').textContent = CONTRACT_ADDRESS;
     } catch (error) {
         console.error('Init error:', error);
@@ -35,8 +36,18 @@ window.toggleAccordion = function(id) {
     }
 };
 
+async function switchToMainnet() {
+    try {
+        await ethProvider.request({
+            method: 'wallet_switchEthereumChain',
+            params: [{ chainId: '0x2105' }],
+        });
+    } catch (error) {
+        console.error('Failed to switch back to mainnet:', error);
+    }
+}
+
 window.mintNFT = async function() {
-    console.log('Mint NFT clicked!');
     const statusDiv = document.getElementById('mintStatus');
 
     try {
@@ -50,17 +61,49 @@ window.mintNFT = async function() {
 
         const { BrowserProvider, Contract } = await import('https://esm.sh/ethers@6.9.0');
         const provider = new BrowserProvider(ethProvider);
+
+        const network = await provider.getNetwork();
+        originalChainId = Number(network.chainId);
+
+        if (originalChainId !== BASE_SEPOLIA_CHAIN_ID) {
+            statusDiv.innerHTML = '<p>Switching to Base Sepolia testnet...</p>';
+
+            try {
+                await ethProvider.request({
+                    method: 'wallet_switchEthereumChain',
+                    params: [{ chainId: '0x14a34' }],
+                });
+            } catch (switchError) {
+                if (switchError.code === 4902) {
+                    await ethProvider.request({
+                        method: 'wallet_addEthereumChain',
+                        params: [{
+                            chainId: '0x14a34',
+                            chainName: 'Base Sepolia',
+                            nativeCurrency: {
+                                name: 'Ethereum',
+                                symbol: 'ETH',
+                                decimals: 18
+                            },
+                            rpcUrls: ['https://sepolia.base.org'],
+                            blockExplorerUrls: ['https://sepolia.basescan.org']
+                        }]
+                    });
+                } else {
+                    throw switchError;
+                }
+            }
+
+            await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+
         signer = await provider.getSigner();
         const userAddress = await signer.getAddress();
-
-        console.log('User address:', userAddress);
 
         statusDiv.innerHTML = '<p>Please confirm the transaction in your wallet...</p>';
 
         const contract = new Contract(CONTRACT_ADDRESS, ABI, signer);
         const tx = await contract.mintTo(userAddress);
-
-        console.log('Transaction sent!', tx.hash);
 
         statusDiv.innerHTML = `
             <p><strong>Transaction Submitted!</strong></p>
@@ -68,9 +111,7 @@ window.mintNFT = async function() {
             <p>Waiting for confirmation...</p>
         `;
 
-        const receipt = await tx.wait();
-        console.log('Transaction confirmed:', receipt);
-
+        await tx.wait();
         const totalMinted = await contract.counter();
 
         statusDiv.className = 'info-box';
@@ -89,9 +130,13 @@ window.mintNFT = async function() {
             <small style="color: #666;">Your NFT has been minted on Base Sepolia testnet</small>
         `;
 
-    } catch (error) {
-        console.error('Mint error:', error);
+        if (originalChainId === BASE_MAINNET_CHAIN_ID) {
+            statusDiv.innerHTML += '<p style="margin-top: 15px; color: #666;">Switching back to Base mainnet...</p>';
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            await switchToMainnet();
+        }
 
+    } catch (error) {
         statusDiv.className = 'error-box';
         if (error.message.includes('User rejected') || error.message.includes('rejected')) {
             statusDiv.innerHTML = '<p>Transaction rejected by user</p>';
@@ -99,6 +144,10 @@ window.mintNFT = async function() {
             statusDiv.innerHTML = '<p>Insufficient ETH for gas fees. Get testnet ETH from <a href="https://faucet.quicknode.com/base/sepolia" target="_blank" class="learn-more">QuickNode Faucet</a>.</p>';
         } else {
             statusDiv.innerHTML = `<p>Mint failed: ${error.shortMessage || error.message}</p>`;
+        }
+
+        if (originalChainId === BASE_MAINNET_CHAIN_ID) {
+            await switchToMainnet();
         }
     }
 };
