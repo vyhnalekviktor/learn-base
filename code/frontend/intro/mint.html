@@ -13,7 +13,6 @@
             <h1>Mint Your NFT</h1>
             <p class="subtitle">Create your first on-chain NFT on Base Sepolia testnet</p>
 
-            <!-- Section 1: What is NFT Minting? -->
             <div class="accordion-item">
                 <button class="accordion-header" onclick="toggleAccordion('section1')">
                     <span>What is NFT Minting?</span>
@@ -21,94 +20,44 @@
                 </button>
                 <div class="accordion-content" id="content-section1">
                     <p>Minting an NFT means creating a unique digital token on the blockchain. When you mint, a smart contract generates a new token with a specific ID that becomes yours forever.</p>
-                    <p>Each NFT from this collection has a randomly generated color and is stored entirely on-chain - no external servers needed!</p>
+                    <p>Each NFT from this collection has a randomly generated color and is stored entirely on-chain!</p>
                 </div>
             </div>
 
-            <!-- Section 2: How Does It Work? -->
-            <div class="accordion-item">
-                <button class="accordion-header" onclick="toggleAccordion('section2')">
-                    <span>How Does It Work?</span>
-                    <span class="accordion-icon" id="icon-section2">▼</span>
-                </button>
-                <div class="accordion-content" id="content-section2">
-                    <p>The minting process is simple:</p>
-                    <ol>
-                        <li>Connect your wallet (MetaMask or Coinbase Wallet)</li>
-                        <li>Make sure you're on Base Sepolia testnet</li>
-                        <li>Click the "Mint NFT" button below</li>
-                        <li>Confirm the transaction in your wallet</li>
-                        <li>Wait 1-2 seconds for confirmation</li>
-                    </ol>
-                    <div class="info-box">
-                        <p><strong>Note:</strong> You'll need a small amount of Base Sepolia testnet ETH for gas fees. Get it free from <a href="https://www.alchemy.com/faucets/base-sepolia" target="_blank">Alchemy Faucet</a>.</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Section 3: What Happens After? -->
-            <div class="accordion-item">
-                <button class="accordion-header" onclick="toggleAccordion('section3')">
-                    <span>What Happens After Minting?</span>
-                    <span class="accordion-icon" id="icon-section3">▼</span>
-                </button>
-                <div class="accordion-content" id="content-section3">
-                    <p>After successfully minting your NFT:</p>
-                    <ul>
-                        <li>The NFT appears in your wallet's NFT/Collectibles section</li>
-                        <li>You can view it on <a href="https://sepolia.basescan.org" target="_blank">BaseScan</a></li>
-                        <li>The transaction is permanently recorded on Base blockchain</li>
-                        <li>You own this unique digital asset with a one-of-a-kind color</li>
-                    </ul>
-                    <p>Your NFT is an SVG image with randomly generated color stored entirely on-chain!</p>
-                </div>
-            </div>
-
-            <!-- Try it Section -->
             <div class="try-section">
                 <h3>Try it yourself!</h3>
                 <p>Mint your first BaseCamp Learning NFT. Each NFT has a unique randomly generated color and is completely free on testnet!</p>
+
                 <div class="practice-info">
                     <p><strong>NFT Contract:</strong></p>
-                    <code id="nftContract">0x726107014C8F10d372D59882dDF126ea02c3c6d4</code>
-                    <p class="practice-hint">Make sure you have Base Sepolia testnet ETH in your wallet</p>
+                    <code id="nftContract">Loading...</code>
                 </div>
+
                 <button id="mintNftBtn" onclick="mintNFT()" class="cta-button">
                     Mint NFT
                 </button>
+
                 <div id="mintStatus" style="display: none; margin-top: 20px;"></div>
+
+                <div class="practice-hint">
+                    <strong>Note:</strong> You'll need a small amount of Base Sepolia testnet ETH for gas fees. Get it free from
+                    <a href="https://faucet.quicknode.com/base/sepolia" target="_blank" class="learn-more">Alchemy Faucet</a>.
+                </div>
             </div>
 
-            <!-- Navigation Footer -->
             <div class="nav-footer">
                 <a href="receive.html" class="nav-btn back-btn">
-                    <span>Previous</span>
+                    <span>◄ Previous</span>
                     <span class="nav-label">Receive</span>
                 </a>
-
                 <a href="launch.html" class="nav-btn next-btn">
-                    <span>Next</span>
+                    <span>Next ►</span>
                     <span class="nav-label">Launch</span>
                 </a>
             </div>
         </div>
     </div>
 
-    <script>
-        function toggleAccordion(id) {
-            const content = document.getElementById('content-' + id);
-            const icon = document.getElementById('icon-' + id);
-
-            if (content.style.maxHeight) {
-                content.style.maxHeight = null;
-                icon.textContent = '▼';
-            } else {
-                content.style.maxHeight = content.scrollHeight + 'px';
-                icon.textContent = '▲';
-            }
-        }
-    </script>
-    <script src="https://cdn.jsdelivr.net/npm/ethers@6.9.0/dist/ethers.umd.min.js"></script>
-    <script src="../src/practiceMint.js"></script>
+    <script type="module" src="../src/practiceMint.js"></script>
 </body>
 </html>
