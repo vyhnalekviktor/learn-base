@@ -24,8 +24,11 @@ async function connectWallet() {
             userAddress = accounts[0];
 
             const network = await provider.getNetwork();
+            console.log('Current network:', network.chainId);
+
             if (network.chainId !== 84532n) {
                 await switchToBaseSepolia();
+                return;
             }
 
             signer = await provider.getSigner();
@@ -56,33 +59,52 @@ async function switchToBaseSepolia() {
             method: 'wallet_switchEthereumChain',
             params: [{ chainId: '0x14a34' }],
         });
+
+        setTimeout(() => {
+            connectWallet();
+        }, 1000);
+
     } catch (switchError) {
         if (switchError.code === 4902) {
-            await window.ethereum.request({
-                method: 'wallet_addEthereumChain',
-                params: [{
-                    chainId: '0x14a34',
-                    chainName: 'Base Sepolia',
-                    nativeCurrency: {
-                        name: 'Ethereum',
-                        symbol: 'ETH',
-                        decimals: 18
-                    },
-                    rpcUrls: ['https://sepolia.base.org'],
-                    blockExplorerUrls: ['https://sepolia.basescan.org']
-                }]
-            });
+            try {
+                await window.ethereum.request({
+                    method: 'wallet_addEthereumChain',
+                    params: [{
+                        chainId: '0x14a34',
+                        chainName: 'Base Sepolia',
+                        nativeCurrency: {
+                            name: 'Ethereum',
+                            symbol: 'ETH',
+                            decimals: 18
+                        },
+                        rpcUrls: ['https://sepolia.base.org'],
+                        blockExplorerUrls: ['https://sepolia.basescan.org']
+                    }]
+                });
+
+                setTimeout(() => {
+                    connectWallet();
+                }, 1000);
+
+            } catch (addError) {
+                console.error('Error adding chain:', addError);
+                throw addError;
+            }
         } else {
             throw switchError;
         }
     }
 }
 
-window.mintNFT = async function() {
+async function mintNFT() {
     const mintBtn = document.getElementById('mintBtn');
     const statusDiv = document.getElementById('status');
 
     try {
+        if (!signer || !userAddress) {
+            throw new Error('Please connect wallet first');
+        }
+
         mintBtn.disabled = true;
         mintBtn.textContent = 'Minting...';
 
@@ -92,6 +114,7 @@ window.mintNFT = async function() {
 
         const contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
 
+        console.log('Minting to:', userAddress);
         const tx = await contract.mintTo(userAddress);
 
         statusDiv.innerHTML = `
@@ -100,7 +123,8 @@ window.mintNFT = async function() {
             <p>Waiting for confirmation...</p>
         `;
 
-        await tx.wait();
+        const receipt = await tx.wait();
+        console.log('Transaction confirmed:', receipt);
 
         const totalMinted = await contract.counter();
 
@@ -118,6 +142,8 @@ window.mintNFT = async function() {
         let errorMessage = error.message;
         if (error.code === 'ACTION_REJECTED') {
             errorMessage = 'Transaction rejected';
+        } else if (error.message.includes('insufficient funds')) {
+            errorMessage = 'Insufficient ETH for gas fees';
         }
 
         statusDiv.innerHTML = `<p><strong>Error:</strong> ${errorMessage}</p>`;
@@ -125,22 +151,30 @@ window.mintNFT = async function() {
         mintBtn.disabled = false;
         mintBtn.textContent = 'Mint NFT';
     }
-};
+}
 
 window.connectWallet = connectWallet;
+window.mintNFT = mintNFT;
 
 if (typeof window.ethereum !== 'undefined') {
     window.ethereum.on('accountsChanged', (accounts) => {
+        console.log('Accounts changed:', accounts);
         if (accounts.length === 0) {
-            location.reload();
+            document.getElementById('connectBtn').style.display = 'block';
+            document.getElementById('walletInfo').style.display = 'none';
+            userAddress = null;
+            signer = null;
         } else {
             userAddress = accounts[0];
-            document.getElementById('userAddress').textContent =
-                userAddress.substring(0, 6) + '...' + userAddress.substring(userAddress.length - 4);
+            const addressEl = document.getElementById('userAddress');
+            if (addressEl) {
+                addressEl.textContent =
+                    userAddress.substring(0, 6) + '...' + userAddress.substring(userAddress.length - 4);
+            }
         }
     });
 
-    window.ethereum.on('chainChanged', () => {
-        location.reload();
+    window.ethereum.on('chainChanged', (chainId) => {
+        console.log('Chain changed to:', chainId);
     });
 }
