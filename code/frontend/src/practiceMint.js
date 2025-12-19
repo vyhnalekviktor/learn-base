@@ -249,3 +249,4 @@ window.mintNFT = async function () {
 };
 
 initApp();
+//a
