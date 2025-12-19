@@ -4,39 +4,99 @@ const ABI = [
     "function counter() public view returns (uint256)"
 ];
 
-window.mintNFT = async function() {
-    const statusDiv = document.getElementById('mintStatus');
-    const button = document.getElementById('mintNftBtn');
+let provider = null;
+let signer = null;
+let userAddress = null;
+
+async function connectWallet() {
+    const connectBtn = document.getElementById('connectBtn');
+    const walletInfo = document.getElementById('walletInfo');
+    const statusDiv = document.getElementById('status');
 
     try {
-        button.disabled = true;
+        connectBtn.disabled = true;
+        connectBtn.textContent = 'Connecting...';
+
+        if (typeof window.ethereum !== 'undefined') {
+            provider = new ethers.BrowserProvider(window.ethereum);
+
+            const accounts = await provider.send("eth_requestAccounts", []);
+            userAddress = accounts[0];
+
+            const network = await provider.getNetwork();
+            if (network.chainId !== 84532n) {
+                await switchToBaseSepolia();
+            }
+
+            signer = await provider.getSigner();
+
+            document.getElementById('userAddress').textContent =
+                userAddress.substring(0, 6) + '...' + userAddress.substring(userAddress.length - 4);
+
+            connectBtn.style.display = 'none';
+            walletInfo.style.display = 'block';
+
+        } else {
+            throw new Error('No wallet found. Please open in Base App or install Coinbase Wallet.');
+        }
+
+    } catch (error) {
+        console.error('Connection error:', error);
+        statusDiv.style.display = 'block';
+        statusDiv.className = 'error-box';
+        statusDiv.innerHTML = `<p><strong>Error:</strong> ${error.message}</p>`;
+        connectBtn.disabled = false;
+        connectBtn.textContent = 'Connect Wallet';
+    }
+}
+
+async function switchToBaseSepolia() {
+    try {
+        await window.ethereum.request({
+            method: 'wallet_switchEthereumChain',
+            params: [{ chainId: '0x14a34' }],
+        });
+    } catch (switchError) {
+        if (switchError.code === 4902) {
+            await window.ethereum.request({
+                method: 'wallet_addEthereumChain',
+                params: [{
+                    chainId: '0x14a34',
+                    chainName: 'Base Sepolia',
+                    nativeCurrency: {
+                        name: 'Ethereum',
+                        symbol: 'ETH',
+                        decimals: 18
+                    },
+                    rpcUrls: ['https://sepolia.base.org'],
+                    blockExplorerUrls: ['https://sepolia.basescan.org']
+                }]
+            });
+        } else {
+            throw switchError;
+        }
+    }
+}
+
+window.mintNFT = async function() {
+    const mintBtn = document.getElementById('mintBtn');
+    const statusDiv = document.getElementById('status');
+
+    try {
+        mintBtn.disabled = true;
+        mintBtn.textContent = 'Minting...';
+
         statusDiv.style.display = 'block';
         statusDiv.className = 'info-box';
-        statusDiv.innerHTML = '<p>Connecting to your wallet...</p>';
+        statusDiv.innerHTML = '<p>Preparing your NFT mint...</p>';
 
-        if (!window.ethereum) {
-            throw new Error('Please install MetaMask or Coinbase Wallet');
-        }
-
-        const provider = new ethers.BrowserProvider(window.ethereum);
-        await provider.send("eth_requestAccounts", []);
-
-        const network = await provider.getNetwork();
-        if (network.chainId !== 84532n) {
-            throw new Error('Please switch to Base Sepolia (Chain ID: 84532)');
-        }
-
-        const signer = await provider.getSigner();
-        const userAddress = await signer.getAddress();
         const contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
-
-        statusDiv.innerHTML = '<p>Minting your NFT...</p>';
 
         const tx = await contract.mintTo(userAddress);
 
         statusDiv.innerHTML = `
-            <p><strong>Transaction submitted!</strong></p>
-            <p>Hash: <code>${tx.hash.substring(0, 10)}...${tx.hash.substring(tx.hash.length - 8)}</code></p>
+            <p><strong>Transaction sent!</strong></p>
+            <p>Hash: <code>${tx.hash.substring(0, 10)}...</code></p>
             <p>Waiting for confirmation...</p>
         `;
 
@@ -46,31 +106,41 @@ window.mintNFT = async function() {
 
         statusDiv.className = 'info-box';
         statusDiv.innerHTML = `
-            <p><strong>Success!</strong> Your NFT has been minted!</p>
+            <p><strong>Success!</strong> NFT minted!</p>
             <p><strong>Token ID:</strong> #${totalMinted.toString()}</p>
             <p><a href="https://sepolia.basescan.org/tx/${tx.hash}" target="_blank">View on BaseScan</a></p>
         `;
 
     } catch (error) {
-        console.error('Error:', error);
+        console.error('Mint error:', error);
         statusDiv.className = 'error-box';
 
         let errorMessage = error.message;
         if (error.code === 'ACTION_REJECTED') {
             errorMessage = 'Transaction rejected';
-        } else if (error.message.includes('insufficient funds')) {
-            errorMessage = 'Insufficient ETH for gas';
         }
 
         statusDiv.innerHTML = `<p><strong>Error:</strong> ${errorMessage}</p>`;
     } finally {
-        button.disabled = false;
+        mintBtn.disabled = false;
+        mintBtn.textContent = 'Mint NFT';
     }
 };
 
-document.addEventListener('DOMContentLoaded', function() {
-    const contractElement = document.getElementById('nftContract');
-    if (contractElement) {
-        contractElement.textContent = CONTRACT_ADDRESS;
-    }
-});
+window.connectWallet = connectWallet;
+
+if (typeof window.ethereum !== 'undefined') {
+    window.ethereum.on('accountsChanged', (accounts) => {
+        if (accounts.length === 0) {
+            location.reload();
+        } else {
+            userAddress = accounts[0];
+            document.getElementById('userAddress').textContent =
+                userAddress.substring(0, 6) + '...' + userAddress.substring(userAddress.length - 4);
+        }
+    });
+
+    window.ethereum.on('chainChanged', () => {
+        location.reload();
+    });
+}
