@@ -140,16 +140,19 @@ window.mintNFT = async function() {
             <strong>NFT Minted Successfully!</strong><br><br>
             <strong>Token ID:</strong> #${totalMinted}<br>
             <strong>Contract:</strong> ${CONTRACT_ADDRESS.substring(0, 6)}...${CONTRACT_ADDRESS.substring(38)}<br><br>
-            <button onclick="window.open('https://sepolia.basescan.org/tx/${txHash}', '_blank')"
-                    style="padding: 8px 16px; background: #0052FF; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600; margin-right: 8px;">
-                View on BaseScan
-            </button>
-            <button onclick="window.open('https://account.base.app/activity', '_blank')"
-                    style="padding: 8px 16px; background: #0052FF; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600;">
-                View in Wallet
-            </button><br><br>
+            <div style="display: flex; flex-direction: column; gap: 12px; margin: 20px 0;">
+                <button onclick="window.open('https://sepolia.basescan.org/tx/${txHash}', '_blank')"
+                    style="width: 100%; padding: 12px 16px; background: #0052FF; color: white; border: none; border-radius: 12px; cursor: pointer; font-size: 15px; font-weight: 600;">
+                    View on BaseScan
+                </button>
+                <button onclick="window.open('https://account.base.app/activity', '_blank')"
+                        style="width: 100%; padding: 12px 16px; background: #0052FF; color: white; border: none; border-radius: 12px; cursor: pointer; font-size: 15px; font-weight: 600;">
+                        View in Wallet
+                </button>
+            </div>
             <small style="color: #666;">Your NFT has been minted on Base Sepolia testnet</small>
         `;
+
 
         if (originalChainId === BASE_MAINNET_CHAIN_ID) {
             await new Promise(resolve => setTimeout(resolve, 2000));

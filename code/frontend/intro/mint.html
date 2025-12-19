@@ -1,63 +1,170 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BaseCamp - Mint NFT</title>
-    <link rel="stylesheet" href="../css/style.css">
-    <link rel="stylesheet" href="../css/tutorial.css">
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  />
+  <title>BaseCamp - Mint NFT</title>
+  <link rel="stylesheet" href="../css/style.css" />
+  <link rel="stylesheet" href="../css/tutorial.css" />
 </head>
 <body>
-    <div class="container">
-        <div class="hero">
-            <h1>Mint Your NFT</h1>
-            <p class="subtitle">Create your first on-chain NFT on Base Sepolia testnet</p>
+  <div class="container">
+    <div class="hero">
+      <h1>Mint your first NFT</h1>
+      <p class="subtitle">
+        Learn how to create a unique, fully on-chain NFT on Base Sepolia
+        testnet.
+      </p>
 
-            <div class="accordion-item">
-                <button class="accordion-header" onclick="toggleAccordion('section1')">
-                    <span>What is NFT Minting?</span>
-                    <span class="accordion-icon" id="icon-section1">▼</span>
-                </button>
-                <div class="accordion-content" id="content-section1">
-                    <p>Minting an NFT means creating a unique digital token on the blockchain. When you mint, a smart contract generates a new token with a specific ID that becomes yours forever.</p>
-                    <p>Each NFT from this collection has a randomly generated color and is stored entirely on-chain!</p>
-                </div>
-            </div>
-
-            <div class="try-section">
-                <h3>Try it yourself!</h3>
-                <p>Mint your first BaseCamp Learning NFT. Each NFT has a unique randomly generated color and is completely free on testnet!</p>
-
-                <div class="practice-info">
-                    <p><strong>NFT Contract:</strong></p>
-                    <code id="nftContract">Loading...</code>
-                </div>
-
-                <button id="mintNftBtn" onclick="mintNFT()" class="cta-button">
-                    Mint NFT
-                </button>
-
-                <div id="mintStatus" style="display: none; margin-top: 20px;"></div>
-
-                <div class="practice-hint">
-                    <strong>Note:</strong> You'll need a small amount of Base Sepolia testnet ETH for gas fees. Get it free from
-                    <a href="https://faucet.quicknode.com/base/sepolia" target="_blank" class="learn-more">Alchemy Faucet</a>.
-                </div>
-            </div>
-
-            <div class="nav-footer">
-                <a href="receive.html" class="nav-btn back-btn">
-                    <span>◄ Previous</span>
-                    <span class="nav-label">Receive</span>
-                </a>
-                <a href="launch.html" class="nav-btn next-btn">
-                    <span>Next ►</span>
-                    <span class="nav-label">Launch</span>
-                </a>
-            </div>
+      <!-- Section 1: What is NFT Minting? -->
+      <div class="accordion-item">
+        <button
+          class="accordion-header"
+          onclick="toggleAccordion('section1')"
+        >
+          <span>What is NFT minting?</span>
+          <span class="accordion-icon" id="icon-section1">▼</span>
+        </button>
+        <div class="accordion-content" id="content-section1">
+          <p>
+            Minting an NFT means creating a new, unique token on the
+            blockchain. The smart contract assigns it a token ID, links it to
+            your wallet, and stores its metadata permanently onchain.
+          </p>
+          <p>
+            In this lesson you mint a simple NFT where the entire image and
+            metadata live directly in the smart contract. There is no IPFS or
+            external server – everything is generated onchain.
+          </p>
+          <p>
+            Once minted, the NFT belongs to your wallet. You can view it, send
+            it to another address, or trade it on compatible marketplaces.
+          </p>
         </div>
-    </div>
+      </div>
 
-    <script type="module" src="../src/practiceMint.js"></script>
+      <!-- Section 2: How does this collection work? -->
+      <div class="accordion-item">
+        <button
+          class="accordion-header"
+          onclick="toggleAccordion('section2')"
+        >
+          <span>How does this collection work?</span>
+          <span class="accordion-icon" id="icon-section2">▼</span>
+        </button>
+        <div class="accordion-content" id="content-section2">
+          <p>
+            The BaseCamp Learning NFT contract generates a random color
+            onchain every time you mint. That color is used to draw a simple
+            SVG square – your NFT image.
+          </p>
+          <p>
+            The contract also builds the JSON metadata onchain. Wallets and
+            explorers read this metadata to show the name, description and
+            image for each token.
+          </p>
+          <p>
+            Because everything is stored onchain, your NFT will continue to
+            work as long as the Base network exists – even if any external
+            servers go offline.
+          </p>
+        </div>
+      </div>
+
+      <!-- Section 3: What do you need? -->
+      <div class="accordion-item">
+        <button
+          class="accordion-header"
+          onclick="toggleAccordion('section3')"
+        >
+          <span>What do you need to mint?</span>
+          <span class="accordion-icon" id="icon-section3">▼</span>
+        </button>
+        <div class="accordion-content" id="content-section3">
+          <p>To mint this NFT you only need:</p>
+          <ul>
+            <li>A wallet connected to Base App or MiniApp</li>
+            <li>
+              A small amount of test ETH on <strong>Base Sepolia</strong> for
+              gas
+            </li>
+          </ul>
+          <p>
+            Gas fees on Base testnet are tiny, and in many cases they are fully
+            sponsored – so the mint may effectively be free for you.
+          </p>
+          <p>
+            Remember: this NFT lives on the <strong>testnet</strong>. It has no
+            real-world value and is meant purely for learning and
+            experimentation.
+          </p>
+        </div>
+      </div>
+
+      <!-- Try it section -->
+      <div class="try-section">
+        <h3>Try it yourself!</h3>
+        <p>
+          Use the button below to mint your own BaseCamp Learning NFT. The
+          contract will generate a unique color, create the SVG image, and
+          assign the new token to your wallet.
+        </p>
+        <p>After minting, you can:</p>
+        <ul>
+          <li>View the transaction on Base Sepolia BaseScan</li>
+          <li>See the NFT in your wallet activity</li>
+          <li>Inspect the tokenURI and onchain metadata</li>
+        </ul>
+
+        <div class="practice-info">
+          <p><strong>NFT Contract:</strong></p>
+          <code id="nftContract">Loading...</code>
+        </div>
+
+        <button id="mintNftBtn" onclick="mintNFT()" class="cta-button">
+          Mint NFT
+        </button>
+
+        <div id="mintStatus" style="display: none; margin-top: 20px;"></div>
+
+        <p class="practice-hint">
+          This is a Base Sepolia <strong>testnet</strong> collection – perfect
+          for experimenting without risk.
+        </p>
+      </div>
+
+      <!-- Navigation Footer -->
+      <div class="nav-footer">
+        <a href="receive.html" class="nav-btn back-btn">
+          <span>Previous</span>
+          <span class="nav-label">Receive</span>
+        </a>
+
+        <a href="launch.html" class="nav-btn next-btn">
+          <span>Next</span>
+          <span class="nav-label">Launch</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function toggleAccordion(id) {
+      const content = document.getElementById('content-' + id);
+      const icon = document.getElementById('icon-' + id);
+
+      if (content.style.maxHeight) {
+        content.style.maxHeight = null;
+        icon.textContent = '▼';
+      } else {
+        content.style.maxHeight = content.scrollHeight + 'px';
+        icon.textContent = '▲';
+      }
+    }
+  </script>
+  <script type="module" src="../src/practiceMint.js"></script>
 </body>
 </html>
