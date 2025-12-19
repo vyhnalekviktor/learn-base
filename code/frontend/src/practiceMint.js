@@ -18,10 +18,7 @@ async function initApp() {
   try {
     ethProvider = await sdk.wallet.ethProvider;
     await sdk.actions.ready();
-    const contractElem = document.getElementById('nftContract');
-    if (contractElem) {
-      contractElem.textContent = CONTRACT_ADDRESS;
-    }
+    document.getElementById('nftContract').textContent = CONTRACT_ADDRESS;
   } catch (error) {
     console.error('Init error:', error);
   }
@@ -30,8 +27,6 @@ async function initApp() {
 window.toggleAccordion = function (id) {
   const content = document.getElementById('content-' + id);
   const icon = document.getElementById('icon-' + id);
-
-  if (!content || !icon) return;
 
   if (content.style.maxHeight) {
     content.style.maxHeight = null;
@@ -53,6 +48,44 @@ async function switchToMainnet() {
   }
 }
 
+// načte metadata a vrátí <img> tag jako HTML string
+async function buildNftImageHtml(tokenId) {
+  try {
+    const { BrowserProvider, Contract } = await import(
+      'https://esm.sh/ethers@6.9.0'
+    );
+
+    const provider = new BrowserProvider(ethProvider);
+    const contract = new Contract(CONTRACT_ADDRESS, ABI, provider);
+
+    const uri = await contract.tokenURI(tokenId);
+    const parts = uri.split(',');
+    if (parts.length < 2) {
+      return '';
+    }
+
+    const base64Json = parts[1];
+    const jsonStr = atob(base64Json);
+    const meta = JSON.parse(jsonStr);
+
+    if (!meta.image) {
+      return '';
+    }
+
+    return `
+      <div style="margin: 16px 0; text-align: center;">
+        <p style="margin-bottom: 8px; font-weight: 600;">This is your NFT</p>
+        <img src="${meta.image}"
+             alt="Your NFT"
+             style="max-width: 140px; border-radius: 6px; border: 1px solid #ccc;" />
+      </div>
+    `;
+  } catch (e) {
+    console.error('buildNftImageHtml error:', e);
+    return '';
+  }
+}
+
 window.mintNFT = async function () {
   const statusDiv = document.getElementById('mintStatus');
   const mintBtn = document.getElementById('mintNftBtn');
@@ -63,11 +96,9 @@ window.mintNFT = async function () {
       mintBtn.textContent = 'Minting...';
     }
 
-    if (statusDiv) {
-      statusDiv.style.display = 'block';
-      statusDiv.className = 'info-box';
-      statusDiv.innerHTML = 'Preparing to mint your NFT...';
-    }
+    statusDiv.style.display = 'block';
+    statusDiv.className = 'info-box';
+    statusDiv.innerHTML = '<p>Preparing to mint your NFT...</p>';
 
     if (!ethProvider) {
       throw new Error('Base App not initialized');
@@ -82,9 +113,7 @@ window.mintNFT = async function () {
     originalChainId = Number(network.chainId);
 
     if (originalChainId !== BASE_SEPOLIA_CHAIN_ID) {
-      if (statusDiv) {
-        statusDiv.innerHTML = 'Switching to Base Sepolia testnet...';
-      }
+      statusDiv.innerHTML = '<p>Switching to Base Sepolia testnet...</p>';
 
       try {
         await ethProvider.request({
@@ -121,22 +150,21 @@ window.mintNFT = async function () {
     signer = await sepoliaProvider.getSigner();
     const userAddress = await signer.getAddress();
 
-    if (statusDiv) {
-      statusDiv.innerHTML = 'Please confirm the transaction in your wallet...';
-    }
+    statusDiv.innerHTML =
+      '<p>Please confirm the transaction in your wallet...</p>';
 
     const contract = new Contract(CONTRACT_ADDRESS, ABI, signer);
     const tx = await contract.mintTo(userAddress);
     const txHash = tx.hash;
 
-    if (statusDiv) {
-      const shortHash =
-        txHash.substring(0, 10) + '...' + txHash.substring(txHash.length - 8);
-      statusDiv.innerHTML =
-        '**Transaction Submitted!**\n\nHash:\n\n' +
-        shortHash +
-        '\n\nWaiting for confirmation...';
-    }
+    const shortHash =
+      txHash.substring(0, 10) + '...' + txHash.substring(txHash.length - 8);
+
+    statusDiv.innerHTML = `
+      <p><strong>Transaction submitted!</strong></p>
+      <p>Hash: <code>${shortHash}</code></p>
+      <p>Waiting for confirmation...</p>
+    `;
 
     let receipt = null;
     try {
@@ -146,22 +174,46 @@ window.mintNFT = async function () {
     }
 
     let totalMinted = 'N/A';
+    let newTokenId = null;
+
     try {
-      totalMinted = await contract.counter();
-      totalMinted = totalMinted.toString();
+      const counter = await contract.counter();
+      totalMinted = counter.toString();
+      newTokenId = totalMinted;
     } catch (e) {
+      console.error('Error fetching counter:', e);
       totalMinted = 'Check wallet';
     }
 
-    if (statusDiv) {
-      statusDiv.className = 'info-box';
-      statusDiv.innerHTML =
-        '✅ Mint successful!\n\n' +
-        'Total NFTs minted so far: ' +
-        totalMinted +
-        '\n\n' +
-        'You can now load your NFT in the preview below using its token ID.';
+    let nftImageHtml = '';
+    if (newTokenId) {
+      nftImageHtml = await buildNftImageHtml(newTokenId);
     }
+
+    const scannerUrl = newTokenId
+      ? `https://sepolia.basescan.org/nft/${CONTRACT_ADDRESS}/${newTokenId}`
+      : `https://sepolia.basescan.org/address/${CONTRACT_ADDRESS}`;
+
+    statusDiv.className = 'info-box';
+    statusDiv.innerHTML = `
+      <p><strong>Mint successful!</strong></p>
+      <p>Total NFTs minted: ${totalMinted}</p>
+      ${newTokenId ? `<p>Your new token ID: #${newTokenId}</p>` : ''}
+      ${nftImageHtml}
+      <div style="margin-top: 12px; display:flex; flex-direction:column; gap:8px;">
+        <a href="${scannerUrl}" target="_blank"
+           style="padding: 10px 16px; text-align:center; border-radius:10px; border:1px solid #0052FF; color:#0052FF; font-weight:600; text-decoration:none;">
+          View scanner
+        </a>
+        <a href="https://account.base.app/activity" target="_blank"
+           style="padding: 10px 16px; text-align:center; border-radius:10px; border:1px solid #0052FF; color:#0052FF; font-weight:600; text-decoration:none;">
+          View in wallet
+        </a>
+      </div>
+      <p style="margin-top:8px; font-size:12px; color:#666;">
+        Your NFT has been minted on Base Sepolia testnet.
+      </p>
+    `;
 
     if (originalChainId === BASE_MAINNET_CHAIN_ID) {
       await switchToMainnet();
@@ -169,21 +221,20 @@ window.mintNFT = async function () {
   } catch (error) {
     console.error('Mint error:', error);
 
-    if (statusDiv) {
-      statusDiv.className = 'info-box error';
+    statusDiv.className = 'info-box';
 
-      if (error.code === 4001) {
-        statusDiv.innerHTML = 'Transaction rejected by user.';
-      } else if (
-        typeof error.message === 'string' &&
-        error.message.includes('insufficient funds')
-      ) {
-        statusDiv.innerHTML =
-          'Insufficient ETH for gas fees. Get testnet ETH from a faucet.';
-      } else {
-        statusDiv.innerHTML =
-          'Mint failed: ' + (error.shortMessage || error.message);
-      }
+    if (error.code === 4001) {
+      statusDiv.innerHTML = '<p>Transaction rejected by user.</p>';
+    } else if (
+      typeof error.message === 'string' &&
+      error.message.includes('insufficient funds')
+    ) {
+      statusDiv.innerHTML =
+        '<p>Insufficient ETH for gas fees. Get testnet ETH from a faucet.</p>';
+    } else {
+      statusDiv.innerHTML = `<p>Mint failed: ${
+        error.shortMessage || error.message
+      }</p>`;
     }
 
     if (originalChainId === BASE_MAINNET_CHAIN_ID) {
@@ -193,68 +244,6 @@ window.mintNFT = async function () {
     if (mintBtn) {
       mintBtn.disabled = false;
       mintBtn.textContent = 'Mint NFT';
-    }
-  }
-};
-
-window.loadNft = async function () {
-  const statusDiv = document.getElementById('viewStatus');
-  const container = document.getElementById('nftContainer');
-  const tokenIdInput = document.getElementById('tokenIdInput');
-
-  if (!tokenIdInput || !container) {
-    return;
-  }
-
-  const tokenId = tokenIdInput.value;
-
-  container.innerHTML = '';
-
-  if (statusDiv) {
-    statusDiv.style.display = 'block';
-    statusDiv.className = 'info-box';
-    statusDiv.textContent = 'Loading NFT metadata...';
-  }
-
-  try {
-    if (!ethProvider) {
-      throw new Error('Base App not initialized');
-    }
-
-    const { BrowserProvider, Contract } = await import(
-      'https://esm.sh/ethers@6.9.0'
-    );
-
-    const provider = new BrowserProvider(ethProvider);
-    const contract = new Contract(CONTRACT_ADDRESS, ABI, provider);
-
-    const uri = await contract.tokenURI(tokenId);
-
-    const parts = uri.split(',');
-    if (parts.length < 2) {
-      throw new Error('Unexpected tokenURI format');
-    }
-
-    const base64Json = parts[1];
-    const jsonStr = atob(base64Json);
-    const meta = JSON.parse(jsonStr);
-
-    const img = document.createElement('img');
-    img.src = meta.image;
-    img.style.maxWidth = '240px';
-    img.style.borderRadius = '8px';
-    img.style.border = '1px solid #ccc';
-
-    container.appendChild(img);
-
-    if (statusDiv) {
-      statusDiv.textContent = 'Name: ' + meta.name;
-    }
-  } catch (error) {
-    console.error('View NFT error:', error);
-    if (statusDiv) {
-      statusDiv.className = 'info-box error';
-      statusDiv.textContent = 'Failed to load NFT: ' + error.message;
     }
   }
 };

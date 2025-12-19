@@ -1,220 +1,170 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Mint Your BaseCamp Learning NFT</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+<head>
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  />
+  <title>BaseCamp - Mint NFT</title>
+  <link rel="stylesheet" href="../css/style.css" />
+  <link rel="stylesheet" href="../css/tutorial.css" />
+</head>
+<body>
+  <div class="container">
+    <div class="hero">
+      <h1>Mint your first NFT</h1>
+      <p class="subtitle">
+        Learn how to create a unique, fully on-chain NFT on Base Sepolia
+        testnet.
+      </p>
 
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&display=swap"
-      rel="stylesheet"
-    />
-
-    <!-- Styles -->
-    <link rel="stylesheet" href="../css/style.css" />
-    <link rel="stylesheet" href="../css/tutorial.css" />
-  </head>
-
-  <body>
-    <div class="layout">
-      <!-- Sidebar -->
-      <aside class="sidebar">
-        <header class="sidebar-header">
-          <div class="logo">
-            <div class="logo-icon">B</div>
-            <div class="logo-text">
-              <div class="logo-title">BaseCamp</div>
-              <div class="logo-subtitle">Learning Journey</div>
-            </div>
-          </div>
-        </header>
-
-        <nav class="sidebar-nav">
-          <a class="nav-item active">
-            <span class="nav-dot"></span>
-            <span>Mint Your First NFT</span>
-          </a>
-          <a class="nav-item">
-            <span class="nav-dot muted"></span>
-            <span>Send Your NFT</span>
-          </a>
-          <a class="nav-item">
-            <span class="nav-dot muted"></span>
-            <span>Bonus: Explore the Chain</span>
-          </a>
-        </nav>
-
-        <footer class="sidebar-footer">
-          <div class="network-pill">
-            <span class="network-dot"></span>
-            <span>Base Sepolia Testnet</span>
-          </div>
-        </footer>
-      </aside>
-
-      <!-- Main content -->
-      <main class="main">
-        <header class="main-header">
-          <h1>Mint Your BaseCamp Learning NFT</h1>
-          <p class="subtitle">
-            Create your first fully on-chain NFT on Base Sepolia testnet.
+      <!-- Section 1: What is NFT Minting? -->
+      <div class="accordion-item">
+        <button
+          class="accordion-header"
+          onclick="toggleAccordion('section1')"
+        >
+          <span>What is NFT minting?</span>
+          <span class="accordion-icon" id="icon-section1">▼</span>
+        </button>
+        <div class="accordion-content" id="content-section1">
+          <p>
+            Minting an NFT means creating a new, unique token on the
+            blockchain. The smart contract assigns it a token ID, links it to
+            your wallet, and stores its metadata permanently onchain.
           </p>
-        </header>
+          <p>
+            In this lesson you mint a simple NFT where the entire image and
+            metadata live directly in the smart contract. There is no IPFS or
+            external server – everything is generated onchain.
+          </p>
+          <p>
+            Once minted, the NFT belongs to your wallet. You can view it, send
+            it to another address, or trade it on compatible marketplaces.
+          </p>
+        </div>
+      </div>
 
-        <section class="card">
-          <div class="card-header" onclick="toggleAccordion('intro')">
-            <div class="card-title">
-              <span class="step-badge">1</span>
-              <div>
-                <h2>What You Are Building</h2>
-                <p class="card-subtitle">
-                  Learn what makes this NFT fully on-chain and how the contract works.
-                </p>
-              </div>
-            </div>
-            <button class="accordion-toggle" id="icon-intro">▼</button>
-          </div>
+      <!-- Section 2: How does this collection work? -->
+      <div class="accordion-item">
+        <button
+          class="accordion-header"
+          onclick="toggleAccordion('section2')"
+        >
+          <span>How does this collection work?</span>
+          <span class="accordion-icon" id="icon-section2">▼</span>
+        </button>
+        <div class="accordion-content" id="content-section2">
+          <p>
+            The BaseCamp Learning NFT contract generates a random color
+            onchain every time you mint. That color is used to draw a simple
+            SVG square – your NFT image.
+          </p>
+          <p>
+            The contract also builds the JSON metadata onchain. Wallets and
+            explorers read this metadata to show the name, description and
+            image for each token.
+          </p>
+          <p>
+            Because everything is stored onchain, your NFT will continue to
+            work as long as the Base network exists – even if any external
+            servers go offline.
+          </p>
+        </div>
+      </div>
 
-          <div class="card-content" id="content-intro">
-            <p>
-              Learn how to create a unique, fully on-chain NFT on Base Sepolia testnet.
-            </p>
-            <p>
-              Minting an NFT means creating a new, unique token on the blockchain. The smart contract assigns it a token ID, links it to your wallet, and stores its metadata permanently onchain.
-            </p>
-            <p>
-              In this lesson you mint a simple NFT where the entire image and metadata live directly in the smart contract. There is no IPFS or external server – everything is generated onchain.
-            </p>
-            <p>
-              Once minted, the NFT belongs to your wallet. You can view it, send it to another address, or trade it on compatible marketplaces.
-            </p>
-            <p>
-              The BaseCamp Learning NFT contract generates a random color onchain every time you mint. That color is used to draw a simple SVG square – your NFT image.
-            </p>
-            <p>
-              The contract also builds the JSON metadata onchain. Wallets and explorers read this metadata to show the name, description and image for each token.
-            </p>
-            <p>
-              Because everything is stored onchain, your NFT will continue to work as long as the Base network exists – even if any external servers go offline.
-            </p>
-            <p>
-              Gas fees on Base testnet are tiny, and in many cases they are fully sponsored – so the mint may effectively be free for you.
-            </p>
-            <p>
-              Remember: this NFT lives on the <strong>testnet</strong>. It has no real-world value and is meant purely for learning and experimentation.
-            </p>
-          </div>
-        </section>
+      <!-- Section 3: What do you need? -->
+      <div class="accordion-item">
+        <button
+          class="accordion-header"
+          onclick="toggleAccordion('section3')"
+        >
+          <span>What do you need to mint?</span>
+          <span class="accordion-icon" id="icon-section3">▼</span>
+        </button>
+        <div class="accordion-content" id="content-section3">
+          <p>To mint this NFT you only need:</p>
+          <ul>
+            <li>A wallet connected to Base App or MiniApp</li>
+            <li>
+              A small amount of test ETH on <strong>Base Sepolia</strong> for
+              gas
+            </li>
+          </ul>
+          <p>
+            Gas fees on Base testnet are tiny, and in many cases they are fully
+            sponsored – so the mint may effectively be free for you.
+          </p>
+          <p>
+            Remember: this NFT lives on the <strong>testnet</strong>. It has no
+            real-world value and is meant purely for learning and
+            experimentation.
+          </p>
+        </div>
+      </div>
 
-        <section class="card">
-          <div class="card-header" onclick="toggleAccordion('mint')">
-            <div class="card-title">
-              <span class="step-badge">2</span>
-              <div>
-                <h2>Mint Your NFT</h2>
-                <p class="card-subtitle">
-                  Use your Farcaster wallet to mint a unique NFT to your address.
-                </p>
-              </div>
-            </div>
-            <button class="accordion-toggle" id="icon-mint">▲</button>
-          </div>
+      <!-- Try it section -->
+      <div class="try-section">
+        <h3>Try it yourself!</h3>
+        <p>
+          Use the button below to mint your own BaseCamp Learning NFT. The
+          contract will generate a unique color, create the SVG image, and
+          assign the new token to your wallet.
+        </p>
+        <p>After minting, you can:</p>
+        <ul>
+          <li>View the transaction on Base Sepolia BaseScan</li>
+          <li>See the NFT in your wallet activity</li>
+          <li>Inspect the tokenURI and onchain metadata</li>
+        </ul>
 
-          <div class="card-content" id="content-mint" style="max-height: none">
-            <div class="info-box">
-              <p>
-                This miniapp will connect to your Farcaster wallet and mint a BaseCamp Learning NFT to your address on Base Sepolia.
-              </p>
-              <p>
-                Make sure you are connected to the Farcaster app with a wallet that has access to Base Sepolia testnet.
-              </p>
-            </div>
+        <div class="practice-info">
+          <p><strong>NFT Contract:</strong></p>
+          <code id="nftContract">Loading...</code>
+        </div>
 
-            <div class="contract-info">
-              <div class="contract-label">NFT Contract:</div>
-              <code id="nftContract">Loading...</code>
-            </div>
+        <button id="mintNftBtn" onclick="mintNFT()" class="cta-button">
+          Mint NFT
+        </button>
 
-            <button id="mintNftBtn" class="primary-button" onclick="mintNFT()">
-              Mint NFT
-            </button>
+        <div id="mintStatus" style="display: none; margin-top: 20px;"></div>
 
-            <div id="mintStatus" class="info-box" style="display: none;"></div>
+        <p class="practice-hint">
+          This is a Base Sepolia <strong>testnet</strong> collection – perfect
+          for experimenting without risk.
+        </p>
+      </div>
 
-            <!-- Viewer block -->
-            <hr class="divider" />
+      <!-- Navigation Footer -->
+      <div class="nav-footer">
+        <a href="receive.html" class="nav-btn back-btn">
+          <span>Previous</span>
+          <span class="nav-label">Receive</span>
+        </a>
 
-            <h2>Your NFT preview</h2>
-            <p class="card-subtitle">
-              Load any minted token by its ID and see the on-chain SVG.
-            </p>
-
-            <div class="nft-preview">
-              <label for="tokenIdInput">Token ID:</label>
-              <input
-                id="tokenIdInput"
-                type="number"
-                min="1"
-                value="1"
-                class="input"
-              />
-
-              <button
-                id="loadNftBtn"
-                type="button"
-                class="secondary-button"
-                onclick="loadNft()"
-              >
-                Load NFT
-              </button>
-
-              <div
-                id="viewStatus"
-                class="info-box"
-                style="display: none; margin-top: 12px;"
-              ></div>
-
-              <div
-                id="nftContainer"
-                style="margin-top: 12px; display: flex; align-items: center; gap: 12px;"
-              ></div>
-            </div>
-          </div>
-        </section>
-
-        <section class="card">
-          <div class="card-header" onclick="toggleAccordion('next')">
-            <div class="card-title">
-              <span class="step-badge">3</span>
-              <div>
-                <h2>What You Can Do Next</h2>
-                <p class="card-subtitle">
-                  Explore your NFT on chain or send it to a friend.
-                </p>
-              </div>
-            </div>
-            <button class="accordion-toggle" id="icon-next">▼</button>
-          </div>
-
-          <div class="card-content" id="content-next">
-            <p>After minting, you can:</p>
-            <ul>
-              <li>View the NFT in this miniapp using the preview above.</li>
-              <li>Open the contract on BaseScan and inspect the tokenURI metadata.</li>
-              <li>Send the NFT to another address using the next lesson.</li>
-            </ul>
-
-            <p>
-              <strong>This is a Base Sepolia testnet collection</strong> – perfect for experimenting without risk.
-            </p>
-          </div>
-        </section>
-      </main>
+        <a href="launch.html" class="nav-btn next-btn">
+          <span>Next</span>
+          <span class="nav-label">Launch</span>
+        </a>
+      </div>
     </div>
+  </div>
 
-    <script type="module" src="../src/practiceMint.js"></script>
-  </body>
+  <script>
+    function toggleAccordion(id) {
+      const content = document.getElementById('content-' + id);
+      const icon = document.getElementById('icon-' + id);
+
+      if (content.style.maxHeight) {
+        content.style.maxHeight = null;
+        icon.textContent = '▼';
+      } else {
+        content.style.maxHeight = content.scrollHeight + 'px';
+        icon.textContent = '▲';
+      }
+    }
+  </script>
+  <script type="module" src="../src/practiceMint.js"></script>
+</body>
 </html>
