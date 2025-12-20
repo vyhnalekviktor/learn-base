@@ -58,10 +58,9 @@ async function getProgress(wallet) {
     }
 
     const parts = [
-      progress.theory,
       progress.faucet,
-      progress.sending,
-      progress.receiving,
+      progress.send,
+      progress.receive,
       progress.mint,
       progress.launch,
     ];
