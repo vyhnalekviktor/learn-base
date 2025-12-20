@@ -20,11 +20,11 @@
                     <span class="accordion-icon" id="icon-section1">▼</span>
                 </button>
                 <div class="accordion-content" id="content-section1">
-                    <p>1. Enter token name (min. 3 characters)</p>
-                    <p>2. Click "Launch Token" → confirm transaction in wallet</p>
-                    <p>3. Smart contract deploys to Base Sepolia with 1M supply to your wallet</p>
-                    <p><strong>Symbol:</strong> First 3 letters uppercase (SuperCoin → SUP)</p>
-                    <p><strong>Example:</strong> "MyAwesomeToken" → "MyAwesomeToken" (MYA), 1,000,000 supply</p>
+                    <p>1. Enter token name (min. 3 characters).</p>
+                    <p>2. Click "Launch Token" and confirm transaction in your wallet.</p>
+                    <p>3. A new ERC20 contract is deployed to Base Sepolia with 1M supply to your wallet.</p>
+                    <p><strong>Symbol:</strong> First 3 letters uppercase (SuperCoin → SUP).</p>
+                    <p><strong>Example:</strong> "MyAwesomeToken" → "MyAwesomeToken" (MYA), 1,000,000 supply.</p>
                 </div>
             </div>
 
@@ -36,9 +36,9 @@
                 </button>
                 <div class="accordion-content" id="content-section2">
                     <ul>
-                        <li>Base App wallet connected to testnet</li>
-                        <li>Small amount of test ETH for gas (free from faucet)</li>
-                        <li>Token name (3+ characters)</li>
+                        <li>Base App wallet connected to testnet.</li>
+                        <li>Small amount of test ETH for gas (free from faucet).</li>
+                        <li>Token name (3+ characters).</li>
                     </ul>
                     <p><a href="https://www.alchemy.com/faucets/base-sepolia" target="_blank" class="learn-more">Get test ETH from Alchemy Faucet</a></p>
                     <p><a href="https://faucets.chain.link/base-sepolia" target="_blank" class="learn-more">Or Chainlink Faucet</a></p>
@@ -54,10 +54,10 @@
                 <div class="accordion-content" id="content-section3">
                     <p>After deployment you can:</p>
                     <ul>
-                        <li><strong>Send tokens:</strong> Use Send/Receive lessons</li>
-                        <li><strong>Add liquidity:</strong> Uniswap V3 on Base Sepolia</li>
-                        <li><strong>Create website:</strong> Add token to MetaMask/Phantom</li>
-                        <li><strong>Verify contract:</strong> On BaseScan for credibility</li>
+                        <li><strong>Send tokens:</strong> Use Send/Receive lessons.</li>
+                        <li><strong>Add liquidity:</strong> Try Uniswap V3 on Base Sepolia.</li>
+                        <li><strong>Create a website:</strong> Add token to MetaMask/Phantom.</li>
+                        <li><strong>Verify contract:</strong> On BaseScan for credibility.</li>
                     </ul>
                 </div>
             </div>
@@ -69,7 +69,9 @@
 
                 <div class="practice-info">
                     <p><strong>Token Contract:</strong></p>
-                    <code id="tokenContract">Not deployed yet</code>
+                    <div class="contract-wrapper">
+                        <code id="tokenContract">Not deployed yet</code>
+                    </div>
                 </div>
 
                 <div style="background: #f8f9fa; padding: 20px; border-radius: 12px; border-left: 4px solid #0052FF; margin: 20px 0;">
@@ -87,7 +89,11 @@
                         <span id="previewSymbol" style="color: #0052FF; font-weight: bold;"></span><br>
                         <span>Supply: 1,000,000 tokens (18 decimals)</span>
                     </div>
-                    <button id="launchTokenBtn" onclick="launchToken(document.getElementById('tokenNameInput').value)" class="cta-button">
+                    <button
+                        id="launchTokenBtn"
+                        onclick="launchToken(document.getElementById('tokenNameInput').value)"
+                        class="cta-button"
+                    >
                         🚀 Launch Token
                     </button>
                 </div>
@@ -133,16 +139,19 @@
             const content = document.getElementById('content-' + id);
             const icon = document.getElementById('icon-' + id);
 
+            if (!content) return;
+
             if (content.style.maxHeight) {
                 content.style.maxHeight = null;
-                icon.textContent = '▼';
+                if (icon) icon.textContent = '▼';
             } else {
                 content.style.maxHeight = content.scrollHeight + 'px';
-                icon.textContent = '▲';
+                if (icon) icon.textContent = '▲';
             }
         }
     </script>
-    <script type="module" src="../src/practiceLaunch.js"></script>
 
+    <!-- Load Launch JS -->
+    <script type="module" src="../src/practiceLaunch.js"></script>
 </body>
 </html>

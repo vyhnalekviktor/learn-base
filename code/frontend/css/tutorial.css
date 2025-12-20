@@ -522,3 +522,27 @@ button:disabled {
     display: none;
     margin-top: 20px;
 }
+
+.contract-wrapper {
+  max-width: 100%;
+  overflow-x: auto;
+  padding: 6px 8px;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 6px;
+}
+
+.contract-wrapper code {
+  white-space: nowrap;
+  font-size: 12px;
+}
+
+.launch-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.launch-links .learn-more {
+  margin-top: 0;
+}

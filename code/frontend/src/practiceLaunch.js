@@ -4,7 +4,7 @@ import sdk from "https://esm.sh/@farcaster/miniapp-sdk"
 const BASE_SEPOLIA_CHAIN_ID = 84532
 const BASE_MAINNET_CHAIN_ID = 8453
 
-// tvoje TokenFactory na Base Sepolia
+// TokenFactory deployed via Remix on Base Sepolia
 const FACTORY_ADDRESS = "0x0ea04CA4244f91b4e09b4D3E5922dBba48226F57"
 
 const FACTORY_ABI = [
@@ -77,7 +77,7 @@ window.launchToken = async function (tokenName) {
       <p>Supply: 1,000,000 tokens</p>
     `
 
-    const { BrowserProvider, Contract, parseUnits } = await import(
+    const { BrowserProvider, Contract } = await import(
       "https://esm.sh/ethers@6.9.0"
     )
 
@@ -119,7 +119,7 @@ window.launchToken = async function (tokenName) {
     // create factory instance
     const factory = new Contract(FACTORY_ADDRESS, FACTORY_ABI, signer)
 
-    // supply in whole tokens -> factory násobí 1e18 v Solidity
+    // supply in whole tokens -> factory multiplies by 1e18 in Solidity
     const supply = 1_000_000
 
     statusDiv.innerHTML += "<p>Please confirm the deployment in your wallet...</p>"
@@ -176,8 +176,9 @@ window.launchToken = async function (tokenName) {
       <p><strong>Token launched successfully!</strong></p>
       <p><strong>${cleanName}</strong> (${symbol})</p>
       <p>Supply: 1,000,000 tokens</p>
-      <p>Contract: <code>${tokenAddress}</code></p>
-      <div style="margin-top: 12px;">
+      <p>Contract:</p>
+      <p><code>${tokenAddress}</code></p>
+      <div class="launch-links">
         <a href="${scannerUrl}" target="_blank" class="learn-more">View on BaseScan</a>
         <a href="https://account.base.app/activity" target="_blank" class="learn-more">View in wallet</a>
       </div>
