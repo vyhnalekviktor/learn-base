@@ -60,24 +60,10 @@
         </nav>
 
         <footer>
-            <p>Created by <strong>vikiase</strong> • 2025</p>
+            <p>Created by <strong>vikiase/satoshivv</strong> 2025</p>
         </footer>
     </div>
 
-    <!-- ✅ Podle oficiální Farcaster docs -->
-    <script type="module">
-        import { sdk } from 'https://esm.sh/@farcaster/miniapp-sdk';
-
-        // Wait for page to be fully loaded
-        window.addEventListener('load', async () => {
-            try {
-                console.log('Page loaded, calling ready()...');
-                await sdk.actions.ready();
-                console.log('BaseCamp mini app is ready!');
-            } catch (error) {
-                console.error('Error calling ready():', error);
-            }
-        });
-    </script>
+    <script type="module" src="src/index.js"></script>
 </body>
 </html>
