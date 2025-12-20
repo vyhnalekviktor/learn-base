@@ -13,7 +13,7 @@
             <h1>Launch Token</h1>
             <p class="subtitle">Create your own ERC20 token with one click on Base Sepolia testnet!</p>
 
-            <!-- Expandable Section 1 - How it works -->
+            <!-- Accordion 1 - How it works -->
             <div class="accordion-item">
                 <button class="accordion-header" onclick="toggleAccordion('section1')">
                     <span>How it works?</span>
@@ -21,14 +21,14 @@
                 </button>
                 <div class="accordion-content" id="content-section1">
                     <p>1. Enter token name (min. 3 characters).</p>
-                    <p>2. Click "Launch Token" and confirm transaction in your wallet.</p>
-                    <p>3. A new ERC20 contract is deployed to Base Sepolia with 1M supply to your wallet.</p>
+                    <p>2. Click "Launch Token" and confirm the transaction in your wallet.</p>
+                    <p>3. A new ERC20 contract is deployed to Base Sepolia with 1,000,000 tokens assigned to your wallet.</p>
                     <p><strong>Symbol:</strong> First 3 letters uppercase (SuperCoin → SUP).</p>
                     <p><strong>Example:</strong> "MyAwesomeToken" → "MyAwesomeToken" (MYA), 1,000,000 supply.</p>
                 </div>
             </div>
 
-            <!-- Expandable Section 2 - Requirements -->
+            <!-- Accordion 2 - Requirements -->
             <div class="accordion-item">
                 <button class="accordion-header" onclick="toggleAccordion('section2')">
                     <span>What do I need?</span>
@@ -45,7 +45,7 @@
                 </div>
             </div>
 
-            <!-- Expandable Section 3 - What happens next -->
+            <!-- Accordion 3 - Next steps -->
             <div class="accordion-item">
                 <button class="accordion-header" onclick="toggleAccordion('section3')">
                     <span>What next with my token?</span>
@@ -83,7 +83,17 @@
                         value="MyToken"
                         style="margin-bottom: 15px;"
                     >
-                    <div id="tokenPreview" style="display: none; background: #f0f9ff; padding: 12px; border-radius: 8px; margin-bottom: 15px; font-size: 14px;">
+                    <div
+                        id="tokenPreview"
+                        style="
+                            display: none;
+                            background: #f3f8ff;
+                            padding: 12px;
+                            border-radius: 8px;
+                            margin-bottom: 15px;
+                            font-size: 14px;
+                        "
+                    >
                         <strong>Preview:</strong><br>
                         <span id="previewName"></span><br>
                         <span id="previewSymbol" style="color: #0052FF; font-weight: bold;"></span><br>

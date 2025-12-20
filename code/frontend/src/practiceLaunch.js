@@ -48,7 +48,6 @@ window.launchToken = async function (tokenName) {
 
   if (!statusDiv) return
 
-  // basic validation
   if (!tokenName || tokenName.trim().length < 3) {
     statusDiv.style.display = "block"
     statusDiv.className = "error-box"
@@ -71,6 +70,9 @@ window.launchToken = async function (tokenName) {
 
     statusDiv.style.display = "block"
     statusDiv.className = "info-box"
+    statusDiv.style.background = ""
+    statusDiv.style.borderLeftColor = ""
+    statusDiv.style.textAlign = "left"
     statusDiv.innerHTML = `
       <p>Launching token:</p>
       <p><strong>${cleanName}</strong> (${symbol})</p>
@@ -85,7 +87,6 @@ window.launchToken = async function (tokenName) {
     const network = await provider.getNetwork()
     originalChainId = Number(network.chainId)
 
-    // ensure Base Sepolia
     if (originalChainId !== BASE_SEPOLIA_CHAIN_ID) {
       statusDiv.innerHTML += "<p>Switching to Base Sepolia testnet...</p>"
       try {
@@ -115,11 +116,8 @@ window.launchToken = async function (tokenName) {
     }
 
     const signer = await provider.getSigner()
-
-    // create factory instance
     const factory = new Contract(FACTORY_ADDRESS, FACTORY_ABI, signer)
 
-    // supply in whole tokens -> factory multiplies by 1e18 in Solidity
     const supply = 1_000_000
 
     statusDiv.innerHTML += "<p>Please confirm the deployment in your wallet...</p>"
@@ -138,7 +136,6 @@ window.launchToken = async function (tokenName) {
 
     const receipt = await tx.wait(1)
 
-    // parse TokenCreated event
     let tokenAddress = null
     try {
       for (const log of receipt.logs || []) {
@@ -149,7 +146,7 @@ window.launchToken = async function (tokenName) {
             break
           }
         } catch {
-          // ignore non‑matching logs
+          // ignore
         }
       }
     } catch (e) {
@@ -171,17 +168,54 @@ window.launchToken = async function (tokenName) {
 
     const scannerUrl = `https://sepolia.basescan.org/address/${tokenAddress}`
 
+    // Mint-like success card
     statusDiv.className = "info-box"
+    statusDiv.style.background = "#dcf5f8"
+    statusDiv.style.borderLeftColor = "transparent"
+    statusDiv.style.textAlign = "center"
     statusDiv.innerHTML = `
-      <p><strong>Token launched successfully!</strong></p>
-      <p><strong>${cleanName}</strong> (${symbol})</p>
-      <p>Supply: 1,000,000 tokens</p>
-      <p>Contract:</p>
-      <p><code>${tokenAddress}</code></p>
-      <div class="launch-links">
-        <a href="${scannerUrl}" target="_blank" class="learn-more">View on BaseScan</a>
-        <a href="https://account.base.app/activity" target="_blank" class="learn-more">View in wallet</a>
+      <p style="font-weight: 700; font-size: 18px; margin-bottom: 8px;">Token launched successfully!</p>
+      <p style="font-weight: 700; margin: 4px 0;">${cleanName} (${symbol})</p>
+      <p style="margin: 4px 0;">Supply: 1,000,000 tokens</p>
+      <p style="margin: 12px 0 4px;">Contract:</p>
+      <p style="margin: 0 0 16px;">
+        <code style="font-size: 13px;">${tokenAddress}</code>
+      </p>
+      <div style="margin-top: 12px; display: flex; flex-direction: column; gap: 10px;">
+        <button
+          onclick="window.open('${scannerUrl}', '_blank')"
+          style="
+            padding: 12px 16px;
+            background: white;
+            color: #0052FF;
+            border-radius: 12px;
+            border: 2px solid #0052FF;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 15px;
+          "
+        >
+          View on BaseScan
+        </button>
+        <button
+          onclick="window.open('https://account.base.app/activity', '_blank')"
+          style="
+            padding: 12px 16px;
+            background: white;
+            color: #0052FF;
+            border-radius: 12px;
+            border: 2px solid #0052FF;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 15px;
+          "
+        >
+          View in wallet
+        </button>
       </div>
+      <p style="margin-top: 12px; font-size: 12px; color: #666;">
+        Your token has been deployed on Base Sepolia testnet.
+      </p>
     `
   } catch (error) {
     console.error("Launch error:", error)
