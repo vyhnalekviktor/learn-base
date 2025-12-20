@@ -108,7 +108,8 @@
 
 /* Completed Step */
 .accordion-item.completed .accordion-header {
-    background: #d4edda;
+    background: #d5f1cc;      /* jemná pastelová zelená */
+    border-color: #b8e3b0;    /* o něco tmavší zelená */
 }
 
 /* Warning/Info Boxes */
