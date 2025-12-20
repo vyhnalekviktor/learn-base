@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BaseCamp - launch</title>
+    <title>BaseCamp - Launch Token</title>
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="../css/tutorial.css">
 </head>
@@ -11,69 +11,124 @@
     <div class="container">
         <div class="hero">
             <h1>Launch Token</h1>
-            <p class="subtitle">Subtitle description here</p>
+            <p class="subtitle">Create your own ERC20 token with one click on Base Sepolia testnet!</p>
 
-            <!-- Expandable Section 1 -->
+            <!-- Expandable Section 1 - How it works -->
             <div class="accordion-item">
                 <button class="accordion-header" onclick="toggleAccordion('section1')">
-                    <span>Section 1 Title</span>
+                    <span>How it works?</span>
                     <span class="accordion-icon" id="icon-section1">▼</span>
                 </button>
                 <div class="accordion-content" id="content-section1">
-                    <p>Content for section 1 goes here...</p>
-                    <p>Add more paragraphs as needed.</p>
+                    <p>1. Enter token name (min. 3 characters)</p>
+                    <p>2. Click "Launch Token" → confirm transaction in wallet</p>
+                    <p>3. Smart contract deploys to Base Sepolia with 1M supply to your wallet</p>
+                    <p><strong>Symbol:</strong> First 3 letters uppercase (SuperCoin → SUP)</p>
+                    <p><strong>Example:</strong> "MyAwesomeToken" → "MyAwesomeToken" (MYA), 1,000,000 supply</p>
                 </div>
             </div>
 
-            <!-- Expandable Section 2 -->
+            <!-- Expandable Section 2 - Requirements -->
             <div class="accordion-item">
                 <button class="accordion-header" onclick="toggleAccordion('section2')">
-                    <span>Section 2 Title</span>
+                    <span>What do I need?</span>
                     <span class="accordion-icon" id="icon-section2">▼</span>
                 </button>
                 <div class="accordion-content" id="content-section2">
-                    <p>Content for section 2 goes here...</p>
+                    <ul>
+                        <li>Base App wallet connected to testnet</li>
+                        <li>Small amount of test ETH for gas (free from faucet)</li>
+                        <li>Token name (3+ characters)</li>
+                    </ul>
+                    <p><a href="https://www.alchemy.com/faucets/base-sepolia" target="_blank" class="learn-more">Get test ETH from Alchemy Faucet</a></p>
+                    <p><a href="https://faucets.chain.link/base-sepolia" target="_blank" class="learn-more">Or Chainlink Faucet</a></p>
                 </div>
             </div>
 
-            <!-- Expandable Section 3 -->
+            <!-- Expandable Section 3 - What happens next -->
             <div class="accordion-item">
                 <button class="accordion-header" onclick="toggleAccordion('section3')">
-                    <span>Section 3 Title</span>
+                    <span>What next with my token?</span>
                     <span class="accordion-icon" id="icon-section3">▼</span>
                 </button>
                 <div class="accordion-content" id="content-section3">
-                    <p>Content for section 3 goes here...</p>
+                    <p>After deployment you can:</p>
+                    <ul>
+                        <li><strong>Send tokens:</strong> Use Send/Receive lessons</li>
+                        <li><strong>Add liquidity:</strong> Uniswap V3 on Base Sepolia</li>
+                        <li><strong>Create website:</strong> Add token to MetaMask/Phantom</li>
+                        <li><strong>Verify contract:</strong> On BaseScan for credibility</li>
+                    </ul>
                 </div>
             </div>
 
-            <!-- Try it Section (Optional) -->
+            <!-- Try it Section - Token Launcher -->
             <div class="try-section">
                 <h3>Try it yourself!</h3>
-                <p>Description of what to try...</p>
-                <a href="https://example.com"
-                   target="_blank"
-                   class="cta-button">
-                    Button Text
-                </a>
+                <p>Enter a token name and deploy it on the blockchain. Symbol auto-generates from first 3 letters, supply is 1,000,000 tokens.</p>
+
+                <div class="practice-info">
+                    <p><strong>Token Contract:</strong></p>
+                    <code id="tokenContract">Not deployed yet</code>
+                </div>
+
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 12px; border-left: 4px solid #0052FF; margin: 20px 0;">
+                    <input
+                        type="text"
+                        id="tokenNameInput"
+                        class="wallet-input"
+                        placeholder="Enter token name (e.g. SuperCoin)"
+                        value="MyToken"
+                        style="margin-bottom: 15px;"
+                    >
+                    <div id="tokenPreview" style="display: none; background: #f0f9ff; padding: 12px; border-radius: 8px; margin-bottom: 15px; font-size: 14px;">
+                        <strong>Preview:</strong><br>
+                        <span id="previewName"></span><br>
+                        <span id="previewSymbol" style="color: #0052FF; font-weight: bold;"></span><br>
+                        <span>Supply: 1,000,000 tokens (18 decimals)</span>
+                    </div>
+                    <button id="launchTokenBtn" onclick="launchToken(document.getElementById('tokenNameInput').value)" class="cta-button">
+                        🚀 Launch Token
+                    </button>
+                </div>
+
+                <div id="launchStatus" class="info-box" style="display: none; margin-top: 20px;"></div>
+                <p class="practice-hint">Token deploys to <strong>Base Sepolia testnet</strong>. Need test ETH from faucet.</p>
             </div>
 
             <!-- Navigation Footer -->
             <div class="nav-footer">
                 <a href="mint.html" class="nav-btn back-btn">
                     <span>Previous</span>
-                    <span class="nav-label">Faucet</span>
+                    <span class="nav-label">Mint NFT</span>
                 </a>
 
                 <a href="../transactions.html" class="nav-btn next-btn">
-                    <span>Finish</span>
-                    <span class="nav-label">Menu</span>
+                    <span>Menu</span>
+                    <span class="nav-label">Transactions</span>
                 </a>
             </div>
         </div>
     </div>
 
     <script>
+        // Token preview on input
+        document.getElementById('tokenNameInput').addEventListener('input', function(e) {
+            const name = e.target.value;
+            const preview = document.getElementById('tokenPreview');
+            const previewName = document.getElementById('previewName');
+            const previewSymbol = document.getElementById('previewSymbol');
+
+            if (name.length >= 3) {
+                const symbol = name.substring(0, 3).toUpperCase();
+                previewName.textContent = `Name: ${name}`;
+                previewSymbol.textContent = `Symbol: ${symbol}`;
+                preview.style.display = 'block';
+            } else {
+                preview.style.display = 'none';
+            }
+        });
+
         function toggleAccordion(id) {
             const content = document.getElementById('content-' + id);
             const icon = document.getElementById('icon-' + id);
@@ -87,5 +142,8 @@
             }
         }
     </script>
+
+    <!-- Load Launch JS -->
+    <script type="module" src="../src/practiceLaunch.js"></script>
 </body>
 </html>
