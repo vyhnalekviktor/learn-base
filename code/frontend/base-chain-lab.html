@@ -5,40 +5,72 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Learn About Base</title>
     <link rel="stylesheet" href="css/landing.css">
+    <style>
+        .menu-item.completed {
+            background: linear-gradient(135deg, #16a34a 0%, #22c55e 100%);
+            color: white;
+            border-color: #16a34a;
+        }
+        .menu-item.completed p {
+            color: rgba(255, 255, 255, 0.9);
+        }
+    </style>
 </head>
 <body>
     <div class="container">
         <div class="hero">
             <h1>Base Chain Lab</h1>
-            <p> Everything is in safe environment for testing</p>
-            <br>
-            <a href="intro/faucet.html"><button>Receiving funds from Faucet</button></a>
-            <br>
-            <a href="intro/send.html"><button>Send funds</button></a>
-            <br>
-            <a href="intro/receive.html"><button>Get Funds</button></a>
-            <br>
-            <a href="intro/mint.html"><button>Mint NFT</button></a>
-            <br>
-            <a href="intro/launch.html"><button>Launch token</button></a>
-            <br><br>
+            <p class="subtitle">Everything is in a safe environment for testing</p>
 
-            <div id="progress-container">
+            <p class="description">
+                Work through the steps below to learn how to use Base. Your progress updates automatically.
+            </p>
+
+            <div id="progress-container" style="margin: 24px 0;">
                 <div style="font-size: 14px; margin-bottom: 4px;">
-                    <span id="progress-percent">0%</span>
+                    Progress: <span id="progress-percent">0%</span>
                 </div>
                 <div style="width: 100%; background-color: #1f2933; border-radius: 999px; overflow: hidden; height: 8px;">
                     <div
                         id="progress-bar-fill"
-                        style="width: 0%; height: 100%; background: linear-gradient(90deg, #3b82f6, #10b981); transition: width 0.3s ease;"
+                        style="width: 0%; height: 100%; background: linear-gradient(135deg, #0052FF 0%, #10b981 100%); transition: width 0.3s ease;"
                     ></div>
                 </div>
             </div>
 
-            <br>
-            <a href="index.html" style="color: #0052FF; text-decoration: none; font-weight: bold;">Back to Home</a>
+            <div class="menu">
+                <a id="item-faucet" href="intro/faucet.html" class="menu-item">
+                    <h3>Receive funds from Faucet</h3>
+                    <p>Get testnet funds to start experimenting on Base without risk.</p>
+                </a>
+
+                <a id="item-send" href="intro/send.html" class="menu-item">
+                    <h3>Send funds</h3>
+                    <p>Practice sending transactions to another address on Base.</p>
+                </a>
+
+                <a id="item-receive" href="intro/receive.html" class="menu-item">
+                    <h3>Get funds</h3>
+                    <p>Learn how to receive tokens securely from other users.</p>
+                </a>
+
+                <a id="item-mint" href="intro/mint.html" class="menu-item">
+                    <h3>Mint an NFT</h3>
+                    <p>Create an NFT on Base and see how minting works in practice.</p>
+                </a>
+
+                <a id="item-launch" href="intro/launch.html" class="menu-item">
+                    <h3>Launch a token</h3>
+                    <p>Walk through the steps of launching a new token on Base.</p>
+                </a>
+            </div>
+
+            <a href="index.html" style="color: #0052FF; text-decoration: none; font-weight: bold;">
+                Back to Home
+            </a>
         </div>
     </div>
+
+    <script type="module" src="src/labMenu.js"></script>
 </body>
-<script src="src/labMenu.js" type="module"></script>
 </html>

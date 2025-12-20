@@ -85,6 +85,27 @@ async function getProgress(wallet) {
     if (bar) {
       bar.style.width = `${percent}%`;
     }
+
+    if (progress.faucet === true) {
+      const el = document.getElementById("item-faucet");
+      if (el) el.classList.add("completed");
+    }
+    if (progress.send === true || progress.send === true) {
+      const el = document.getElementById("item-send");
+      if (el) el.classList.add("completed");
+    }
+    if (progress.receive === true || progress.receive === true) {
+      const el = document.getElementById("item-receive");
+      if (el) el.classList.add("completed");
+    }
+    if (progress.mint === true) {
+      const el = document.getElementById("item-mint");
+      if (el) el.classList.add("completed");
+    }
+    if (progress.launch === true) {
+      const el = document.getElementById("item-launch");
+      if (el) el.classList.add("completed");
+    }
   } catch (err) {
     console.error("getProgress error:", err);
   }
