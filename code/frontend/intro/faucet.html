@@ -109,19 +109,6 @@
         </div>
     </div>
 
-    <script>
-        function toggleAccordion(id) {
-            const content = document.getElementById('content-' + id);
-            const icon = document.getElementById('icon-' + id);
-
-            if (content.style.maxHeight) {
-                content.style.maxHeight = null;
-                icon.textContent = '▼';
-            } else {
-                content.style.maxHeight = content.scrollHeight + 'px';
-                icon.textContent = '▲';
-            }
-        }
-    </script>
+    <script type="module" src="../src/faucet.js"></script>
 </body>
 </html>
