@@ -1,0 +1,7 @@
+backend/venv/
+__pycache__/
+backend/.env
+frontend/node_modules
+frontend/package-lock.json
+frontend/package.json
+poznamky.txt
