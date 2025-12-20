@@ -96,11 +96,6 @@ async def testnet_send(request: Request):
     if not result.get("success"):
         raise HTTPException(status_code=400, detail=result.get("msg"))
 
-    # update status
-    result = database.reset_if_equal_atomic(wallet)
-    if not result:
-        return {"success": False, "msg": "Error Editing transactions!"}
-
     return {"success": True}
 
 @app.post("/api/database/init-user")
