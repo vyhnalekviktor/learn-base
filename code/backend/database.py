@@ -103,11 +103,3 @@ def delete_user(wallet: str) :
         }
     except Exception as e :
         return None
-
-print(add_user("test_user"))
-print(get_field("USER_INFO", "practice_sent", "test_user"))
-print(get_user("sdfasfafar"))
-print(get_user("test_user"))
-print(add_user("test_user"))
-print(delete_user("test_user"))
-print(update_field("test_user", "wallet", "test_user", "xxx"))

@@ -16,7 +16,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ENDPOINTS (všechny stejné jako předtím)
+# ENDPOINTS
 @app.get("/")
 @app.get("/api")
 def is_up():
@@ -133,7 +133,7 @@ async def update_field(request: Request):
     field_name = data.get("field_name")
     value = data.get("value")
 
-    if not wallet or not table_name or not field_name or not value:
+    if not wallet or not table_name or not field_name or value is None:
         raise HTTPException(status_code=400, detail="Invalid parameters!")
 
     response = database.update_field(table_name, field_name, wallet, value)
@@ -151,7 +151,7 @@ async def get_field(request: Request):
         raise HTTPException(status_code=400, detail="Invalid parameters!")
 
     response = database.get_field(table_name, field_name, wallet)
-    if not response:
+    if response is None:
         raise HTTPException(status_code=400, detail="Error getting field from DB.")
     return {"success": True, "value": response}
 
