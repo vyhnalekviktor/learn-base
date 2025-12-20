@@ -71,6 +71,22 @@ def eligible_rec(wallet: str):
        return 1
     return 0
 
+def update_tx(wallet):
+    received = database.get_field("USER_INFO", "practice_received", wallet)
+    if received is None:
+        return False
+    status = database.update_field("USER_INFO", "practice_received", wallet, received+1)
+    if status is None:
+        return False
+
+    bot_bal = database.get_field("MY_WALLET", "balance-USDC", os.getenv("BOT_WALLET"))
+    if bot_bal is None:
+        return False
+    status = database.update_field("MY_WALLET", "balance-USDC", wallet, bot_bal-1)
+    if status is None:
+        return False
+    return True
+
 @app.post("/api/testnet/send-test")
 async def testnet_send(request: Request):
     data = await request.json()
@@ -95,6 +111,10 @@ async def testnet_send(request: Request):
     result = functions_testnet.try_sending(wallet)
     if not result.get("success"):
         raise HTTPException(status_code=400, detail=result.get("msg"))
+
+    result = update_tx(wallet)
+    if not result:
+        raise HTTPException(status_code=400, detail="Error updating trans. count!")
 
     return {"success": True}
 
