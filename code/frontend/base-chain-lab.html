@@ -22,10 +22,23 @@
             <br>
             <a href="intro/launch.html"><button>Launch token</button></a>
             <br><br>
-            <p>progress bar</p>
+
+            <div id="progress-container">
+                <div style="font-size: 14px; margin-bottom: 4px;">
+                    <span id="progress-percent">0%</span>
+                </div>
+                <div style="width: 100%; background-color: #1f2933; border-radius: 999px; overflow: hidden; height: 8px;">
+                    <div
+                        id="progress-bar-fill"
+                        style="width: 0%; height: 100%; background: linear-gradient(90deg, #3b82f6, #10b981); transition: width 0.3s ease;"
+                    ></div>
+                </div>
+            </div>
+
             <br>
             <a href="index.html" style="color: #0052FF; text-decoration: none; font-weight: bold;">Back to Home</a>
         </div>
     </div>
 </body>
+<script src="src/labMenu.js" type="module"></script>
 </html>
