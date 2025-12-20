@@ -103,3 +103,20 @@ def delete_user(wallet: str) :
         }
     except Exception as e :
         return None
+
+def check_completion(wallet: str):
+    try:
+        info, progress = get_user(wallet)
+        if not info["completed_practice"]:
+            if progress["faucet"] and progress["sending"] and progress["receiving"] and progress["mint"] and progress["launch"]:
+                update_field("USER_INFO", "completed_practice", wallet, True)
+            if progress["theory"]:
+                update_field("USER_INFO", "completed_theory", wallet, True)
+
+        if not info["completed_all"] and info["completed_practice"] and info["completed_theory"]:
+            update_field("USER_INFO", "completed_all", wallet, True)
+
+        return True
+
+    except Exception:
+        return None

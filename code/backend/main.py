@@ -141,6 +141,12 @@ async def update_field(request: Request):
     response = database.update_field(table_name, field_name, wallet, value)
     if not response:
         raise HTTPException(status_code=400, detail="Error updating field in DB.")
+
+    if table_name == "USER_PROGRESS":
+        response = database.check_completion(wallet)
+        if response is None:
+            raise HTTPException(status_code=500, detail="Error checking completion from DB.")
+
     return {"success": True}
 
 @app.post("/api/database/get-field")
