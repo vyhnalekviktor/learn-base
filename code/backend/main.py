@@ -64,7 +64,7 @@ def eligible_rec(wallet: str):
     sent = database.get_field("USER_INFO", "practice_sent", wallet)
     received = database.get_field("USER_INFO", "practice_received", wallet)
 
-    if not sent or not received:
+    if sent is None or received is None:
         return 2
 
     if received >= sent:
