@@ -112,7 +112,7 @@ async def api_del_user(request: Request):
         raise HTTPException(status_code=500, detail="Error deleting user from DB.")
     return {"success": True}
 
-#returns: ({'wallet': 'test_user', 'id': 18, 'created_at': '2025-12-20T20:16:41.898289+00:00', 'practice_sent': 0, 'practice_received': 0, 'completed_all': False, 'completed_theory': False, 'completed_practice': False}, {'id': 11, 'wallet': 'test_user', 'created_at': '2025-12-20T20:16:41.997225+00:00', 'theory': False, 'faucet': False, 'sending': False, 'receiving': False, 'mint': False, 'launch': False})
+#returns: ({'wallet': 'test_user', 'id': 18, 'created_at': '2025-12-20T20:16:41.898289+00:00', 'practice_sent': 0, 'practice_received': 0, 'completed_all': False, 'completed_theory': False, 'completed_practice': False}, {'id': 11, 'wallet': 'test_user', 'created_at': '2025-12-20T20:16:41.997225+00:00', 'theory': False, 'faucet': False, 'send': False, 'receive': False, 'mint': False, 'launch': False})
 @app.post("/api/database/get-user")
 async def get_user(request: Request):
     data = await request.json()

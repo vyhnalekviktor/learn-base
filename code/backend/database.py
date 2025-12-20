@@ -25,8 +25,8 @@ def init_user_progress(wallet: str) :
         "wallet": wallet,
         "theory": False,
         "faucet": False,
-        "sending": False,
-        "receiving": False,
+        "send": False,
+        "receive": False,
         "mint": False,
         "launch": False
     }
@@ -66,7 +66,7 @@ def update_field(table_name: str, field_name: str, wallet: str, value):
     except Exception as e :
         return None
 # SOPHISTICATED DB FUNCTIONS
-#returns: ([{'wallet': 'test_user', 'id': 18, 'created_at': '2025-12-20T20:16:41.898289+00:00', 'practice_sent': 0, 'practice_received': 0, 'completed_all': False, 'completed_theory': False, 'completed_practice': False}], [{'id': 11, 'wallet': 'test_user', 'created_at': '2025-12-20T20:16:41.997225+00:00', 'theory': False, 'faucet': False, 'sending': False, 'receiving': False, 'mint': False, 'launch': False}])
+#returns: ([{'wallet': 'test_user', 'id': 18, 'created_at': '2025-12-20T20:16:41.898289+00:00', 'practice_sent': 0, 'practice_received': 0, 'completed_all': False, 'completed_theory': False, 'completed_practice': False}], [{'id': 11, 'wallet': 'test_user', 'created_at': '2025-12-20T20:16:41.997225+00:00', 'theory': False, 'faucet': False, 'send': False, 'receive': False, 'mint': False, 'launch': False}])
 def add_user(wallet: str) :
     try:
         row_info = init_user_info(wallet)
@@ -76,7 +76,7 @@ def add_user(wallet: str) :
     except Exception as e :
         return None
 
-#returns: ({'wallet': 'test_user', 'id': 18, 'created_at': '2025-12-20T20:16:41.898289+00:00', 'practice_sent': 0, 'practice_received': 0, 'completed_all': False, 'completed_theory': False, 'completed_practice': False}, {'id': 11, 'wallet': 'test_user', 'created_at': '2025-12-20T20:16:41.997225+00:00', 'theory': False, 'faucet': False, 'sending': False, 'receiving': False, 'mint': False, 'launch': False})
+#returns: ({'wallet': 'test_user', 'id': 18, 'created_at': '2025-12-20T20:16:41.898289+00:00', 'practice_sent': 0, 'practice_received': 0, 'completed_all': False, 'completed_theory': False, 'completed_practice': False}, {'id': 11, 'wallet': 'test_user', 'created_at': '2025-12-20T20:16:41.997225+00:00', 'theory': False, 'faucet': False, 'send': False, 'receive': False, 'mint': False, 'launch': False})
 def get_user(wallet: str):
     try:
         info = get_user_info(wallet)
@@ -85,7 +85,7 @@ def get_user(wallet: str):
     except Exception as e :
         return None
 
-#returns: {'progress_deleted': [{'id': 11, 'wallet': 'test_user', 'created_at': '2025-12-20T20:16:41.997225+00:00', 'theory': False, 'faucet': False, 'sending': False, 'receiving': False, 'mint': False, 'launch': False}], 'info_deleted': [{'wallet': 'test_user', 'id': 18, 'created_at': '2025-12-20T20:16:41.898289+00:00', 'practice_sent': 0, 'practice_received': 0, 'completed_all': False, 'completed_theory': False, 'completed_practice': False}]}
+#returns: {'progress_deleted': [{'id': 11, 'wallet': 'test_user', 'created_at': '2025-12-20T20:16:41.997225+00:00', 'theory': False, 'faucet': False, 'send': False, 'receive': False, 'mint': False, 'launch': False}], 'info_deleted': [{'wallet': 'test_user', 'id': 18, 'created_at': '2025-12-20T20:16:41.898289+00:00', 'practice_sent': 0, 'practice_received': 0, 'completed_all': False, 'completed_theory': False, 'completed_practice': False}]}
 def delete_user(wallet: str) :
     try:
         prog_resp = (
@@ -108,7 +108,7 @@ def check_completion(wallet: str):
     try:
         info, progress = get_user(wallet)
         if not info["completed_practice"]:
-            if progress["faucet"] and progress["sending"] and progress["receiving"] and progress["mint"] and progress["launch"]:
+            if progress["faucet"] and progress["send"] and progress["receive"] and progress["mint"] and progress["launch"]:
                 update_field("USER_INFO", "completed_practice", wallet, True)
             if progress["theory"]:
                 update_field("USER_INFO", "completed_theory", wallet, True)
