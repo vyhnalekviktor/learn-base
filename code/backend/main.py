@@ -73,14 +73,14 @@ def eligible_rec(wallet: str):
 
 @app.post("/api/testnet/send-test")
 async def testnet_send(request: Request):
-    # default:
-    #return {"success": False, "msg": "Friend is busy (not ready)!"}
     data = await request.json()
     wallet = data.get("wallet")
     if not wallet:
         raise HTTPException(status_code=400, detail="No wallet!")
 
     my_wallet_bal = database.get_field("MY_WALLET", "balance-USDC", os.getenv("BOT_WALLET"))
+    if my_wallet_bal is None:
+        return {"success": False, "msg": "Bot wallet row not found in MY_WALLET table"}
     is_eligible = eligible_rec(wallet)
 
     if is_eligible == 1 or my_wallet_bal < 1:
