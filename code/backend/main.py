@@ -91,15 +91,15 @@ async def api_init_user(request: Request):
     if not wallet:
         raise HTTPException(status_code=400, detail="No wallet!")
 
-    exists = database.get_user(wallet)[0].get("wallet")
-    if exists:
-        return {"success": True}
+    result = database.get_user(wallet)
+    if result is not None:
+        return {"success": True, "created": False}
 
     response = database.add_user(wallet)
-    if response.get("message"):
-        raise HTTPException(status_code=400, detail="Error adding user to DB.")
+    if response is None:
+        raise HTTPException(status_code=500, detail="Error adding user to DB.")
 
-    return {"success": True}
+    return {"success": True, "created": True}
 
 @app.post("/api/database/delete-user")
 async def api_del_user(request: Request):
@@ -107,9 +107,9 @@ async def api_del_user(request: Request):
     wallet = data.get("wallet")
     if not wallet:
         raise HTTPException(status_code=400, detail="No wallet!")
-    response = database.remove_user(wallet)
+    response = database.delete_user(wallet)
     if not response:
-        raise HTTPException(status_code=400, detail="Error deleting user from DB.")
+        raise HTTPException(status_code=500, detail="Error deleting user from DB.")
     return {"success": True}
 
 #returns: ({'wallet': 'test_user', 'id': 18, 'created_at': '2025-12-20T20:16:41.898289+00:00', 'practice_sent': 0, 'practice_received': 0, 'completed_all': False, 'completed_theory': False, 'completed_practice': False}, {'id': 11, 'wallet': 'test_user', 'created_at': '2025-12-20T20:16:41.997225+00:00', 'theory': False, 'faucet': False, 'sending': False, 'receiving': False, 'mint': False, 'launch': False})
@@ -120,9 +120,11 @@ async def get_user(request: Request):
     if not wallet:
         raise HTTPException(status_code=400, detail="No wallet!")
 
-    info, progress = database.get_user(wallet)
-    if not info or not progress:
-        raise HTTPException(status_code=400, detail="Error getting user from DB.")
+    response = database.get_user(wallet)
+    if response is None:
+        raise HTTPException(status_code=500, detail="Error getting user from DB.")
+    info = response[0]
+    progress = response[1]
     return {"success": True, "info": info, "progress": progress}
 
 @app.post("/api/database/update_field")
@@ -164,8 +166,8 @@ async def eligible_rec(request: Request):
     if not wallet:
         raise HTTPException(status_code=400, detail="No wallet!")
 
-    sent = database.get_field("USER_INFO", "practice_sent", "wallet")
-    received = database.get_field("USER_INFO", "practice_received", "wallet")
+    sent = database.get_field("USER_INFO", "practice_sent", wallet)
+    received = database.get_field("USER_INFO", "practice_received", wallet)
 
     if not sent or not received:
         raise HTTPException(status_code=400, detail="Error getting user data from DB.")
@@ -173,4 +175,3 @@ async def eligible_rec(request: Request):
     if received >= sent:
        return {"success":True, "eligible": False}
     return {"success":True, "eligible":True}
-
