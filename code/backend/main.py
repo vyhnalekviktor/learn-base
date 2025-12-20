@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from datetime import datetime
+import os
 from dotenv import load_dotenv
 import functions_testnet, functions_mainnet, database
 
@@ -57,32 +57,51 @@ async def testnet_verify(request: Request):
         raise HTTPException(status_code=400, detail=result.get("msg"))
     return result
 
+
+#is user eligible for receiving USDC on testnet? did he pay more than withdraw?
+# return 0 - ok, 1 - limit reached, 2- error
+def eligible_rec(wallet: str):
+    sent = database.get_field("USER_INFO", "practice_sent", wallet)
+    received = database.get_field("USER_INFO", "practice_received", wallet)
+
+    if not sent or not received:
+        return 2
+
+    if received >= sent:
+       return 1
+    return 0
+
 @app.post("/api/testnet/send-test")
 async def testnet_send(request: Request):
     # default:
-    return {"success": False, "msg": "Friend is busy (not ready)!"}
-    '''
-    todo check available funds:
-        if 0: return {"success": False, "msg": "Donate testnet funds, i am empty!"}
-    check user sent status in DB - true/false
-        if false : return {"success": False, "msg": "Already sent you!"}
-    connect to wallet
-    send 1 USDC on sepolia
-    '''
-
+    #return {"success": False, "msg": "Friend is busy (not ready)!"}
     data = await request.json()
-    user_address = data.get("user_address")
+    wallet = data.get("wallet")
+    if not wallet:
+        raise HTTPException(status_code=400, detail="No wallet!")
 
-    result = functions_testnet.validateAddress(user_address)
+    my_wallet_bal = database.get_field("MY_WALLET", "balance-USDC", os.getenv("BOT_WALLET"))
+    is_eligible = eligible_rec(wallet)
+
+    if is_eligible == 1 or my_wallet_bal < 1:
+        return {"success": False, "msg": "Send test USDC first, then withdraw!"}
+    elif is_eligible == 2:
+        raise HTTPException(status_code=400, detail="Error checking status!")
+
+    result = functions_testnet.validateAddress(wallet)
     if not result.get("success"):
         raise HTTPException(status_code=400, detail=result.get("msg"))
 
-    send = functions_testnet.send_testnet(user_address)
-    if not send.get("success"):
-        raise HTTPException(status_code=400, detail=send.get("msg"))
+    result = functions_testnet.try_sending(wallet)
+    if not result.get("success"):
+        raise HTTPException(status_code=400, detail=result.get("msg"))
 
-    #after getting wallet
-    #return send
+    # update status
+    result = database.reset_if_equal_atomic(wallet)
+    if not result:
+        return {"success": False, "msg": "Error Editing transactions!"}
+
+    return {"success": True}
 
 @app.post("/api/database/init-user")
 async def api_init_user(request: Request):
@@ -162,22 +181,3 @@ async def get_field(request: Request):
     if response is None:
         raise HTTPException(status_code=400, detail="Error getting field from DB.")
     return {"success": True, "value": response}
-
-
-#is user eligible for receiving USDC on testnet? did he pay more than withdraw?
-@app.post("/api/database/eligible-rec")
-async def eligible_rec(request: Request):
-    data = await request.json()
-    wallet = data.get("wallet")
-    if not wallet:
-        raise HTTPException(status_code=400, detail="No wallet!")
-
-    sent = database.get_field("USER_INFO", "practice_sent", wallet)
-    received = database.get_field("USER_INFO", "practice_received", wallet)
-
-    if not sent or not received:
-        raise HTTPException(status_code=400, detail="Error getting user data from DB.")
-
-    if received >= sent:
-       return {"success":True, "eligible": False}
-    return {"success":True, "eligible":True}

@@ -120,3 +120,16 @@ def check_completion(wallet: str):
 
     except Exception:
         return None
+
+def reset_if_equal_atomic(wallet: str):
+    try:
+        response = (
+            supabase.table("USER_INFO")
+            .update({"practice_sent": 0, "practice_received": 0})
+            .eq("wallet", wallet)
+            .eq("practice_sent", supabase.sql("practice_received"))
+            .execute()
+        )
+        return True
+    except Exception:
+        return None

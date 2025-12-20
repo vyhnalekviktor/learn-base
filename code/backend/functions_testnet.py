@@ -1,7 +1,5 @@
-from fastapi import FastAPI, Request, HTTPException
 from web3 import Web3
 import os
-import json
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -88,6 +86,8 @@ def verify_testnet_transaction(address_from, address_to, tx_hash, token, amount)
 
 # MetaMask sending
 PRIVATE_KEY = os.getenv("PRIVATE_KEY")
+BOT_WALLET = os.getenv("BOT_WALLET")
+
 ERC20_ABI = [
     {
         "constant": False,
@@ -108,8 +108,6 @@ ERC20_ABI = [
     }
 ]
 
-# todo sent addresses DB
-sent_addresses = set()
 
 def validateAddress(user_address):
     if not user_address:
@@ -119,32 +117,34 @@ def validateAddress(user_address):
         return {"success": False, "msg": "Invalid address format"}
 
     try:
-        user_address = w3.to_checksum_address(user_address)
+        w3.to_checksum_address(user_address)
     except:
         return {"success": False, "msg": "Invalid address"}
 
-    if user_address in sent_addresses:
-        return {"success": False, "msg": "Already sent you USDC! Try sending something in previous step :)."}
-
     return {"success": True}
+
 
 def try_sending(user_address):
     try:
+        # ✅ FIX: Převod na checksum address (vyřeší type error)
+        user_checksum = w3.to_checksum_address(user_address)
+
         account = w3.eth.account.from_key(PRIVATE_KEY)
         faucet_address = account.address
 
         usdc_contract = w3.eth.contract(address=USDC_ADDRESS, abi=ERC20_ABI)
 
+        # Zkontroluj balance BOT walletu
         balance = usdc_contract.functions.balanceOf(faucet_address).call()
-
-        amount = 1_000000
+        amount = 1_000000  # 1 USDC (6 decimals)
 
         if balance < amount:
             return {"success": False, "msg": "Faucet is empty! Please donate testnet USDC."}
 
         nonce = w3.eth.get_transaction_count(faucet_address)
 
-        transfer_function = usdc_contract.functions.transfer(user_address, amount)
+        # ✅ FIX: Použití checksum address
+        transfer_function = usdc_contract.functions.transfer(user_checksum, amount)
 
         transaction = transfer_function.build_transaction({
             "from": faucet_address,
@@ -152,18 +152,19 @@ def try_sending(user_address):
             "gas": 100000,
             "maxFeePerGas": w3.to_wei("2", "gwei"),
             "maxPriorityFeePerGas": w3.to_wei("1", "gwei"),
-            "chainId": 84532
+            "chainId": 84532  # Base Sepolia
         })
 
         signed_tx = w3.eth.account.sign_transaction(transaction, PRIVATE_KEY)
         tx_hash = w3.eth.send_raw_transaction(signed_tx.rawTransaction)
 
-        sent_addresses.add(user_address)
-
         return {
             "success": True,
-            "msg": "USDC sent successfully!",
-            "txHash": w3.to_hex(tx_hash)
+            "msg": "1 USDC sent successfully to Base Sepolia testnet!",
+            "txHash": w3.to_hex(tx_hash),
+            "from": faucet_address,
+            "to": user_checksum,
+            "amount": "1 USDC"
         }
 
     except Exception as e:
