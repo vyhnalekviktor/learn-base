@@ -173,11 +173,11 @@ window.launchToken = async function (tokenName) {
     statusDiv.className = "info-box"
     statusDiv.innerHTML = `
       <p><strong>Token launched successfully!</strong></p>
-      <p style="color: black;"><strong>${cleanName}</strong> (${symbol})</p>
-      <p style="color: black;">Supply: 1,000,000 tokens</p>
-      <p style="color: black;">Contract: <code>${tokenAddress}</code></p>
+      <p ><strong>${cleanName}</strong> (${symbol})</p>
+      <p>Supply: 1,000,000 tokens</p>
+      <p>Contract: <code>${tokenAddress}</code></p>
       <div style="margin-top: 12px;">
-        <a href="${scannerUrl}" target="_blank" class="learn-more">View on BaseScan</a><br>
+        <a href="${scannerUrl}" target="_blank" class="learn-more">View on BaseScan</a>
         <a href="https://account.base.app/activity" target="_blank" class="learn-more">View in wallet</a>
       </div>
     `
