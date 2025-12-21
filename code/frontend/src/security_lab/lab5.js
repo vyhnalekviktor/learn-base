@@ -182,7 +182,7 @@ function showFakeDEXDemo(runButton) {
                         </div>
                         <div class="token-row">
                             <span class="token-label">Contract</span>
-                            <span class="token-value token-value-danger">0x833589fCD6eDb6E08f4c7C32D4f71b54bdA0ABCD </span>
+                            <span class="token-value token-value-danger">0x833589...ABCD </span>
                         </div>
                         <div class="token-row">
                             <span class="token-label">Network</span>
@@ -258,7 +258,7 @@ function showFakeDEXDemo(runButton) {
                         <div class="token-row">
                             <span class="token-label">Contract</span>
                             <span class="token-value">
-                                0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913 (verified)
+                                0x833589...2913 (verified)
                             </span>
                         </div>
                         <div class="token-row">
@@ -268,7 +268,7 @@ function showFakeDEXDemo(runButton) {
                         <div class="token-row token-row-hint">
                             <span class="token-label">Where to check</span>
                             <span class="token-value">
-                                You can verify this contract on BaseScan / Etherscan and
+                                You can verify this contract on BaseScan and
                                 cross-check it with official USDC contract lists (Circle docs, CoinGecko, CoinMarketCap).
                             </span>
                         </div>
