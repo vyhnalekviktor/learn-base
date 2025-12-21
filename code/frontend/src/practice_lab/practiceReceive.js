@@ -109,13 +109,15 @@ window.requestTestUSDC = async function() {
     statusDiv.className = 'info-box';
     statusDiv.innerHTML = `
         <strong>Payment Received!</strong><br><br>
-        Your friend sent you <strong>1 USDC</strong> on Base Sepolia!<br><br>
+            Your friend sent you <strong>1 USDC</strong> on Base Sepolia!<br><br>
         <strong>To:</strong> ${address.substring(0, 6)}...${address.substring(38)}<br><br>
-        Check your wallet now. Transaction should appear in your wallet within 10–30 seconds.<br><br>
-        <a href="https://sepolia.basescan.org" target="_blank" style="color: #0052FF; text-decoration: underline;">
+        <button onclick="window.open('https://sepolia.basescan.org/address/${address}', '_blank')"
+          style="padding: 8px 16px; background: #0052FF; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600;">
             View on BaseScan
-        </a>
+        </button><br><br>
+        <small style="color: #666;">Transaction should appear in your wallet within 10–30 seconds</small>
     `;
+
 
   } catch (error) {
     console.error('Error:', error);
