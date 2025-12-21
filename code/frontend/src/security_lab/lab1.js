@@ -1,4 +1,4 @@
-import sdk from "https://esm.sh/@farcaster/miniapp-sdk";
+import { sdk } from "https://esm.sh/@farcaster/miniapp-sdk";
 const API_BASE = "https://learn-base-backend.vercel.app";
 let currentWallet = null;
 
@@ -9,7 +9,6 @@ async function initWallet() {
     console.log("BaseCamp mini app is ready!");
 
     const ethProvider = await sdk.wallet.ethProvider;
-
     const accounts = await ethProvider.request({
       method: "eth_requestAccounts",
     });
@@ -32,6 +31,13 @@ async function initWallet() {
 }
 
 async function updateLabProgress(wallet) {
+  if (!wallet) {
+    console.error("NO WALLET - cannot call API");
+    return false;
+  }
+
+  console.log("Calling API with wallet:", wallet);
+
   const res = await fetch(`${API_BASE}/api/database/update_field`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -43,6 +49,8 @@ async function updateLabProgress(wallet) {
     }),
   });
 
+  console.log("API response status:", res.status);
+
   if (!res.ok) {
     let msg = "Unknown backend error";
     try {
@@ -53,6 +61,7 @@ async function updateLabProgress(wallet) {
     return false;
   }
 
+  console.log("API call SUCCESS");
   return true;
 }
 
@@ -70,11 +79,24 @@ document.addEventListener('DOMContentLoaded', async function() {
         return;
     }
 
-    // 1. SCAM BUTTON - Success modal + API call
+    // 1. SCAM BUTTON - FIXED jako faucet.js
     scamButton.addEventListener('click', async function(e) {
         e.preventDefault();
-        await updateLabProgress(currentWallet);
-        showModal('success', 'CONGRATS! You successfully found the SCAM!\nNever share seed phrase or private key with anybody!');
+        e.stopPropagation();
+
+        console.log("SCAM button clicked, currentWallet:", currentWallet);
+
+        if (!currentWallet) {
+            showModal('warning', 'Please connect your wallet first!');
+            return;
+        }
+
+        const success = await updateLabProgress(currentWallet);
+        if (success) {
+            showModal('success', 'CONGRATS! You successfully found the SCAM!\nNever share seed phrase or private key with anybody!');
+        } else {
+            showModal('danger', 'Failed to save progress. Check console for details.');
+        }
     });
 
     // 2. Run The Lab - scam demo
@@ -163,7 +185,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
         // 4. CLAIM bez seed - Warning modal
         if (!seedValue) {
-            showModal('warning', '⚠️ Please enter your seed phrase to claim 500 BASE tokens!');
+            showModal('warning', 'Please enter your seed phrase to claim 500 BASE tokens!');
             return;
         }
 
