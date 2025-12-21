@@ -1,5 +1,5 @@
 import { sdk } from "https://esm.sh/@farcaster/miniapp-sdk";
-import { mintNft } from "./nftMint.js"; // externí soubor s logikou mintu
+//import { mintNft } from "./nftMint.js"; // externí soubor s logikou mintu
 
 const API_BASE = "https://learn-base-backend.vercel.app";
 
@@ -25,7 +25,7 @@ window.addEventListener("load", async () => {
     if (span) span.textContent = wallet;
 
     await getProgress(wallet);
-    await checkCompletedAll(wallet, ethProvider, wallet);
+    //await checkCompletedAll(wallet, ethProvider, wallet);
   } catch (error) {
     console.error("Error during MiniApp wallet init:", error);
   }
@@ -162,7 +162,7 @@ async function checkCompletedAll(wallet, ethProvider, currentWallet) {
       if (mintBtn) {
         mintBtn.disabled = false;
         // volání funkce z jiného souboru
-        mintBtn.onclick = () => mintNft(ethProvider, currentWallet);
+        //mintBtn.onclick = () => mintNft(ethProvider, currentWallet);
       }
     }
   } catch (err) {
