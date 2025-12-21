@@ -43,11 +43,9 @@ window.addEventListener("load", async () => {
     const span = document.getElementById("wallet-address");
     if (span) span.textContent = wallet;
 
-    await initUser(wallet);          // vytvoř USER_INFO / USER_PROGRESS, pokud chybí
-    await getProgress(wallet);       // načti progres
-    await checkCompletedAll(wallet); // odemkni NFT sekci
-    await checkClaimedNft(wallet);   // případně zobraz owned NFT
-    await initApp();                 // init NFT části (zobrazení adresy kontraktu)
+    await initUser(wallet);       // vytvoř USER_INFO / USER_PROGRESS, pokud chybí
+    await loadUserState(wallet);  // načti vše z get-user
+    await initApp();              // init NFT části (zobrazení adresy kontraktu)
   } catch (error) {
     console.error("Error during MiniApp wallet init:", error);
   }
@@ -79,8 +77,8 @@ async function initUser(wallet) {
   }
 }
 
-// Načtení progresu uživatele
-async function getProgress(wallet) {
+// Jediný get-user call – progress + completed_all + claimed_nft
+async function loadUserState(wallet) {
   try {
     const res = await fetch(`${API_BASE}/api/database/get-user`, {
       method: "POST",
@@ -99,8 +97,8 @@ async function getProgress(wallet) {
     }
 
     const data = await res.json();
-    const info = data.info;
-    const progress = data.progress;
+    const info = data.info;       // USER_INFO
+    const progress = data.progress; // USER_PROGRESS
 
     if (!progress || !info) {
       console.error("Missing info or progress object in response");
@@ -155,80 +153,24 @@ async function getProgress(wallet) {
     const secText = document.getElementById("securityProgressText");
     if (secBar) secBar.style.width = `${securityPercent}%`;
     if (secText) secText.textContent = `${securityPercent} / 100 %`;
-  } catch (err) {
-    console.error("getProgress error:", err);
-  }
-}
 
-// Zjistí USER_INFO.completed_all a odemkne NFT blok
-async function checkCompletedAll(wallet) {
-  try {
-    const res = await fetch(`${API_BASE}/api/database/get-field`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        wallet,
-        table_name: "USER_INFO",
-        field_name: "completed_all",
-      }),
-    });
-
-    if (!res.ok) {
-      let msg = "Unknown backend error";
-      try {
-        const err = await res.json();
-        msg = err.detail || JSON.stringify(err);
-      } catch (_) {}
-      console.error("get-field completed_all error:", msg);
-      return;
-    }
-
-    const data = await res.json();
-    const value = data.value;
-    console.log("completed_all value:", value);
-
+    // completed_all → odemknutí NFT sekce
     const nftSection = document.getElementById("nftSection");
     const mintBtn = document.getElementById("mintNftBtn");
-
-    if (value === true) {
+    if (info.completed_all === true) {
       if (nftSection) nftSection.classList.remove("locked");
       if (mintBtn) {
         mintBtn.disabled = false;
         mintBtn.onclick = window.claimNFT;
       }
     }
-  } catch (err) {
-    console.error("checkCompletedAll error:", err);
-  }
-}
 
-// Zjistí USER_INFO.claimed_nft
-async function checkClaimedNft(wallet) {
-  try {
-    const res = await fetch(`${API_BASE}/api/database/get-field`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        wallet,
-        table_name: "USER_INFO",
-        field_name: "claimed_nft",
-      }),
-    });
-
-    if (!res.ok) {
-      console.log("claimed_nft get-field not ok (maybe not set yet)");
-      return;
-    }
-
-    const data = await res.json();
-    const value = data.value;
-    console.log("claimed_nft value:", value);
-
-    if (value === true) {
+    // claimed_nft → přepnutí na „Your NFT“
+    if (info.claimed_nft === true) {
       showOwnedNftSection();
     }
   } catch (err) {
-    console.error("checkClaimedNft error:", err);
+    console.error("loadUserState error:", err);
   }
 }
 
