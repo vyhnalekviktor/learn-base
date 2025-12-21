@@ -206,7 +206,7 @@ async def practice_sent(request: Request):
         raise HTTPException(status_code=400, detail="No wallet!")
 
     u = database.get_field("USER_INFO", "practice_sent", wallet)
-    b = database.get_field("MY_WALLET", "practice_sent", BOT_WALLET)
+    b = database.get_field("MY_WALLET", "balance-USDC", BOT_WALLET)
 
     if u is None or b is None:
         raise HTTPException(status_code=400, detail="Error getting data from DB.")
