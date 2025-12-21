@@ -235,52 +235,66 @@ async def mint_nft_thirdweb(request: Request):
 
     USDC_ADDRESS = "0x833589fCD6eDb6E08f4c7c32D4f71b54bdA02913"
     NFT_CONTRACT = os.getenv("BATCH1_NFT_ADDRESS")
+    if not NFT_CONTRACT:
+        raise HTTPException(status_code=500, detail="Missing NFT_CONTRACT env")
 
-    # APPROVE USDC
-    approve_resp = requests.post("https://api.thirdweb.com/v1/contracts/write",
-                                 headers={
-                                     "Content-Type": "application/json",
-                                     "x-secret-key": SECRET_KEY
-                                 },
-                                 json={
-                                     "calls": [{
-                                         "contractAddress": USDC_ADDRESS,
-                                         "method": "function approve(address,uint256) external returns (bool)",
-                                         "params": [NFT_CONTRACT, "4000000"]
-                                     }],
-                                     "chainId": 8453,
-                                     "from": wallet
-                                 }
-                                 )
+    try:
+        # 1. APPROVE USDC
+        approve_resp = requests.post(
+            "https://api.thirdweb.com/v1/contracts/write",
+            headers={
+                "Content-Type": "application/json",
+                "x-secret-key": SECRET_KEY
+            },
+            json={
+                "calls": [{
+                    "contractAddress": USDC_ADDRESS,
+                    "method": "function approve(address,uint256) external returns (bool)",
+                    "params": [NFT_CONTRACT, 4000000]
+                }],
+                "chainId": 8453,
+                "from": wallet
+            }
+        )
 
-    time.sleep(3)
+        if approve_resp.status_code != 200:
+            return {"success": False, "error": f"Approve failed: {approve_resp.text}"}
 
-    # CLAIM NFT
-    claim_resp = requests.post("https://api.thirdweb.com/v1/contracts/write",
-                               headers={
-                                   "Content-Type": "application/json",
-                                   "x-secret-key": SECRET_KEY
-                               },
-                               json={
-                                   "calls": [{
-                                       "contractAddress": NFT_CONTRACT,
-                                       "method": "function claim(address _receiver,uint256 _tokenId,uint256 _quantity,address _currency,uint256 _pricePerToken,(bytes32[] proof,uint256 quantityLimitPerWallet,uint256 pricePerToken,address currency) _allowlistProof,bytes _data) payable",
-                                       "params": [
-                                           wallet, 0, 1, USDC_ADDRESS, "4000000",
-                                           {"proof": [], "quantityLimitPerWallet": 1, "pricePerToken": "4000000",
-                                            "currency": USDC_ADDRESS},
-                                           "0x"
-                                       ]
-                                   }],
-                                   "chainId": 8453,
-                                   "from": wallet
-                               }
-                               )
+        approve_result = approve_resp.json()
+        if "transactionHash" not in approve_result:
+            return {"success": False, "error": approve_result}
 
-    result = claim_resp.json()
+        time.sleep(3)  # Wait for approval confirmation
 
-    if "transactionHash" in result:
-        database.add_transaction("USER_INFO", "claimed_nft", wallet, True)
-        return {"success": True, "tx": result["transactionHash"]}
+        # 2. CLAIM NFT
+        claim_resp = requests.post(
+            "https://api.thirdweb.com/v1/contracts/write",
+            headers={"Content-Type": "application/json", "x-secret-key": SECRET_KEY},
+            json={
+                "calls": [{
+                    "contractAddress": NFT_CONTRACT,
+                    "method": "function claim(address _receiver, uint256 _tokenId, uint256 _quantity, address _currency, uint256 _pricePerToken, (bytes32[] proof, uint256 quantityLimitPerWallet, uint256 pricePerToken, address currency) _allowlistProof, bytes _data) payable",
+                    "params": [
+                        wallet, 0, 1, USDC_ADDRESS, 4000000,
+                        {"proof": [], "quantityLimitPerWallet": 1, "pricePerToken": 4000000, "currency": USDC_ADDRESS},
+                        "0x"
+                    ]
+                }],
+                "chainId": 8453, "from": wallet
+            }
+        )
 
-    return {"success": False, "error": result}
+        if claim_resp.status_code != 200:
+            return {"success": False, "error": f"Claim failed: {claim_resp.text}"}
+
+        result = claim_resp.json()
+
+        if "transactionHash" in result:
+            # Update database
+            database.add_transaction("USER_INFO", "claimed_nft", wallet, True)
+            return {"success": True, "tx": result["transactionHash"]}
+
+        return {"success": False, "error": result}
+
+    except Exception as e:
+        return {"success": False, "error": str(e)}
