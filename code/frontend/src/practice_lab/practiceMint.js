@@ -1,6 +1,8 @@
 import { sdk } from 'https://esm.sh/@farcaster/miniapp-sdk';
 
+const API_BASE = "https://learn-base-backend.vercel.app";
 const CONTRACT_ADDRESS = '0x726107014C8F10d372D59882dDF126ea02c3c6d4';
+
 const BASE_SEPOLIA_CHAIN_ID = 84532;
 const BASE_MAINNET_CHAIN_ID = 8453;
 
@@ -14,19 +16,27 @@ let ethProvider = null;
 let signer = null;
 let originalChainId = null;
 
+// init
 async function initApp() {
   try {
     ethProvider = await sdk.wallet.ethProvider;
     await sdk.actions.ready();
-    document.getElementById('nftContract').textContent = CONTRACT_ADDRESS;
+
+    const addrSpan = document.getElementById('nftContract');
+    if (addrSpan) {
+      addrSpan.textContent = CONTRACT_ADDRESS;
+    }
   } catch (error) {
     console.error('Init error:', error);
   }
 }
 
+// accordion
 window.toggleAccordion = function (id) {
   const content = document.getElementById('content-' + id);
   const icon = document.getElementById('icon-' + id);
+
+  if (!content || !icon) return;
 
   if (content.style.maxHeight) {
     content.style.maxHeight = null;
@@ -48,7 +58,37 @@ async function switchToMainnet() {
   }
 }
 
-// načte metadata a vrátí <img> tag jako HTML string
+// update USER_PROGRESS.mint = true
+async function updateMintProgress(wallet) {
+  try {
+    const res = await fetch(`${API_BASE}/api/database/update_field`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        wallet,
+        table_name: "USER_PROGRESS",
+        field_name: "mint",
+        value: true,
+      }),
+    });
+
+    if (!res.ok) {
+      let msg = "Unknown backend error";
+      try {
+        const err = await res.json();
+        msg = err.detail || JSON.stringify(err);
+      } catch (_) {}
+      console.error("update_field mint error:", msg);
+      return false;
+    }
+    return true;
+  } catch (e) {
+    console.error("update_field mint network error:", e);
+    return false;
+  }
+}
+
+// load NFT metadata and return HTML snippet
 async function buildNftImageHtml(tokenId) {
   try {
     const { BrowserProvider, Contract } = await import(
@@ -60,35 +100,31 @@ async function buildNftImageHtml(tokenId) {
 
     const uri = await contract.tokenURI(tokenId);
     const parts = uri.split(',');
-    if (parts.length < 2) {
-      return '';
-    }
+    if (parts.length < 2) return '';
 
     const base64Json = parts[1];
     const jsonStr = atob(base64Json);
     const meta = JSON.parse(jsonStr);
 
-    if (!meta.image) {
-      return '';
-    }
+    if (!meta.image) return '';
 
     return `
-      <div style="margin: 16px 0; text-align: center;">
-        <p style="margin-bottom: 8px; font-weight: 600;">This is your NFT</p>
-        <img src="${meta.image}"
-             alt="Your NFT"
-             style="max-width: 140px; border-radius: 6px; border: 1px solid #ccc;" />
+      <div style="margin-top: 16px;">
+        <div style="margin-bottom: 8px; font-weight: 600;">This is your NFT</div>
+        <img src="${meta.image}" alt="Your NFT" style="max-width: 100%; border-radius: 12px; border: 1px solid rgba(255,255,255,0.15);" />
       </div>
     `;
   } catch (e) {
-    console.error('buildNftImageHtml error:', e);
+    console.error('Error building NFT image HTML:', e);
     return '';
   }
 }
 
 window.mintNFT = async function () {
   const statusDiv = document.getElementById('mintStatus');
-  const mintBtn = document.getElementById('mintNftBtn');
+  const mintBtn = document.getElementById('mintBtn');
+
+  if (!statusDiv) return;
 
   try {
     if (mintBtn) {
@@ -98,7 +134,7 @@ window.mintNFT = async function () {
 
     statusDiv.style.display = 'block';
     statusDiv.className = 'info-box';
-    statusDiv.innerHTML = '<p>Preparing to mint your NFT...</p>';
+    statusDiv.innerHTML = 'Preparing to mint your NFT...';
 
     if (!ethProvider) {
       throw new Error('Base App not initialized');
@@ -110,10 +146,12 @@ window.mintNFT = async function () {
 
     const provider = new BrowserProvider(ethProvider);
     const network = await provider.getNetwork();
+
     originalChainId = Number(network.chainId);
 
+    // switch to Base Sepolia if needed
     if (originalChainId !== BASE_SEPOLIA_CHAIN_ID) {
-      statusDiv.innerHTML = '<p>Switching to Base Sepolia testnet...</p>';
+      statusDiv.innerHTML = 'Switching to Base Sepolia testnet...';
 
       try {
         await ethProvider.request({
@@ -150,29 +188,35 @@ window.mintNFT = async function () {
     signer = await sepoliaProvider.getSigner();
     const userAddress = await signer.getAddress();
 
-    statusDiv.innerHTML =
-      '<p>Please confirm the transaction in your wallet...</p>';
+    statusDiv.innerHTML = 'Please confirm the transaction in your wallet...';
 
     const contract = new Contract(CONTRACT_ADDRESS, ABI, signer);
     const tx = await contract.mintTo(userAddress);
-    const txHash = tx.hash;
 
+    const txHash = tx.hash;
     const shortHash =
       txHash.substring(0, 10) + '...' + txHash.substring(txHash.length - 8);
 
     statusDiv.innerHTML = `
-      <p><strong>Transaction submitted!</strong></p>
-      <p>Hash: <code>${shortHash}</code></p>
-      <p>Waiting for confirmation...</p>
+      <strong>Transaction submitted!</strong><br><br>
+      <strong>Hash:</strong><br>
+      <code>${shortHash}</code><br><br>
+      Waiting for confirmation...
     `;
 
     let receipt = null;
     try {
       receipt = await tx.wait(1);
     } catch (waitError) {
+      // some providers throw even if status is 1, so fallback
       receipt = { status: 1 };
     }
 
+    if (receipt.status !== 1) {
+      throw new Error('Transaction failed on chain');
+    }
+
+    // get total minted and new token id
     let totalMinted = 'N/A';
     let newTokenId = null;
 
@@ -190,29 +234,30 @@ window.mintNFT = async function () {
       nftImageHtml = await buildNftImageHtml(newTokenId);
     }
 
+    // ✅ progress update po úspěšném mintu
+    try {
+      const mintProgressOk = await updateMintProgress(userAddress);
+      console.log("mint progress updated:", mintProgressOk);
+    } catch (e) {
+      console.error("Cannot update mint progress:", e);
+    }
+
     const scannerUrl = newTokenId
       ? `https://sepolia.basescan.org/nft/${CONTRACT_ADDRESS}/${newTokenId}`
       : `https://sepolia.basescan.org/address/${CONTRACT_ADDRESS}`;
 
     statusDiv.className = 'info-box';
     statusDiv.innerHTML = `
-      <p><strong>Mint successful!</strong></p>
-      <p>Total NFTs minted: ${totalMinted}</p>
-      ${newTokenId ? `<p>Your new token ID: #${newTokenId}</p>` : ''}
+      <strong>Mint successful!</strong><br><br>
+      <strong>Total NFTs minted:</strong> ${totalMinted}<br>
+      ${newTokenId ? `<strong>Your new token ID:</strong> #${newTokenId}<br>` : ''}
       ${nftImageHtml}
-      <div style="margin-top: 12px; display:flex; flex-direction:column; gap:8px;">
-        <a href="${scannerUrl}" target="_blank"
-           style="padding: 10px 16px; text-align:center; border-radius:10px; border:1px solid #0052FF; color:#0052FF; font-weight:600; text-decoration:none;">
-          View scanner
-        </a>
-        <a href="https://account.base.app/activity" target="_blank"
-           style="padding: 10px 16px; text-align:center; border-radius:10px; border:1px solid #0052FF; color:#0052FF; font-weight:600; text-decoration:none;">
-          View in wallet
-        </a>
-      </div>
-      <p style="margin-top:8px; font-size:12px; color:#666;">
-        Your NFT has been minted on Base Sepolia testnet.
-      </p>
+      <br>
+      <button onclick="window.open('${scannerUrl}', '_blank')"
+              style="margin-top: 12px; padding: 8px 16px; background: #0052FF; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600;">
+        View on BaseScan
+      </button><br><br>
+      <small style="color: #666;">Your NFT has been minted on Base Sepolia testnet</small>
     `;
 
     if (originalChainId === BASE_MAINNET_CHAIN_ID) {
@@ -224,17 +269,17 @@ window.mintNFT = async function () {
     statusDiv.className = 'info-box';
 
     if (error.code === 4001) {
-      statusDiv.innerHTML = '<p>Transaction rejected by user.</p>';
+      statusDiv.innerHTML = 'Transaction rejected by user.';
     } else if (
       typeof error.message === 'string' &&
       error.message.includes('insufficient funds')
     ) {
       statusDiv.innerHTML =
-        '<p>Insufficient ETH for gas fees. Get testnet ETH from a faucet.</p>';
+        'Insufficient ETH for gas fees. Get testnet ETH from a faucet.';
     } else {
-      statusDiv.innerHTML = `<p>Mint failed: ${
+      statusDiv.innerHTML = `Mint failed: ${
         error.shortMessage || error.message
-      }</p>`;
+      }`;
     }
 
     if (originalChainId === BASE_MAINNET_CHAIN_ID) {
@@ -249,4 +294,3 @@ window.mintNFT = async function () {
 };
 
 initApp();
-//a
