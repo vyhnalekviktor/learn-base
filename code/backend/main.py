@@ -15,6 +15,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+BOT_WALLET = os.getenv("BOT_WALLET")
 
 # ENDPOINTS
 @app.get("/")
@@ -79,7 +80,7 @@ def update_tx(wallet):
     if status is None:
         return False
 
-    bot_bal = database.get_field("MY_WALLET", "balance-USDC", os.getenv("BOT_WALLET"))
+    bot_bal = database.get_field("MY_WALLET", "balance-USDC", BOT_WALLET)
     if bot_bal is None:
         return False
     status = database.update_field("MY_WALLET", "balance-USDC", wallet, bot_bal-1)
@@ -94,7 +95,7 @@ async def testnet_send(request: Request):
     if not wallet:
         raise HTTPException(status_code=400, detail="No wallet!")
 
-    my_wallet_bal = database.get_field("MY_WALLET", "balance-USDC", os.getenv("BOT_WALLET"))
+    my_wallet_bal = database.get_field("MY_WALLET", "balance-USDC", BOT_WALLET)
     if my_wallet_bal is None:
         return {"success": False, "msg": "Bot wallet row not found in MY_WALLET table"}
     is_eligible = eligible_rec(wallet)
@@ -196,3 +197,25 @@ async def get_field(request: Request):
     if response is None:
         raise HTTPException(status_code=400, detail="Error getting field from DB.")
     return {"success": True, "value": response}
+
+@app.post("/api/database/practice-sent")
+async def practice_sent(request: Request):
+    data = await request.json()
+    wallet = data.get("wallet")
+    if not wallet:
+        raise HTTPException(status_code=400, detail="No wallet!")
+
+    u = database.get_field("USER_INFO", "practice_sent", wallet)
+    b = database.get_field("MY_WALLET", "practice_sent", BOT_WALLET)
+
+    if u is None or b is None:
+        raise HTTPException(status_code=400, detail="Error getting data from DB.")
+
+    r = database.update_field("USER_INFO", "practice_sent", wallet, u+1)
+    s = database.update_field("MY_WALLET", "balance-USDC", wallet, b+1)
+
+    if r is None or s is None:
+        raise HTTPException(status_code=400, detail="Error updating data to DB.")
+
+    return {"success": True}
+    
