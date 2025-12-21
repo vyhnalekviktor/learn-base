@@ -229,7 +229,7 @@ def call_nft_api(wallet_address, approve_first=True):
     url = "https://api.thirdweb.com/v1/contracts/write"
     headers = {
         "Content-Type": "application/json",
-        "x-api-key": thirdweb_api_key  # x-api-key pro client, x-secret-key pro server
+        "x-secret-key": thirdweb_api_key  # x-api-key pro client, x-secret-key pro server
     }
 
     USDC_ADDRESS = "0x833589fCD6eDb6E08f4c7c32D4f71b54bdA02913"
