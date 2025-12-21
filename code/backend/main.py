@@ -83,7 +83,7 @@ def update_tx(wallet):
     bot_bal = database.get_field("MY_WALLET", "balance-USDC", BOT_WALLET)
     if bot_bal is None:
         return False
-    status = database.update_field("MY_WALLET", "balance-USDC", wallet, bot_bal-1)
+    status = database.update_field("MY_WALLET", "balance-USDC", BOT_WALLET, bot_bal-1)
     if status is None:
         return False
     return True
