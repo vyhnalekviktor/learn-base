@@ -17,7 +17,8 @@ def init_user_info(wallet: str) :
         "completed_theory": False,
         "completed_practice": False,
         "completed_security": False,
-        "completed_all": False
+        "completed_all": False,
+        "claimed_nft": False
     }
     response = supabase.table("USER_INFO").insert(user_info).execute()
     return response.data
