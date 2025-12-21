@@ -1,57 +1,71 @@
-import { NFT_ABI } from "./nftABI.js";
+import { createThirdwebClient, getContract, claimTo, sendTransaction } from "thirdweb";
+import { defineChain } from "thirdweb/chains";
 
-const BASE_MAINNET_CHAIN_ID = "0x2105"; // Base mainnet
-
+const BASE = defineChain(8453); // Base mainnet
 const NFT_CONTRACT = "0xA76F456f6FbaB161069fc891c528Eb56672D3e69";
-
 const USDC_ADDRESS = "0x833589fCD6eDb6E08f4c7c32D4f71b54bdA02913";
 const USDC_DECIMALS = 6;
-const PRICE_USDC = 4;    // 4 USDC
+const PRICE_USDC = 4; // 4 USDC
 const QUANTITY = 1;
+const TOKEN_ID = 0; // první NFT z dropu
 
-const ERC20_ABI = [
-  "function approve(address spender, uint256 amount) public returns (bool)",
-];
+// Thirdweb client (bez clientId funguje pro basic operace)
+const client = createThirdwebClient({});
 
-export async function mintNft(ethProvider, wallet) {
+export async function mintNft(ethProvider, walletAddress) {
   try {
-    if (!ethProvider || !wallet) {
-      console.error("Missing provider or wallet for mintNft");
+    if (!ethProvider || !walletAddress) {
+      console.error("Missing provider or wallet");
       return;
     }
 
-    // ověření / přepnutí na Base mainnet
+    // Přepni na Base mainnet
     const chainId = await ethProvider.request({ method: "eth_chainId" });
-    if (chainId !== BASE_MAINNET_CHAIN_ID) {
+    if (chainId !== "0x2105") {
       await ethProvider.request({
         method: "wallet_switchEthereumChain",
-        params: [{ chainId: BASE_MAINNET_CHAIN_ID }],
+        params: [{ chainId: "0x2105" }],
       });
     }
 
-    // ethers v5 přes global `ethers` (z UMD skriptu v HTML)
-    const provider = new ethers.providers.Web3Provider(ethProvider);
-    const signer = provider.getSigner();
+    // NFT Drop kontrakt
+    const contract = getContract({
+      client,
+      chain: BASE,
+      address: NFT_CONTRACT,
+    });
 
-    // 1) approve USDC
-    const usdc = new ethers.Contract(USDC_ADDRESS, ERC20_ABI, signer);
-    const amount = ethers.utils.parseUnits(
-      PRICE_USDC.toString(),
-      USDC_DECIMALS
-    );
+    // 1) APPROVE USDC (použijeme raw transaction)
+    const usdcAmount = (PRICE_USDC * QUANTITY * 10 ** USDC_DECIMALS).toString();
 
     console.log("Approving USDC...");
-    const approveTx = await usdc.approve(NFT_CONTRACT, amount);
-    await approveTx.wait();
-    console.log("USDC approved");
+    const approveTx = await ethProvider.request({
+      method: "eth_sendTransaction",
+      params: [{
+        from: walletAddress,
+        to: USDC_ADDRESS,
+        data: `0x095ea7b3000000000000000000000000${NFT_CONTRACT.slice(2)}${usdcAmount.padStart(64, '0')}`
+      }]
+    });
+    await ethProvider.once("block", () => {}); // čekej na potvrzení
+    console.log("USDC approved:", approveTx);
 
-    // 2) claim NFT z drop kontraktu
-    const drop = new ethers.Contract(NFT_CONTRACT, NFT_ABI, signer);
+    // 2) CLAIM NFT přes thirdweb
+    console.log("Claiming NFT...");
+    const transaction = claimTo({
+      contract,
+      to: walletAddress,
+      tokenId: TOKEN_ID,
+      amount: QUANTITY,
+    });
 
-    console.log("Calling claim...");
-    const claimTx = await drop.claim(wallet, QUANTITY);
-    await claimTx.wait();
-    console.log("Claim confirmed");
+    const { transactionHash } = await sendTransaction({
+      transaction,
+      account: ethProvider,
+    });
+
+    console.log("NFT minted! Tx:", transactionHash);
+    return transactionHash;
   } catch (e) {
     console.error("mintNft error:", e);
   }
