@@ -57,14 +57,14 @@ async function getProgress(wallet) {
       return;
     }
 
-    // THEORY
+    // THEORY ✅
     const theoryBar = document.getElementById('theoryProgressBar');
     const theoryText = document.getElementById('theoryProgressText');
     const theoryPercent = info.completed_theory ? 100 : 0;
     if (theoryBar) theoryBar.style.width = `${theoryPercent}%`;
     if (theoryText) theoryText.textContent = `${theoryPercent}%`;
 
-    // BASE CHAIN LAB
+    // BASE CHAIN LAB ✅
     const baseParts = [progress.faucet, progress.send, progress.receive, progress.mint, progress.launch];
     let baseCompleted = 0;
     for (const part of baseParts) {
@@ -78,7 +78,7 @@ async function getProgress(wallet) {
     if (baseBar) baseBar.style.width = `${basePercent}%`;
     if (baseText) baseText.textContent = `${basePercent}%`;
 
-    // SECURITY LAB
+    // SECURITY LAB ✅
     const securityParts = [progress.lab1, progress.lab2, progress.lab3, progress.lab4, progress.lab5];
     let securityCompleted = 0;
     for (const part of securityParts) {
@@ -163,15 +163,15 @@ async function checkCompletedAll(wallet, ethProvider, currentWallet) {
           if (data.success) {
             console.log('NFT MINTED! Tx:', data.tx);
 
-            // ✅ UKAŽ NFT SEKCI
+            // UKAŽ NFT SEKCI
             const ownedSection = document.getElementById('ownedNftSection');
             if (ownedSection) ownedSection.style.display = 'block';
 
-            // ✅ SKRYJ MINT BUTTON
+            // SKRYJ MINT BUTTON
             mintBtn.disabled = true;
             mintBtn.textContent = 'NFT Minted!';
 
-            // ✅ TX LINK NA BASESCAN
+            // TX LINK NA BASESCAN
             const txLink = `https://basescan.org/tx/${data.tx}`;
             alert(`NFT successfully minted!\nTx: ${txLink}`);
           } else {
