@@ -1,4 +1,4 @@
-import { NFT_ABI } from "./nftABI.js"
+import { NFT_ABI } from "./nftABI.js";
 import { sdk } from "https://esm.sh/@farcaster/miniapp-sdk";
 
 const API_BASE = "https://learn-base-backend.vercel.app";
@@ -43,14 +43,41 @@ window.addEventListener("load", async () => {
     const span = document.getElementById("wallet-address");
     if (span) span.textContent = wallet;
 
-    await getProgress(wallet);
-    await checkCompletedAll(wallet);
-    await checkClaimedNft(wallet);
-    await initApp();
+    await initUser(wallet);          // vytvoř USER_INFO / USER_PROGRESS, pokud chybí
+    await getProgress(wallet);       // načti progres
+    await checkCompletedAll(wallet); // odemkni NFT sekci
+    await checkClaimedNft(wallet);   // případně zobraz owned NFT
+    await initApp();                 // init NFT části (zobrazení adresy kontraktu)
   } catch (error) {
     console.error("Error during MiniApp wallet init:", error);
   }
 });
+
+// Inicializace uživatele v DB
+async function initUser(wallet) {
+  try {
+    const res = await fetch(`${API_BASE}/api/database/init-user`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ wallet }),
+    });
+
+    if (!res.ok) {
+      let msg = "Unknown backend error";
+      try {
+        const err = await res.json();
+        msg = err.detail || JSON.stringify(err);
+      } catch (_) {}
+      console.error("init-user error:", msg);
+      return;
+    }
+
+    const data = await res.json();
+    console.log("init-user:", data);
+  } catch (e) {
+    console.error("initUser error:", e);
+  }
+}
 
 // Načtení progresu uživatele
 async function getProgress(wallet) {
@@ -286,7 +313,7 @@ window.claimNFT = async function () {
     await approveTx.wait();
     console.log("USDC approved");
 
-    // 2) Claim 1 NFT – SIGNATURU UPRAV PODLE ABI
+    // 2) Claim 1 NFT (uprav signaturu dle ABI, pokud je jiná)
     const drop = new ethers.Contract(NFT_CONTRACT, NFT_ABI, signer);
     console.log("Calling claim...");
     const claimTx = await drop.claim(currentWallet, QUANTITY);
