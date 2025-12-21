@@ -110,10 +110,16 @@ def check_completion(wallet: str):
         if not info["completed_practice"]:
             if progress["faucet"] and progress["send"] and progress["receive"] and progress["mint"] and progress["launch"]:
                 update_field("USER_INFO", "completed_practice", wallet, True)
-            if progress["theory"]:
-                update_field("USER_INFO", "completed_theory", wallet, True)
 
-        if not info["completed_all"] and info["completed_practice"] and info["completed_theory"]:
+        if progress["theory"]:
+            update_field("USER_INFO", "completed_theory", wallet, True)
+
+        if not info["completed_security"]:
+            if progress["lab1"] and progress["lab2"] and progress["lab3"] and progress["lab4"] and progress["lab5"]:
+                update_field("USER_INFO", "completed_security", wallet, True)
+
+
+        if not info["completed_all"] and info["completed_practice"] and info["completed_theory"] and info["completed_security"]:
             update_field("USER_INFO", "completed_all", wallet, True)
 
         return True
