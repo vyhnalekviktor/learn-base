@@ -131,84 +131,39 @@ async function checkCompletedAll(wallet, ethProvider, currentWallet) {
       if (mintBtn) {
         mintBtn.disabled = false;
 
-        // THIRDWEB FULL CLAIM (podle dokumentace)
+        // BACKEND PROXY MINT (secret key skrytý)
         mintBtn.onclick = async () => {
           try {
-            console.log("Thirdweb FULL claim started");
+            console.log("=== MINT START (via backend) ===");
 
             // 1. Přepni na Base mainnet
             const chainId = await ethProvider.request({ method: "eth_chainId" });
+            console.log("Current chain:", chainId);
             if (chainId !== "0x2105") {
               await ethProvider.request({
                 method: "wallet_switchEthereumChain",
                 params: [{ chainId: "0x2105" }],
               });
+              console.log("Switched to Base (0x2105)");
             }
 
-            // 2. APPROVE USDC
-            console.log("1. Approving USDC...");
-            const approveResp = await fetch("https://api.thirdweb.com/v1/contracts/write", {
+            // 2. Zavolej backend endpoint (secret key na serveru)
+            const resp = await fetch(`${API_BASE}/api/mint-nft-thirdweb`, {
               method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "x-client-id": THIRDWEB_CLIENT_ID,
-              },
-              body: JSON.stringify({
-                calls: [{
-                  contractAddress: "0x833589fCD6eDb6E08f4c7c32D4f71b54bdA02913",
-                  method: "function approve(address,uint256) external returns (bool)",
-                  params: ["0xA76F456f6FbaB161069fc891c528Eb56672D3e69", "4000000"]
-                }],
-                chainId: 8453,
-                from: currentWallet,
-              }),
-            });
-            const approveData = await approveResp.json();
-            console.log("Approve result:", approveData);
-
-            await new Promise(resolve => setTimeout(resolve, 3000));
-
-            // 3. PLNÁ CLAIM SIGNATURA (podle Thirdweb docs)
-            console.log("2. Full Claim NFT...");
-            const response = await fetch("https://api.thirdweb.com/v1/contracts/write", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "x-client-id": THIRDWEB_CLIENT_ID,
-              },
-              body: JSON.stringify({
-                calls: [{
-                  contractAddress: "0xA76F456f6FbaB161069fc891c528Eb56672D3e69",
-                  method: "function claim(address _receiver, uint256 _tokenId, uint256 _quantity, address _currency, uint256 _pricePerToken, (bytes32[] proof, uint256 quantityLimitPerWallet, uint256 pricePerToken, address currency) _allowlistProof, bytes _data) payable",
-                  params: [
-                    currentWallet,
-                    0,
-                    1,
-                    "0x833589fCD6eDb6E08f4c7c32D4f71b54bdA02913",
-                    "4000000",
-                    {
-                      proof: [],
-                      quantityLimitPerWallet: 1,
-                      pricePerToken: "4000000",
-                      currency: "0x833589fCD6eDb6E08f4c7c32D4f71b54bdA02913"
-                    },
-                    "0x"
-                  ]
-                }],
-                chainId: 8453,
-                from: currentWallet,
-              }),
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ wallet: currentWallet }),
             });
 
-            const data = await response.json();
-            console.log("Claim result:", data);
+            console.log("Backend status:", resp.status);
+            const data = await resp.json();
+            console.log("Backend response:", data);
 
-            if (data.transactionHash) {
-              console.log("NFT MINTED! Tx:", data.transactionHash);
-              alert(`NFT successfully minted!\nTx: ${data.transactionHash}`);
+            if (data.success) {
+              console.log("NFT MINTED! Tx:", data.tx);
+              alert(`NFT successfully minted!\nTx: ${data.tx}`);
             } else {
               console.error("Mint failed:", data);
-              alert("Mint failed: " + JSON.stringify(data));
+              alert("Mint failed: " + JSON.stringify(data.error || data));
             }
 
           } catch (e) {
