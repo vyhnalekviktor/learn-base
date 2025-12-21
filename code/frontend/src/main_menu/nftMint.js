@@ -1,10 +1,12 @@
 import { NFT_ABI } from "./nftABI.js";
 
-const BASE_MAINNET_CHAIN_ID = "0x2105";
+const BASE_MAINNET_CHAIN_ID = "0x2105"; // Base mainnet
+
 const NFT_CONTRACT = "0xA76F456f6FbaB161069fc891c528Eb56672D3e69";
+
 const USDC_ADDRESS = "0x833589fCD6eDb6E08f4c7c32D4f71b54bdA02913";
 const USDC_DECIMALS = 6;
-const PRICE_USDC = 4;
+const PRICE_USDC = 4;    // 4 USDC
 const QUANTITY = 1;
 
 const ERC20_ABI = [
@@ -18,6 +20,7 @@ export async function mintNft(ethProvider, wallet) {
       return;
     }
 
+    // ověření / přepnutí na Base mainnet
     const chainId = await ethProvider.request({ method: "eth_chainId" });
     if (chainId !== BASE_MAINNET_CHAIN_ID) {
       await ethProvider.request({
@@ -26,9 +29,11 @@ export async function mintNft(ethProvider, wallet) {
       });
     }
 
+    // ethers v5 přes global `ethers` (z UMD skriptu v HTML)
     const provider = new ethers.providers.Web3Provider(ethProvider);
     const signer = provider.getSigner();
 
+    // 1) approve USDC
     const usdc = new ethers.Contract(USDC_ADDRESS, ERC20_ABI, signer);
     const amount = ethers.utils.parseUnits(
       PRICE_USDC.toString(),
@@ -40,7 +45,9 @@ export async function mintNft(ethProvider, wallet) {
     await approveTx.wait();
     console.log("USDC approved");
 
+    // 2) claim NFT z drop kontraktu
     const drop = new ethers.Contract(NFT_CONTRACT, NFT_ABI, signer);
+
     console.log("Calling claim...");
     const claimTx = await drop.claim(wallet, QUANTITY);
     await claimTx.wait();
