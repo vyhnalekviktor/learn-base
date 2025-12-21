@@ -210,19 +210,18 @@ Check the transaction on BaseScan:
       console.error("Cannot update launch progress:", e);
     }
 
-    // ✅ success UI co nejpodobnější send screen
-    statusDiv.className = "info-box";
+    statusDiv.className = 'info-box';
     statusDiv.innerHTML = `
-<strong>Token Launched!</strong><br><br>
-<strong>Name:</strong> ${cleanName} (${symbol})<br>
-<strong>Supply:</strong> 1,000,000 tokens<br>
-<strong>Contract:</strong> ${tokenAddress.substring(0, 6)}...${tokenAddress.substring(38)}<br><br>
-<button onclick="window.open('${scannerUrl}', '_blank')"
-        style="padding: 8px 16px; background: #0052FF; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600;">
-  View on BaseScan
-</button><br><br>
-<small style="color: #666;">Token successfully deployed on Base Sepolia testnet</small>
-`;
+        <strong>Payment Received!</strong><br><br>
+        Your friend sent you <strong>1 USDC</strong> on Base Sepolia!<br><br>
+        <strong>To:</strong> ${address.substring(0, 6)}...${address.substring(38)}<br><br>
+        <button onclick="window.open('https://sepolia.basescan.org/address/${address}', '_blank')"
+            style="padding: 8px 16px; background: #0052FF; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600;">
+            View on BaseScan
+        </button><br><br>
+        <small style="color: #666;">Transaction should appear in your wallet within 10–30 seconds</small>
+    `;
+
 
   } catch (error) {
     console.error("Launch error:", error);
