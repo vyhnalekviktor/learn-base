@@ -1,4 +1,4 @@
-import sdk from 'https://esm.sh/farcaster-miniapp-sdk';
+//import sdk from 'https://esm.sh/farcaster-miniapp-sdk';
 
 let currentWallet = null;
 
