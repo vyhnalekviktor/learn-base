@@ -16,6 +16,7 @@ def init_user_info(wallet: str) :
         "practice_received": 0,
         "completed_theory": False,
         "completed_practice": False,
+        "completed_security": False,
         "completed_all": False
     }
     response = supabase.table("USER_INFO").insert(user_info).execute()
@@ -28,7 +29,12 @@ def init_user_progress(wallet: str) :
         "send": False,
         "receive": False,
         "mint": False,
-        "launch": False
+        "launch": False,
+        "lab1": False,
+        "lab2": False,
+        "lab3": False,
+        "lab4": False,
+        "lab5": False
     }
     response = supabase.table("USER_PROGRESS").insert(user_progress).execute()
     return response.data
