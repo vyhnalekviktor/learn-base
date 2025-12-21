@@ -1,23 +1,60 @@
-//import sdk from 'https://esm.sh/farcaster-miniapp-sdk';
-
+import { sdk } from "https://esm.sh/@farcaster/miniapp-sdk";
+const API_BASE = "https://learn-base-backend.vercel.app";
 let currentWallet = null;
 
 async function initWallet() {
-    try {
-        await sdk.actions.ready;
-        console.log('BaseCamp mini app is ready!');
-        const ethProvider = await sdk.wallet.ethProvider;
-        const accounts = await ethProvider.request({ method: 'eth_requestAccounts' });
-        currentWallet = accounts[0] || null;
-        if (currentWallet) {
-            console.log('Wallet connected:', currentWallet);
-        }
-    } catch (error) {
-        console.error('Wallet init error:', error);
+  try {
+    console.log("Page loaded, calling sdk.actions.ready()...");
+    await sdk.actions.ready();
+    console.log("BaseCamp mini app is ready!");
+
+    const ethProvider = await sdk.wallet.ethProvider;
+
+    const accounts = await ethProvider.request({
+      method: "eth_requestAccounts",
+    });
+
+    const wallet = accounts && accounts.length > 0 ? accounts[0] : null;
+
+    if (!wallet) {
+      console.warn("Wallet address not found from ethProvider.request()");
+      return;
     }
+
+    console.log("Connected wallet from SDK:", wallet);
+    currentWallet = wallet;
+
+    const span = document.getElementById("wallet-address");
+    if (span) span.textContent = wallet;
+  } catch (error) {
+    console.error("Error during MiniApp wallet init:", error);
+  }
 }
 
-// lab1.js - Lab 1: Airdrop SCAM Detection (FINAL - WITH API)
+async function updateLabProgress(wallet) {
+  const res = await fetch(`${API_BASE}/api/database/update_field`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      wallet,
+      table_name: "USER_PROGRESS",
+      field_name: "lab1",
+      value: true,
+    }),
+  });
+
+  if (!res.ok) {
+    let msg = "Unknown backend error";
+    try {
+      const err = await res.json();
+      msg = err.detail || JSON.stringify(err);
+    } catch (_) {}
+    console.error("update_field error:", msg);
+    return false;
+  }
+
+  return true;
+}
 
 document.addEventListener('DOMContentLoaded', async function() {
     console.log('Lab 1 loaded - Modal-based SCAM detection (WITH API)');
@@ -36,31 +73,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     // 1. SCAM BUTTON - Success modal + API call
     scamButton.addEventListener('click', async function(e) {
         e.preventDefault();
-
-        // API CALL - při úspěšném nalezení SCAMu
-        if (currentWallet) {
-            try {
-                const API_BASE = 'https://learn-base-backend.vercel.app';
-                const res = await fetch(`${API_BASE}/api/database/update_field`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        wallet: currentWallet,
-                        table_name: 'USER_PROGRESS',
-                        field_name: 'lab1',
-                        value: true
-                    })
-                });
-                if (res.ok) {
-                    console.log('Lab 1 SCAM progress saved!');
-                } else {
-                    console.error('API update failed');
-                }
-            } catch (error) {
-                console.error('API call error:', error);
-            }
-        }
-
+        await updateFaucetProgress(currentWallet);
         showModal('success', 'CONGRATS! You successfully found the SCAM!\nNever share seed phrase or private key with anybody!');
     });
 
