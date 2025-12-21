@@ -1,7 +1,5 @@
 import { sdk } from "https://esm.sh/@farcaster/miniapp-sdk";
-
 const API_BASE = "https://learn-base-backend.vercel.app";
-
 let currentWallet = null;
 
 function toggleAccordion(id) {
