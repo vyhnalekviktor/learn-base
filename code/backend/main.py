@@ -264,9 +264,9 @@ async def mint_nft_thirdweb(request: Request):
         if "transactionHash" not in approve_result:
             return {"success": False, "error": approve_result}
 
-        time.sleep(3)  # Wait for approval confirmation
+        time.sleep(3)
 
-        # 2. CLAIM NFT
+        # 2. CLAIM NFT - SPRÁVNÝ allowlistProof
         claim_resp = requests.post(
             "https://api.thirdweb.com/v1/contracts/write",
             headers={"Content-Type": "application/json", "x-secret-key": SECRET_KEY},
@@ -276,7 +276,7 @@ async def mint_nft_thirdweb(request: Request):
                     "method": "function claim(address _receiver, uint256 _tokenId, uint256 _quantity, address _currency, uint256 _pricePerToken, (bytes32[] proof, uint256 quantityLimitPerWallet, uint256 pricePerToken, address currency) _allowlistProof, bytes _data) payable",
                     "params": [
                         wallet, 0, 1, USDC_ADDRESS, 4000000,
-                        {"proof": [], "quantityLimitPerWallet": 1, "pricePerToken": 4000000, "currency": USDC_ADDRESS},
+                        {"proof": [], "quantityLimitPerWallet": 1, "pricePerToken": 4000000, "currency": USDC_ADDRESS},  # ← TADY JE RŮZNICE
                         "0x"
                     ]
                 }],
@@ -290,8 +290,7 @@ async def mint_nft_thirdweb(request: Request):
         result = claim_resp.json()
 
         if "transactionHash" in result:
-            # Update database
-            database.add_transaction("USER_INFO", "claimed_nft", wallet, True)
+            database.update_field("USER_INFO", "claimed_nft", wallet, True)
             return {"success": True, "tx": result["transactionHash"]}
 
         return {"success": False, "error": result}
