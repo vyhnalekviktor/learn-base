@@ -25,7 +25,7 @@ window.addEventListener("load", async () => {
     if (span) span.textContent = wallet;
 
     await getProgress(wallet);
-    //await checkCompletedAll(wallet, ethProvider, wallet);
+    await checkCompletedAll(wallet, ethProvider, wallet);
   } catch (error) {
     console.error("Error during MiniApp wallet init:", error);
   }
