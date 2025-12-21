@@ -339,3 +339,251 @@
   padding: 8px 10px;
   font-size: 14px;
 }
+
+.dex-comparison-card {
+    background: #0041c4;
+    border-radius: 20px;
+    padding: 22px 18px 20px;
+    color: #ffffff;
+}
+
+.exchange-block {
+    background: #020617;
+    border-radius: 18px;
+    padding: 16px 14px 18px;
+    margin-top: 14px;
+    box-shadow: 0 14px 30px rgba(0,0,0,0.45);
+}
+
+.exchange-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.exchange-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.exchange-logo {
+    width: 32px;
+    height: 32px;
+    border-radius: 999px;
+    background: #111827;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.exchange-logo-blue {
+    background: #2563eb;
+}
+
+.exchange-name {
+    font-weight: 700;
+    font-size: 14px;
+}
+
+.exchange-subtitle {
+    font-size: 11px;
+    opacity: 0.8;
+}
+
+.exchange-status {
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.exchange-status-ok {
+    background: rgba(34, 197, 94, 0.14);
+    color: #4ade80;
+}
+
+.exchange-status-warning {
+    background: rgba(248, 113, 113, 0.12);
+    color: #fca5a5;
+}
+
+.status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 999px;
+    background: currentColor;
+}
+
+.pair-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.pair-symbol {
+    font-size: 13px;
+    opacity: 0.85;
+}
+
+.pair-price {
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.fake-price {
+    color: #facc15;
+}
+
+.pair-change {
+    font-size: 12px;
+}
+
+.negative-change {
+    color: #f97373;
+}
+
+.neutral-change {
+    color: #4ade80;
+}
+
+.order-type-row {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 10px;
+}
+
+.order-tab {
+    flex: 0 0 auto;
+    padding: 4px 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(148, 163, 184, 0.4);
+    background: transparent;
+    color: #e5e7eb;
+    font-size: 11px;
+    cursor: default;
+}
+
+.order-tab-active {
+    background: #1d4ed8;
+    border-color: #1d4ed8;
+}
+
+.order-form {
+    background: #020617;
+    border-radius: 12px;
+    padding: 10px 10px 12px;
+    border: 1px solid rgba(148, 163, 184, 0.3);
+    margin-bottom: 10px;
+}
+
+.order-form-row {
+    margin-bottom: 8px;
+}
+
+.order-form-row label {
+    display: block;
+    font-size: 11px;
+    margin-bottom: 3px;
+    opacity: 0.85;
+}
+
+.order-input-wrap {
+    display: flex;
+    align-items: center;
+    background: #020617;
+    border-radius: 10px;
+    border: 1px solid rgba(148, 163, 184, 0.5);
+    overflow: hidden;
+}
+
+.order-input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    color: #e5e7eb;
+    font-size: 13px;
+    padding: 6px 8px;
+    outline: none;
+}
+
+.order-input-suffix {
+    padding: 6px 10px;
+    font-size: 12px;
+    background: #0b1120;
+    border-left: 1px solid rgba(148, 163, 184, 0.5);
+}
+
+.order-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    font-size: 11px;
+    opacity: 0.85;
+    margin-top: 4px;
+    margin-bottom: 6px;
+}
+
+.meta-sep {
+    opacity: 0.5;
+}
+
+.token-details {
+    border-top: 1px solid rgba(148, 163, 184, 0.3);
+    margin-top: 10px;
+    padding-top: 8px;
+    font-size: 11px;
+}
+
+.token-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 4px;
+}
+
+.token-label {
+    opacity: 0.7;
+}
+
+.token-value-danger {
+    color: #f97373;
+}
+
+.exchange-warning-box {
+    margin-top: 8px;
+    background: rgba(127, 29, 29, 0.7);
+    border-radius: 10px;
+    padding: 8px 9px;
+    font-size: 11px;
+}
+
+.exchange-warning-box .warning-title {
+    font-weight: 700;
+    margin-bottom: 4px;
+    letter-spacing: 0.03em;
+}
+
+.warning-list {
+    margin: 0;
+    padding-left: 16px;
+}
+.token-row-hint {
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 1px dashed rgba(148, 163, 184, 0.4);
+}
+
+.token-row-hint .token-label {
+    font-style: italic;
+}
+
+.token-row-hint .token-value {
+    opacity: 0.9;
+}
