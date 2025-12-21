@@ -3,46 +3,68 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Security Lab</title>
+    <title>Base Security Lab</title>
     <link rel="stylesheet" href="../../css/landing.css">
+    <style>
+        .menu-item.completed {
+            background: #d5f1cc;
+            border-color: #b8e3b0;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
-        <div class="hero">
-            <h1>Base Security Lab</h1>
-            <p> rozbalovaci nabidka: how does it work?</p>
-            <p>
-                1. everything is safe, no transactions really happen.
-                2. choose any test
-                3. you will have red button "scam" at the bottom of your screen, press it when you think it is suspicious
-                4. some tests are scams and some are OK.
-                5. if you do any dangerous operation, the system alerts you
-                6. if you do every step in OK test, you get progress
-                7. if you press SCAM, when scam, you get progress
-            </p>
-            <br>
-            <a href="../security_lab/lab1.html" class="cta-button">
-                LAB 1
+    <div class="hero">
+        <h1>Base Security Lab</h1>
+        <p class="subtitle">Everything is in a safe environment for testing</p>
+        <p class="description">
+            Work through the steps below to learn how to spot scams. Your progress updates automatically.
+            I recommend finishing all Labs even if you easily recognize scam, it is fascinating to see, how they work!
+        </p>
+
+        <div id="progress-container" style="margin: 24px 0;">
+            <div style="font-size: 14px; margin-bottom: 4px;">
+                Progress <span id="progress-percent">0%</span>
+            </div>
+            <div style="width: 100%; background-color: #1f2933; border-radius: 999px; overflow: hidden; height: 8px;">
+                <div id="progress-bar-fill" style="width: 0%; height: 100%; background: linear-gradient(135deg, #0052FF 0%, #10b981 100%); transition: width 0.3s ease;"></div>
+            </div>
+        </div>
+
+        <div class="menu">
+            <a id="item-lab1" href="../security_lab/lab1.html" class="menu-item">
+                <h3>Lab 1: Airdrop</h3>
+                <p>Airdrop - get free tokens! Airdrop is used to deliver tokens into community.</p>
             </a>
-            <p>Airdrop needs Seed - scam</p><br>
-            <a href="../security_lab/lab2.html" class="cta-button">
-                LAB 1
+
+            <a id="item-lab2" href="../security_lab/lab2.html" class="menu-item">
+                <h3>Lab 2: Buy Token</h3>
+                <p>Somebody sent you a super token tip!</p>
             </a>
-            <p>honeypot token - scam</p><br>
-            <a href="../security_lab/lab3.html" class="cta-button">
-                LAB 1
+
+            <a id="item-lab3" href="../security_lab/lab3.html" class="menu-item">
+                <h3>Lab 3: Transaction</h3>
+                <p>You want to pay an artist.</p>
             </a>
-            <p>transaction - OK</p><br>
-            <a href="../security_lab/lab4.html" class="cta-button">
-                LAB 1
+
+            <a id="item-lab4" href="../security_lab/lab4.html" class="menu-item">
+                <h3>Lab 4: Login</h3>
+                <p>Which login options are OK?</p>
             </a>
-            <p>login option, ok, scam & scam - tlacitka vedle moznosti </p><br>
-            <a href="../security_lab/lab5.html" class="cta-button">
-                LAB 1
+
+            <a id="item-lab5" href="../security_lab/lab5.html" class="menu-item">
+                <h3>Lab 5: DEX offer</h3>
+                <p>You found and interesting price for ETH on an unknown DEX.</p>
             </a>
-            <p> Fake DEX s nerealistickým kurzem (SCAM)</p><br>
-            <a href="../../index.html" style="color: #0052FF; text-decoration: none; font-weight: bold;">Back to Home</a>
+        </div>
+
+        <div style="margin-top: 32px;">
+            <a href="../../index.html" style="color: #0052FF; text-decoration: none; font-weight: bold;">
+                Back to Home
+            </a>
         </div>
     </div>
+</div>
 </body>
+<script type="module" src="../../src/main_menu/securityMenu.js"></script>
 </html>
