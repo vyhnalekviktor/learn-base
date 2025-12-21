@@ -1,4 +1,4 @@
-    import { sdk } from "https://esm.sh/@farcaster/miniapp-sdk";
+import { sdk } from "https://esm.sh/@farcaster/miniapp-sdk";
 
 const API_BASE = "https://learn-base-backend.vercel.app";
 
@@ -25,6 +25,7 @@ window.addEventListener("load", async () => {
 
     await getProgress(wallet);
     await checkCompletedAll(wallet);
+    await initApp(); // Inicializace NFT claim funkcionality
   } catch (error) {
     console.error("Error during MiniApp wallet init:", error);
   }
@@ -153,11 +154,37 @@ async function checkCompletedAll(wallet) {
 
     const nftSection = document.getElementById("nftSection");
     const mintBtn = document.getElementById("mintNftBtn");
+
     if (value === true) {
       if (nftSection) nftSection.classList.remove("locked");
-      if (mintBtn) mintBtn.disabled = false;
+      if (mintBtn) {
+        mintBtn.disabled = false;
+        mintBtn.onclick = window.claimNFT; // Přiřadí claimNFT funkci
+      }
     }
   } catch (err) {
     console.error("checkCompletedAll error:", err);
   }
 }
+
+// Inicializace NFT claim funkcionality (z experienceMint.js)
+let ethProvider = null;
+
+async function initApp() {
+  try {
+    ethProvider = await sdk.wallet.ethProvider;
+    const addrSpan = document.getElementById('nftContract');
+    if (addrSpan) {
+      addrSpan.textContent = '0xA76F456f6FbaB161069fc891c528Eb56672D3e69';
+    }
+  } catch (error) {
+    console.error('NFT Init error:', error);
+  }
+}
+
+// Export claimNFT funkce pro HTML onclick
+window.claimNFT = async function() {
+  // Tato funkce bude načtena z experienceMint.js
+  // nebo ji implementuj přímo zde podle předchozího návrhu
+  console.log("claimNFT called - load experienceMint.js");
+};
