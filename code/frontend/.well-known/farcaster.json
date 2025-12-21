@@ -7,7 +7,7 @@
   "miniapp": {
     "version": "1",
     "name": "BaseCamp Learning",
-    "homeUrl": "https://learn-base-mu.vercel.app/pages/main_menu/index.html",
+    "homeUrl": "https://learn-base-mu.vercel.app/index.html",
     "iconUrl": "https://learn-base-mu.vercel.app/images/icon.png",
     "splashImageUrl": "https://learn-base-mu.vercel.app/images/splash.png",
     "splashBackgroundColor": "#0052FF",
