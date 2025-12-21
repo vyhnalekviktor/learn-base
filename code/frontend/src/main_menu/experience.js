@@ -1,7 +1,6 @@
 import { sdk } from "https://esm.sh/@farcaster/miniapp-sdk";
 
 const API_BASE = "https://learn-base-backend.vercel.app";
-// VLOŽ TVŮJ THIRDWEB CLIENT ID SEM (VEŘEJNÝ, bezpečný)
 const THIRDWEB_CLIENT_ID = "c12132b8cbef77793a3ed49c591110e6";
 
 window.addEventListener("load", async () => {
@@ -98,7 +97,6 @@ async function getProgress(wallet) {
   }
 }
 
-// NFT MINT - odemkne se při completed_all = true
 async function checkCompletedAll(wallet, ethProvider, currentWallet) {
   try {
     const res = await fetch(`${API_BASE}/api/database/get-field`, {
@@ -133,10 +131,10 @@ async function checkCompletedAll(wallet, ethProvider, currentWallet) {
       if (mintBtn) {
         mintBtn.disabled = false;
 
-        // THIRDWEB FRONTEND MINT (Client ID - veřejný)
+        // THIRDWEB FULL CLAIM (podle dokumentace)
         mintBtn.onclick = async () => {
           try {
-            console.log("Thirdweb CLIENT mint started");
+            console.log("Thirdweb FULL claim started");
 
             // 1. Přepni na Base mainnet
             const chainId = await ethProvider.request({ method: "eth_chainId" });
@@ -147,33 +145,9 @@ async function checkCompletedAll(wallet, ethProvider, currentWallet) {
               });
             }
 
-            // 2. APPROVE USDC (wallet popup)
+            // 2. APPROVE USDC
             console.log("1. Approving USDC...");
             const approveResp = await fetch("https://api.thirdweb.com/v1/contracts/write", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "x-client-id": THIRDWEB_CLIENT_ID,  // VEŘEJNÝ Client ID
-              },
-              body: JSON.stringify({
-                calls: [{
-                  contractAddress: "0x833589fCD6eDb6E08f4c7c32D4f71b54bdA02913",  // USDC
-                  method: "function approve(address,uint256) external returns (bool)",
-                  params: ["0xA76F456f6FbaB161069fc891c528Eb56672D3e69", "4000000"]  // 4 USDC
-                }],
-                chainId: 8453,  // Base mainnet
-                from: currentWallet,
-              }),
-            });
-            const approveData = await approveResp.json();
-            console.log("Approve result:", approveData);
-
-            // 3. Počkej 2s na approve potvrzení
-            await new Promise(resolve => setTimeout(resolve, 2000));
-
-            // 4. CLAIM NFT (wallet popup)
-            console.log("2. Claiming NFT...");
-            const claimResp = await fetch("https://api.thirdweb.com/v1/contracts/write", {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
@@ -181,29 +155,65 @@ async function checkCompletedAll(wallet, ethProvider, currentWallet) {
               },
               body: JSON.stringify({
                 calls: [{
-                  contractAddress: "0xA76F456f6FbaB161069fc891c528Eb56672D3e69",  // NFT Drop
-                  method: "function claim(address,uint256) public payable",
-                  params: [currentWallet, 1]
+                  contractAddress: "0x833589fCD6eDb6E08f4c7c32D4f71b54bdA02913",
+                  method: "function approve(address,uint256) external returns (bool)",
+                  params: ["0xA76F456f6FbaB161069fc891c528Eb56672D3e69", "4000000"]
+                }],
+                chainId: 8453,
+                from: currentWallet,
+              }),
+            });
+            const approveData = await approveResp.json();
+            console.log("Approve result:", approveData);
+
+            await new Promise(resolve => setTimeout(resolve, 3000));
+
+            // 3. PLNÁ CLAIM SIGNATURA (podle Thirdweb docs)
+            console.log("2. Full Claim NFT...");
+            const response = await fetch("https://api.thirdweb.com/v1/contracts/write", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "x-client-id": THIRDWEB_CLIENT_ID,
+              },
+              body: JSON.stringify({
+                calls: [{
+                  contractAddress: "0xA76F456f6FbaB161069fc891c528Eb56672D3e69",
+                  method: "function claim(address _receiver, uint256 _tokenId, uint256 _quantity, address _currency, uint256 _pricePerToken, (bytes32[] proof, uint256 quantityLimitPerWallet, uint256 pricePerToken, address currency) _allowlistProof, bytes _data) payable",
+                  params: [
+                    currentWallet,
+                    0,
+                    1,
+                    "0x833589fCD6eDb6E08f4c7c32D4f71b54bdA02913",
+                    "4000000",
+                    {
+                      proof: [],
+                      quantityLimitPerWallet: 1,
+                      pricePerToken: "4000000",
+                      currency: "0x833589fCD6eDb6E08f4c7c32D4f71b54bdA02913"
+                    },
+                    "0x"
+                  ]
                 }],
                 chainId: 8453,
                 from: currentWallet,
               }),
             });
 
-            const claimData = await claimResp.json();
-            console.log("Claim result:", claimData);
+            const data = await response.json();
+            console.log("Claim result:", data);
 
-            if (claimData.transactionHash) {
-              console.log("NFT MINTED! Tx:", claimData.transactionHash);
-              alert(`NFT successfully minted!\nTx: ${claimData.transactionHash}`);
+            if (data.transactionHash) {
+              console.log("NFT MINTED! Tx:", data.transactionHash);
+              alert(`NFT successfully minted!\nTx: ${data.transactionHash}`);
             } else {
-              console.error("Mint failed:", claimData);
-              alert("Mint failed: " + JSON.stringify(claimData));
+              console.error("Mint failed:", data);
+              alert("Mint failed: " + JSON.stringify(data));
             }
 
           } catch (e) {
-            console.error("Thirdweb mint error:", e);
-            alert("Mint error: " + e.message);
+            console.error("Mint error:", e);
+            alert("Error: " + e.message);
           }
         };
       }
