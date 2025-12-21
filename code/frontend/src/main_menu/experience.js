@@ -2,13 +2,17 @@ import { sdk } from "https://esm.sh/@farcaster/miniapp-sdk";
 
 const API_BASE = "https://learn-base-backend.vercel.app";
 
+let ethProvider = null;
+
+// Hlavní init
 window.addEventListener("load", async () => {
   try {
     console.log("Page loaded, calling sdk.actions.ready()...");
     await sdk.actions.ready();
     console.log("BaseCamp mini app is ready!");
 
-    const ethProvider = await sdk.wallet.ethProvider;
+    ethProvider = await sdk.wallet.ethProvider;
+
     const accounts = await ethProvider.request({
       method: "eth_requestAccounts",
     });
@@ -25,12 +29,13 @@ window.addEventListener("load", async () => {
 
     await getProgress(wallet);
     await checkCompletedAll(wallet);
-    await initApp(); // Inicializace NFT claim funkcionality
+    await initApp(); // Inicializace NFT části
   } catch (error) {
     console.error("Error during MiniApp wallet init:", error);
   }
 });
 
+// Načtení progresu uživatele
 async function getProgress(wallet) {
   try {
     const res = await fetch(`${API_BASE}/api/database/get-user`, {
@@ -58,7 +63,7 @@ async function getProgress(wallet) {
       return;
     }
 
-    // THEORY: 0 / 100 %
+    // THEORY
     const theoryBar = document.getElementById("theoryProgressBar");
     const theoryText = document.getElementById("theoryProgressText");
     const theoryPercent = info.completed_theory ? 100 : 0;
@@ -69,7 +74,7 @@ async function getProgress(wallet) {
       theoryText.textContent = `${theoryPercent} / 100 %`;
     }
 
-    // BASE CHAIN LAB: faucet, send, receive, mint, launch
+    // BASE CHAIN LAB (faucet, send, receive, mint, launch)
     const baseParts = [
       progress.faucet,
       progress.send,
@@ -79,11 +84,11 @@ async function getProgress(wallet) {
     ];
     let baseCompleted = 0;
     for (const part of baseParts) {
-      if (part === true) {
-        baseCompleted += 1;
-      }
+      if (part === true) baseCompleted += 1;
     }
-    const basePercent = Math.round((baseCompleted / baseParts.length) * 100);
+    const basePercent = Math.round(
+      (baseCompleted / baseParts.length) * 100
+    );
     console.log("Base Chain Lab percent:", basePercent);
     const baseBar = document.getElementById("baseLabProgressBar");
     const baseText = document.getElementById("baseLabProgressText");
@@ -94,7 +99,7 @@ async function getProgress(wallet) {
       baseText.textContent = `${basePercent} / 100 %`;
     }
 
-    // SECURITY LAB: lab1 - lab5
+    // SECURITY LAB (lab1–lab5)
     const securityParts = [
       progress.lab1,
       progress.lab2,
@@ -104,13 +109,12 @@ async function getProgress(wallet) {
     ];
     let securityCompleted = 0;
     for (const part of securityParts) {
-      if (part === true) {
-        securityCompleted += 1;
-      }
+      if (part === true) securityCompleted += 1;
     }
-    const securityPercent = Math.round((securityCompleted / securityParts.length) * 100);
+    const securityPercent = Math.round(
+      (securityCompleted / securityParts.length) * 100
+    );
     console.log("Security Lab percent:", securityPercent);
-
     const secBar = document.getElementById("securityProgressBar");
     const secText = document.getElementById("securityProgressText");
     if (secBar) {
@@ -119,13 +123,12 @@ async function getProgress(wallet) {
     if (secText) {
       secText.textContent = `${securityPercent} / 100 %`;
     }
-
   } catch (err) {
     console.error("getProgress error:", err);
   }
 }
 
-// zjistí USER_INFO.completed_all a podle toho odemkne NFT blok
+// Zjistí USER_INFO.completed_all a odemkne NFT blok
 async function checkCompletedAll(wallet) {
   try {
     const res = await fetch(`${API_BASE}/api/database/get-field`, {
@@ -159,7 +162,7 @@ async function checkCompletedAll(wallet) {
       if (nftSection) nftSection.classList.remove("locked");
       if (mintBtn) {
         mintBtn.disabled = false;
-        mintBtn.onclick = window.claimNFT; // Přiřadí claimNFT funkci
+        mintBtn.onclick = window.claimNFT; // připojíme claimNFT
       }
     }
   } catch (err) {
@@ -167,24 +170,51 @@ async function checkCompletedAll(wallet) {
   }
 }
 
-// Inicializace NFT claim funkcionality (z experienceMint.js)
-let ethProvider = null;
-
+// Inicializace NFT claim části
 async function initApp() {
   try {
-    ethProvider = await sdk.wallet.ethProvider;
-    const addrSpan = document.getElementById('nftContract');
+    if (!ethProvider) {
+      ethProvider = await sdk.wallet.ethProvider;
+    }
+
+    const addrSpan = document.getElementById("nftContract");
     if (addrSpan) {
-      addrSpan.textContent = '0xA76F456f6FbaB161069fc891c528Eb56672D3e69';
+      addrSpan.textContent =
+        "0xA76F456f6FbaB161069fc891c528Eb56672D3e69";
     }
   } catch (error) {
-    console.error('NFT Init error:', error);
+    console.error("NFT Init error:", error);
   }
 }
 
-// Export claimNFT funkce pro HTML onclick
-window.claimNFT = async function() {
-  // Tato funkce bude načtena z experienceMint.js
-  // nebo ji implementuj přímo zde podle předchozího návrhu
-  console.log("claimNFT called - load experienceMint.js");
+// ===== NFT MINT =====
+
+// TODO: nahraď ABI podle svého kontraktu (ERC‑721 s funkcí mint() nebo podobnou)
+const NFT_CONTRACT = "0xA76F456f6FbaB161069fc891c528Eb56672D3e69";
+const NFT_ABI = [
+  "function mint() public",
+  // pokud máš jinou signaturu, uprav zde
+];
+
+// Funkce volaná po kliknutí na „Mint“ tlačítko
+window.claimNFT = async function () {
+  try {
+    if (!ethProvider) {
+      ethProvider = await sdk.wallet.ethProvider;
+    }
+
+    const provider = new ethers.providers.Web3Provider(ethProvider);
+    const signer = provider.getSigner();
+
+    const contract = new ethers.Contract(NFT_CONTRACT, NFT_ABI, signer);
+
+    console.log("Sending mint transaction...");
+    const tx = await contract.mint(); // případně contract.safeMint(...) apod.
+    console.log("Mint tx sent:", tx.hash);
+
+    const receipt = await tx.wait();
+    console.log("Mint confirmed in block:", receipt.blockNumber);
+  } catch (e) {
+    console.error("Mint error:", e);
+  }
 };
