@@ -1,4 +1,4 @@
-import { sdk } from "https://esm.sh/@farcaster/miniapp-sdk";
+import sdk from "https://esm.sh/@farcaster/miniapp-sdk";
 const API_BASE = "https://learn-base-backend.vercel.app";
 let currentWallet = null;
 
@@ -73,7 +73,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     // 1. SCAM BUTTON - Success modal + API call
     scamButton.addEventListener('click', async function(e) {
         e.preventDefault();
-        await updateFaucetProgress(currentWallet);
+        await updateLabProgress(currentWallet);
         showModal('success', 'CONGRATS! You successfully found the SCAM!\nNever share seed phrase or private key with anybody!');
     });
 
