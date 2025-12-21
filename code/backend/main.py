@@ -211,10 +211,10 @@ async def practice_sent(request: Request):
     if u is None or b is None:
         raise HTTPException(status_code=400, detail="Error getting data from DB.")
 
-    r = database.update_field("USER_INFO", "practice_sent", wallet, u+1)
-    s = database.update_field("MY_WALLET", "balance-USDC", wallet, b+1)
+    user = database.update_field("USER_INFO", "practice_sent", wallet, u+1)
+    bot = database.update_field("MY_WALLET", "balance-USDC", BOT_WALLET, b+1)
 
-    if r is None or s is None:
+    if user is None or bot is None:
         raise HTTPException(status_code=400, detail="Error updating data to DB.")
 
     return {"success": True}
