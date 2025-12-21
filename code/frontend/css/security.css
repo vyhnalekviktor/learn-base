@@ -317,3 +317,25 @@
         padding: 20px;
     }
 }
+/* Menší tlačítka pro BUY/SELL v rámci karty tokenu */
+.compact-swap-btn {
+  max-width: 220px;
+  padding: 10px 20px;
+  font-size: 14px;
+  border-radius: 8px;
+  margin: 0 auto;
+}
+
+/* ať input + button víc připomínají form, ne hero CTA */
+.swap-section .input-group {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  align-items: center;
+}
+
+.swap-input {
+  max-width: 120px;
+  padding: 8px 10px;
+  font-size: 14px;
+}
