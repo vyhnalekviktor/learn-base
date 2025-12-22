@@ -1,4 +1,4 @@
-// experience.js - Experience + FREE NFT mint + Debug Console
+// experience.js - Experience + FREE NFT claim + Debug Console
 import sdk from "https://esm.sh/@farcaster/miniapp-sdk"
 
 // ========== DEBUG CONSOLE ==========
@@ -201,6 +201,7 @@ function escapeHtml(text) {
 // ========== APP KONSTANTY ==========
 const API_BASE = "https://learn-base-backend.vercel.app"
 const BASE_CHAIN_ID_HEX = "0x2105" // Base mainnet
+// Sem dej svojí mainnet address kontraktu s claim funkcí:
 const NFT_CONTRACT = "0xA76F456f6FbaB161069fc891c528Eb56672D3e69"
 
 let currentWallet = null
@@ -292,16 +293,16 @@ async function getProgressAndSetupMint(wallet, ethProvider) {
     const mintBtn = document.getElementById("mintNftBtn")
 
     if (completedAll) {
-      debugLog("All sections completed – enabling NFT mint", "success")
+      debugLog("All sections completed – enabling NFT claim", "success")
       if (nftSection) nftSection.classList.remove("locked")
       if (mintBtn) mintBtn.disabled = false
     } else {
-      debugLog("Not completed_all, mint remains locked", "warn")
+      debugLog("Not completed_all, NFT claim remains locked", "warn")
     }
 
     if (mintBtn) {
       mintBtn.onclick = async () => {
-        await handleFreeMint(ethProvider)
+        await handleFreeClaim(ethProvider)
       }
     }
   } catch (err) {
@@ -309,24 +310,25 @@ async function getProgressAndSetupMint(wallet, ethProvider) {
   }
 }
 
-// ========== FREE NFT MINT (claim) ==========
-async function handleFreeMint(ethProvider) {
+// ========== FREE NFT CLAIM (claim function) ==========
+async function handleFreeClaim(ethProvider) {
   const mintBtn = document.getElementById("mintNftBtn")
   try {
-    debugLog("Mint button clicked", "info")
+    debugLog("Claim button clicked", "info")
 
     const { ethers } = await import("https://esm.sh/ethers@6.9.0")
 
     const accounts2 = await ethProvider.request({ method: "eth_requestAccounts" })
     const userWallet = accounts2 && accounts2[0] ? accounts2[0].toLowerCase() : null
     if (!userWallet) {
-      debugLog("Wallet not found in mint handler", "error")
+      debugLog("Wallet not found in claim handler", "error")
       alert("Wallet address not found")
       return
     }
 
-    debugLog(`Minting for wallet: ${userWallet}`, "info")
+    debugLog(`Claiming NFT for wallet: ${userWallet}`, "info")
 
+    // Chain check
     let chainId = await ethProvider.request({ method: "eth_chainId" })
     debugLog(`Current chainId: ${chainId}`, "info")
     if (chainId !== BASE_CHAIN_ID_HEX) {
@@ -339,14 +341,18 @@ async function handleFreeMint(ethProvider) {
       debugLog(`New chainId: ${chainId}`, "success")
     }
 
+    // claim(address _receiver, uint256 _tokenId, uint256 _quantity, address _currency,
+    //       uint256 _pricePerToken, (bytes32[] proof, uint256 quantityLimitPerWallet,
+    //       uint256 pricePerToken, address currency) _allowlistProof, bytes _data) payable
+
     const iface = new ethers.Interface([
       "function claim(address _receiver, uint256 _tokenId, uint256 _quantity, address _currency, uint256 _pricePerToken, (bytes32[] proof, uint256 quantityLimitPerWallet, uint256 pricePerToken, address currency) _allowlistProof, bytes _data) payable",
     ])
 
     const receiver = userWallet
-    const tokenId = 0n
+    const tokenId = 0n          // uprav, pokud používáš jiné ID
     const quantity = 1n
-    const currency = "0x0000000000000000000000000000000000000000"
+    const currency = "0x0000000000000000000000000000000000000000" // free
     const pricePerToken = 0n
 
     const allowlistProof = {
@@ -368,7 +374,7 @@ async function handleFreeMint(ethProvider) {
       dataBytes,
     ])
 
-    debugLog("Sending claim transaction to NFT contract...", "info")
+    debugLog("Sending claim transaction...", "info")
 
     const claimTx = await ethProvider.request({
       method: "eth_sendTransaction",
@@ -392,7 +398,7 @@ async function handleFreeMint(ethProvider) {
 
     alert(`NFT minted!\nTx hash: ${claimTx}`)
   } catch (e) {
-    debugLog(`Mint error: ${e.message}`, "error")
+    debugLog(`Claim error: ${e.message}`, "error")
     alert("Error: " + (e.message || e))
   }
 }
