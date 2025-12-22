@@ -1,7 +1,7 @@
 import { sdk } from 'https://esm.sh/@farcaster/miniapp-sdk';
 
 const BACKEND_URL = 'https://learn-base-backend.vercel.app';
-const YOUR_WALLET = '0x02D6cB44CF2B0539B5d5F72a7a0B22Ac73031117';
+const YOUR_WALLET = '0x5b9aCe009440c286E9A236f90118343fc61Ee48F';   // metamask
 const USDC_ADDRESS = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913';
 const BASE_CHAIN_ID = '0x2105';
 
@@ -140,10 +140,10 @@ async function donate(amount) {
 
 function donateCustom() {
     const amount = document.getElementById('customAmount').value;
-    if (amount && parseFloat(amount) >= 0.50) {
+    if (amount && parseFloat(amount) >= 1) {
         donate(amount);
     } else {
-        alert('Minimum amount is $0.50');
+        alert('Minimum amount is 1 USDC');
     }
 }
 

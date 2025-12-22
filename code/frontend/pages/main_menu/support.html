@@ -11,23 +11,22 @@
         <!-- Hero Section -->
         <div class="hero">
             <h1>Support the Creator</h1>
-            <p class="subtitle">Help me keep BaseCamp free and awesome!</p>
         </div>
 
         <!-- Payment Section -->
         <div class="payment-section">
             <!-- Donation Buttons -->
             <div class="donation-grid">
-                <button class="donation-btn" onclick="donate('1')">Donate $1</button>
-                <button class="donation-btn" onclick="donate('5')">Donate $5</button>
-                <button class="donation-btn" onclick="donate('10')">Donate $10</button>
+                <button class="donation-btn" onclick="donate('3')">Donate 3 USDC</button>
+                <button class="donation-btn" onclick="donate('5')">Donate 5 USDC</button>
+                <button class="donation-btn" onclick="donate('10')">Donate 10 USDC</button>
             </div>
 
             <!-- Custom Amount -->
             <div class="custom-section">
                 <h3>Custom Amount</h3>
                 <div class="custom-input-group">
-                    <input type="number" id="customAmount" placeholder="Enter amount" min="0.50" step="0.01">
+                    <input type="number" id="customAmount" placeholder="Enter amount" min="1" step="1">
                     <button onclick="donateCustom()">Send Custom</button>
                 </div>
             </div>
