@@ -1,4 +1,4 @@
-// practiceLaunch.js
+// practiceLaunch.js - FULL FUNKČNÍ KÓD pro Base MiniApp
 import sdk from "https://esm.sh/@farcaster/miniapp-sdk"
 
 const BASE_SEPOLIA_CHAIN_ID = 84532
@@ -11,8 +11,11 @@ const FACTORY_ABI = [
   "function createToken(string name_, string symbol_, uint256 initialSupply_) external returns (address)"
 ]
 
+// GLOBÁLNÍ PROMĚNNÉ
 let ethProvider = null
 let originalChainId = null
+let currentWallet = null
+const API_BASE = "https://learn-base-backend.vercel.app/"
 
 async function initApp() {
   try {
@@ -21,6 +24,8 @@ async function initApp() {
 
     const contractEl = document.getElementById("tokenContract")
     if (contractEl) contractEl.textContent = "Not deployed yet"
+
+    console.log("Base MiniApp initialized successfully")
   } catch (error) {
     console.error("Init error:", error)
   }
@@ -38,6 +43,36 @@ window.toggleAccordion = function (id) {
   } else {
     content.style.maxHeight = content.scrollHeight + "px"
     if (icon) icon.textContent = "▲"
+  }
+}
+
+async function updatePracticeLaunchProgress(wallet) {
+  try {
+    const res = await fetch(`${API_BASE}/api/database/update_field`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        wallet,
+        table_name: "USER_PROGRESS",
+        field_name: "launch",
+        value: true,
+      }),
+    });
+
+    if (!res.ok) {
+      let msg = "Unknown backend error";
+      try {
+        const err = await res.json();
+        msg = err.detail || JSON.stringify(err);
+      } catch (_) {}
+      console.error("update_field error:", msg);
+      return false;
+    }
+    console.log("Progress updated successfully for wallet:", wallet)
+    return true;
+  } catch (error) {
+    console.error("updatePracticeLaunchProgress error:", error)
+    return false;
   }
 }
 
@@ -76,9 +111,7 @@ window.launchToken = async function (tokenName) {
       <p>Supply: 1,000,000 tokens</p>
     `
 
-    const { BrowserProvider, Contract, parseUnits } = await import(
-      "https://esm.sh/ethers@6.9.0"
-    )
+    const { BrowserProvider, Contract } = await import("https://esm.sh/ethers@6.9.0")
 
     const provider = new BrowserProvider(ethProvider)
     const network = await provider.getNetwork()
@@ -96,15 +129,13 @@ window.launchToken = async function (tokenName) {
         if (switchError.code === 4902) {
           await ethProvider.request({
             method: "wallet_addEthereumChain",
-            params: [
-              {
-                chainId: "0x14a34",
-                chainName: "Base Sepolia",
-                nativeCurrency: { name: "Ethereum", symbol: "ETH", decimals: 18 },
-                rpcUrls: ["https://sepolia.base.org"],
-                blockExplorerUrls: ["https://sepolia.basescan.org"]
-              }
-            ]
+            params: [{
+              chainId: "0x14a34",
+              chainName: "Base Sepolia",
+              nativeCurrency: { name: "Ethereum", symbol: "ETH", decimals: 18 },
+              rpcUrls: ["https://sepolia.base.org"],
+              blockExplorerUrls: ["https://sepolia.basescan.org"]
+            }]
           })
         } else {
           throw switchError
@@ -114,6 +145,8 @@ window.launchToken = async function (tokenName) {
     }
 
     const signer = await provider.getSigner()
+    const wallet = await signer.getAddress()
+    currentWallet = wallet  // uložte globálně
 
     // create factory instance
     const factory = new Contract(FACTORY_ADDRESS, FACTORY_ABI, signer)
@@ -125,9 +158,7 @@ window.launchToken = async function (tokenName) {
 
     const tx = await factory.createToken(cleanName, symbol, supply)
     const txHash = tx.hash
-    const shortHash = `${txHash.substring(0, 10)}...${txHash.substring(
-      txHash.length - 8
-    )}`
+    const shortHash = `${txHash.substring(0, 10)}...${txHash.substring(txHash.length - 8)}`
 
     statusDiv.innerHTML = `
       <p><strong>Transaction submitted!</strong></p>
@@ -148,7 +179,7 @@ window.launchToken = async function (tokenName) {
             break
           }
         } catch {
-          // ignore non‑matching logs
+          // ignore non-matching logs
         }
       }
     } catch (e) {
@@ -170,15 +201,27 @@ window.launchToken = async function (tokenName) {
 
     const scannerUrl = `https://sepolia.basescan.org/address/${tokenAddress}`
 
-    statusDiv.className = "info-box"
+    // AKTUALIZACE PROGRESS V DATABÁZI
+    const progressUpdated = await updatePracticeLaunchProgress(wallet)
+    if (!progressUpdated) {
+      console.warn("Failed to update launch progress in USER_PROGRESS table")
+    }
+
+    statusDiv.className = "success-box"
     statusDiv.innerHTML = `
       <p><strong>Token launched successfully!</strong></p>
-      <p ><strong>${cleanName}</strong> (${symbol})</p>
+      <p><strong>${cleanName}</strong> (${symbol})</p>
       <p>Supply: 1,000,000 tokens</p>
       <p>Contract: <code>${tokenAddress}</code></p>
-      <div style="margin-top: 12px;">
-        <a href="${scannerUrl}" target="_blank" class="learn-more">View on BaseScan</a>
-        <a href="https://account.base.app/activity" target="_blank" class="learn-more">View in wallet</a>
+      <div style="margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap;">
+        <button onclick="window.open('${scannerUrl}', '_blank')"
+                style="padding: 8px 16px; background: #0052FF; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600;">
+          View on BaseScan
+        </button>
+        <button onclick="window.open('https://account.base.app/activity', '_blank')"
+                style="padding: 8px 16px; background: #0052FF; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600;">
+          View in Wallet
+        </button>
       </div>
     `
   } catch (error) {
@@ -191,15 +234,14 @@ window.launchToken = async function (tokenName) {
       typeof error.message === "string" &&
       error.message.toLowerCase().includes("insufficient")
     ) {
-      statusDiv.innerHTML =
-        "<p>Insufficient ETH for gas fees. Get testnet ETH from a faucet.</p>"
+      statusDiv.innerHTML = "<p>Insufficient ETH for gas fees. Get testnet ETH from a faucet.</p>"
     } else {
       statusDiv.innerHTML = `<p>Launch failed: ${error.message || error}</p>`
     }
   } finally {
     if (launchBtn) {
       launchBtn.disabled = false
-      launchBtn.textContent = "🚀 Launch Token"
+      launchBtn.textContent = "Launch Token"
     }
   }
 }
