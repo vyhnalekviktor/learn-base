@@ -14,6 +14,7 @@ function toggleAccordion(id) {
         icon.textContent = '▲';
     }
 }
+window.toggleAccordion = toggleAccordion;
 
 async function initWallet() {
   try {
