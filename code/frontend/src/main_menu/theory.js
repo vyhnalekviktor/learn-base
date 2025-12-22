@@ -14,28 +14,52 @@ async function initWallet() {
         const wallet = accounts && accounts.length > 0 ? accounts[0] : null;
 
         if (!wallet) {
-            console.warn('Wallet address not found from ethProvider.request');
+            console.warn('Wallet address not found');
             return;
         }
 
-        console.log('Connected wallet from SDK:', wallet);
+        console.log('Connected wallet:', wallet);
         currentWallet = wallet;
 
-        // Optional: display wallet if element exists
         const span = document.getElementById('wallet-address');
         if (span) span.textContent = wallet;
 
-        // Load initial progress
+        // ✅ FIX 1: Ensure user exists BEFORE reading progress
+        await ensureUserExists();
         await getTheoryProgress();
 
     } catch (error) {
-        console.error('Error during MiniApp wallet init:', error);
+        console.error('Error during wallet init:', error);
+    }
+}
+
+// ✅ FIX 2: Add missing function
+async function ensureUserExists() {
+    if (!currentWallet) return;
+
+    try {
+        const res = await fetch(`${API_BASE}/api/database/init-user`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ wallet: currentWallet })
+        });
+
+        if (!res.ok) {
+            console.error('Failed to init user:', res.status);
+            return;
+        }
+
+        const data = await res.json();
+        console.log('User init:', data.created ? 'created' : 'exists');
+
+    } catch (error) {
+        console.error('ensureUserExists error:', error);
     }
 }
 
 async function getTheoryProgress() {
     if (!currentWallet) {
-        console.warn('Wallet not available yet');
+        console.warn('Wallet not available');
         return;
     }
 
@@ -47,15 +71,25 @@ async function getTheoryProgress() {
         });
 
         if (!res.ok) {
-            console.warn('Could not load theory progress');
+            console.error('Failed to load progress:', res.status);
             return;
         }
 
         const data = await res.json();
-        const progress = data.progress;
-        if (!progress) return;
 
-        // Count completed theory sections (theory1-theory5)
+        // ✅ FIX 3: Check success flag
+        if (!data.success) {
+            console.error('API returned success=false');
+            return;
+        }
+
+        // ✅ FIX 4: Correct parsing
+        const progress = data.progress;
+        if (!progress) {
+            console.error('No progress object');
+            return;
+        }
+
         const theoryFields = ['theory1', 'theory2', 'theory3', 'theory4', 'theory5'];
         let completed = 0;
 
@@ -78,17 +112,31 @@ function updateProgressBar(percent) {
     const percentEl = document.getElementById('theory-progress-percent');
     const barEl = document.getElementById('theory-progress-bar-fill');
 
-    if (percentEl) percentEl.textContent = `${percent}%`;
-    if (barEl) barEl.style.width = `${percent}%`;
+    // ✅ FIX 5: Better logging
+    if (percentEl) {
+        percentEl.textContent = `${percent}%`;
+        console.log('✅ Progress text updated');
+    } else {
+        console.error('❌ Element theory-progress-percent not found!');
+    }
+
+    if (barEl) {
+        barEl.style.width = `${percent}%`;
+        console.log('✅ Progress bar updated');
+    } else {
+        console.error('❌ Element theory-progress-bar-fill not found!');
+    }
 }
 
 async function updateTheoryProgress(sectionNumber) {
     if (!currentWallet) {
-        console.warn('Wallet not available yet');
+        console.warn('Wallet not available');
         return false;
     }
 
     try {
+        console.log(`Updating theory${sectionNumber}...`);
+
         const res = await fetch(`${API_BASE}/api/database/update_field`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -101,20 +149,12 @@ async function updateTheoryProgress(sectionNumber) {
         });
 
         if (!res.ok) {
-            let msg = 'Unknown backend error';
-            try {
-                const err = await res.json();
-                msg = err.detail || JSON.stringify(err);
-            } catch {
-                // ignore
-            }
-            console.error(`updatefield theory${sectionNumber} error:`, msg);
+            const errorText = await res.text();
+            console.error(`Update failed (${res.status}):`, errorText);
             return false;
         }
 
-        console.log(`Theory section ${sectionNumber} progress saved for wallet:`, currentWallet);
-
-        // Refresh progress bar after update
+        console.log(`✅ Theory${sectionNumber} saved`);
         await getTheoryProgress();
         return true;
 
@@ -127,11 +167,15 @@ async function updateTheoryProgress(sectionNumber) {
 function toggleAccordion(sectionId) {
     const content = document.getElementById('content-' + sectionId);
     const icon = document.getElementById('icon-' + sectionId);
-    const header = icon.parentElement;
 
+    if (!content || !icon) {
+        console.error('Accordion elements not found:', sectionId);
+        return;
+    }
+
+    const header = icon.parentElement;
     const isOpen = content.classList.contains('active');
 
-    // Close all others
     document.querySelectorAll('.accordion-content').forEach(c => {
         c.classList.remove('active');
         c.style.maxHeight = null;
@@ -145,7 +189,6 @@ function toggleAccordion(sectionId) {
         h.style.color = 'inherit';
     });
 
-    // Open current if it was closed
     if (!isOpen) {
         content.classList.add('active');
         content.style.maxHeight = content.scrollHeight + 'px';
@@ -154,7 +197,6 @@ function toggleAccordion(sectionId) {
         header.style.background = 'linear-gradient(135deg, #0052FF 0%, #0041CC 100%)';
         header.style.color = 'white';
 
-        // Map sectionId to theory number and update progress
         const sectionMap = {
             'core-blockchain': 1,
             'wallet-security': 2,
@@ -162,15 +204,14 @@ function toggleAccordion(sectionId) {
             'base-network': 4,
             'smart-contracts': 5
         };
+
         const sectionNumber = sectionMap[sectionId];
         if (sectionNumber) {
+            console.log(`Opened section ${sectionId} -> theory${sectionNumber}`);
             updateTheoryProgress(sectionNumber);
         }
     }
 }
 
-// Initialize wallet on page load
 window.addEventListener('load', initWallet);
-
-// Export functions for HTML
 window.toggleAccordion = toggleAccordion;
