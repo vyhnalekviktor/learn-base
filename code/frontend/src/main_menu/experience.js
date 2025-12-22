@@ -196,6 +196,9 @@ async function handlePaidClaim(ethProvider) {
     }
 
     alert(`NFT claimed successfully!\nTx hash: ${mintTx}\nView on: https://basescan.org/tx/${mintTx}`);
+
+    zavolej muj api endpoint update field
+    USER_INFO, claimed_nft, True
   } catch (e) {
     if (!(e && e.code === 4001)) {
       alert('Error: ' + (e && e.message ? e.message : e));
