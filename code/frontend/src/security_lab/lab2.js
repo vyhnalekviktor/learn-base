@@ -151,8 +151,8 @@ document.addEventListener("DOMContentLoaded", async function () {
           <h2>${FAKE_TOKEN.name.toUpperCase()}</h2>
           <p><strong>${FAKE_TOKEN.apy} APY</strong> on new Base token!</p>
           <p>
-            ${FAKE_TOKEN.symbol} Liquidity: ${FAKE_TOKEN.liquidity}
-            &nbsp;&nbsp; Market Cap: ${FAKE_TOKEN.marketCap}
+            Liquidity: ${FAKE_TOKEN.liquidity}
+            &nbsp;&nbsp; MC: ${FAKE_TOKEN.marketCap}
           </p>
           <h3>Stake for insane yields!</h3>
         </div>
