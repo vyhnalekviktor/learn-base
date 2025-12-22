@@ -128,10 +128,8 @@ function showFakeDEXDemo(runButton) {
             <div class="exchange-block scam-exchange">
                 <div class="exchange-header">
                     <div class="exchange-title">
-                        <div class="exchange-logo">SS</div>
                         <div>
                             <div class="exchange-name">SuperSwap</div>
-                            <div class="exchange-subtitle">ETH / USDC</div>
                         </div>
                     </div>
                     <div class="exchange-status exchange-status-warning">
@@ -206,7 +204,6 @@ function showFakeDEXDemo(runButton) {
                         <div class="exchange-logo exchange-logo-blue">CB</div>
                         <div>
                             <div class="exchange-name">Coinbase</div>
-                            <div class="exchange-subtitle">ETH / USDC</div>
                         </div>
                     </div>
                     <div class="exchange-status exchange-status-ok">
