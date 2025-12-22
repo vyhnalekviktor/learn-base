@@ -514,7 +514,8 @@ window.evaluateAnswers = async function () {
 
   showModal(
     "success",
-    "All answers correct.\nLegitimate dApps connect via WalletConnect and never ask directly for seed phrases, private keys, or backup files."
+    "CONGRATS! Lab 4 COMPLETE!\n\n" +
+    "Legitimate dApps connect via WalletConnect and never ask directly for seed phrases, private keys, or backup files."
   );
 
   if (!currentWallet) {

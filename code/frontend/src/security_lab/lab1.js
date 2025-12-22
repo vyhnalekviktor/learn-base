@@ -93,7 +93,9 @@ document.addEventListener('DOMContentLoaded', async function() {
 
         const success = await updateLabProgress(currentWallet);
         if (success) {
-            showModal('success', 'CONGRATS! You successfully found the SCAM!\nNever share seed phrase or private key with anybody!');
+            showModal('success',
+            "CONGRATS! Lab 1 COMPLETE!\n\n" +
+            "Never share seed phrase or private key with anybody!");
         } else {
             showModal('danger', 'Failed to save progress. Check console for details.');
         }

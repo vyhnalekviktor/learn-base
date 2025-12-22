@@ -114,10 +114,11 @@ document.addEventListener("DOMContentLoaded", async function () {
     if (success) {
       showModal(
         "success",
-        "CONGRATS! You identified the HONEYPOT SCAM!<br>" +
-          "1250% APY je silný red flag.<br>" +
-          "Token lze často koupit, ale nejde ho prodat nebo je extrémní skryté fee.<br>" +
-          "Vždy ověř možnost výstupu z pozice v exploreru a simulaci swapu."
+        "CONGRATS! Lab 5 COMPLETE!\n\n" +
+        "You identified suspicious token.\n"
+          "1250% APY is a red flag.\n" +
+          "Token can be easily bought, but there is huge fee on selling.\n" +
+          "Always verify token and simulate transactions if possible."
       );
     } else {
       showModal(
