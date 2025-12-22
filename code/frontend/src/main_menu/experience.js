@@ -7,37 +7,23 @@ const NFT_CONTRACT = '0xA76F456f6FbaB161069fc891c528Eb56672D3e69';
 const USDC = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913';
 const PRICE_USDC_HEX = '00000000000000000000000000000000000000000000000000000000003d0900';
 
-function debug(msg) {
-  console.log(msg);
-  const box = document.getElementById('debugLog');
-  if (!box) return;
-  const time = new Date().toISOString().split('T')[1].split('.')[0];
-  box.textContent += `[${time}] ${msg}\n`;
-  box.scrollTop = box.scrollHeight;
-}
-
 window.addEventListener('load', async () => {
   try {
-    debug('Page loaded, calling sdk.actions.ready()...');
     await sdk.actions.ready();
-    debug('BaseCamp mini app is ready!');
 
     const ethProvider = sdk.wallet.ethProvider;
     const accounts = await ethProvider.request({ method: 'eth_requestAccounts' });
     const wallet = accounts && accounts.length > 0 ? accounts[0] : null;
 
     if (!wallet) {
-      debug('Wallet address not found from ethProvider.request');
       return;
     }
 
-    debug('Connected wallet from SDK: ' + wallet);
     const span = document.getElementById('wallet-address');
     if (span) span.textContent = wallet;
 
     await getProgressAndSetupMint(wallet, ethProvider);
   } catch (error) {
-    debug('Error during MiniApp wallet init: ' + (error.message || String(error)));
   }
 });
 
@@ -55,7 +41,6 @@ async function getProgressAndSetupMint(wallet, ethProvider) {
         const err = await res.json();
         msg = err.detail ? JSON.stringify(err) : msg;
       } catch {}
-      debug('get-user error: ' + msg);
       return;
     }
 
@@ -64,11 +49,10 @@ async function getProgressAndSetupMint(wallet, ethProvider) {
     const progress = data.progress;
 
     if (!progress || !info) {
-      debug('Missing info or progress object in response');
       return;
     }
 
-    // Progress bary (beze změny)
+    // Progress bars
     const theoryBar = document.getElementById('theoryProgressBar');
     const theoryText = document.getElementById('theoryProgressText');
     const theoryPercent = info.completed_theory ? 100 : 0;
@@ -79,7 +63,6 @@ async function getProgressAndSetupMint(wallet, ethProvider) {
     let baseCompleted = 0;
     for (const part of baseParts) if (part === true) baseCompleted++;
     const basePercent = Math.round((baseCompleted / baseParts.length) * 100);
-    debug('Base Chain Lab percent: ' + basePercent);
     const baseBar = document.getElementById('baseLabProgressBar');
     const baseText = document.getElementById('baseLabProgressText');
     if (baseBar) baseBar.style.width = `${basePercent}%`;
@@ -89,7 +72,6 @@ async function getProgressAndSetupMint(wallet, ethProvider) {
     let securityCompleted = 0;
     for (const part of securityParts) if (part === true) securityCompleted++;
     const securityPercent = Math.round((securityCompleted / securityParts.length) * 100);
-    debug('Security Lab percent: ' + securityPercent);
     const secBar = document.getElementById('securityProgressBar');
     const secText = document.getElementById('securityProgressText');
     if (secBar) secBar.style.width = `${securityPercent}%`;
@@ -97,7 +79,6 @@ async function getProgressAndSetupMint(wallet, ethProvider) {
 
     // Odemčení mintu podle USER_INFO.completed_all (předpoklad: info.completed_all)
     const completedAll = info.completed_all === true;
-    debug('completed_all from USER_INFO: ' + JSON.stringify(completedAll));
 
     const nftSection = document.getElementById('nftSection');
     const mintBtn = document.getElementById('mintNftBtn');
@@ -110,7 +91,6 @@ async function getProgressAndSetupMint(wallet, ethProvider) {
     if (mintBtn) {
       mintBtn.onclick = async () => {
         try {
-          debug('MINT START – user pays from own wallet');
 
           const accounts2 = await ethProvider.request({ method: 'eth_requestAccounts' });
           const userWallet = (accounts2 && accounts2[0]) ? accounts2[0].toLowerCase() : null;
@@ -118,22 +98,16 @@ async function getProgressAndSetupMint(wallet, ethProvider) {
             alert('Wallet address not found');
             return;
           }
-          debug('Using wallet: ' + userWallet);
-
           let chainId = await ethProvider.request({ method: 'eth_chainId' });
-          debug('Current chain: ' + chainId);
           if (chainId !== BASE_CHAIN_ID_HEX) {
             await ethProvider.request({
               method: 'wallet_switchEthereumChain',
               params: [{ chainId: BASE_CHAIN_ID_HEX }],
             });
-            debug('Switched to Base 0x2105');
             chainId = await ethProvider.request({ method: 'eth_chainId' });
-            debug('New chain: ' + chainId);
           }
 
           // APPROVE 4 USDC
-          debug('Sending USDC approve tx...');
           const approveData =
             '0x095ea7b3' +
             '000000000000000000000000' + NFT_CONTRACT.slice(2).toLowerCase() +
@@ -147,12 +121,10 @@ async function getProgressAndSetupMint(wallet, ethProvider) {
               data: approveData,
             }],
           });
-          debug('Approve tx hash: ' + approveTx);
 
           await new Promise(r => setTimeout(r, 5000));
 
           // CLAIM
-          debug('Sending claim tx...');
           const claimData =
             '0x57bc3d78' +
             '000000000000000000000000' + userWallet.slice(2).toLowerCase() +
@@ -176,7 +148,6 @@ async function getProgressAndSetupMint(wallet, ethProvider) {
               data: claimData,
             }],
           });
-          debug('Claim tx hash: ' + claimTx);
 
           const ownedSection = document.getElementById('ownedNftSection');
           if (ownedSection) ownedSection.style.display = 'block';
@@ -184,13 +155,11 @@ async function getProgressAndSetupMint(wallet, ethProvider) {
           mintBtn.textContent = 'NFT Minted!';
           alert(`NFT claimed!\nTx hash: ${claimTx}`);
         } catch (e) {
-          debug('Mint/claim error: ' + (e.message || String(e)));
           alert('Error: ' + (e.message || e));
         }
       };
     }
   } catch (err) {
-    debug('getProgressAndSetupMint error: ' + (err.message || String(err)));
   }
 }
 
