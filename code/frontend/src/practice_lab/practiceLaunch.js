@@ -198,7 +198,7 @@ const FACTORY_ABI = [
 let ethProvider = null
 let originalChainId = null
 let currentWallet = null
-const API_BASE = "https://learn-base-backend.vercel.app/"
+const API_BASE = "https://learn-base-backend.vercel.app"
 
 async function initApp() {
   try {
