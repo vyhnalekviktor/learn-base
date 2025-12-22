@@ -246,7 +246,7 @@
             <!-- Section 1: Core Blockchain Concepts -->
             <div class="accordion-section">
                 <button class="accordion-header" onclick="toggleAccordion('core-blockchain')">
-                    <span>Core Blockchain Concepts (5 terms)</span>
+                    <span>Core Blockchain Concepts</span>
                     <span id="icon-core-blockchain" class="accordion-icon">▼</span>
                 </button>
                 <div id="content-core-blockchain" class="accordion-content">
@@ -276,7 +276,7 @@
             <!-- Section 2: Wallet & Security -->
             <div class="accordion-section">
                 <button class="accordion-header" onclick="toggleAccordion('wallet-security')">
-                    <span>Wallet & Security (5 terms)</span>
+                    <span>Wallet & Security</span>
                     <span id="icon-wallet-security" class="accordion-icon">▼</span>
                 </button>
                 <div id="content-wallet-security" class="accordion-content">
@@ -306,7 +306,7 @@
             <!-- Section 3: Tokens & Standards -->
             <div class="accordion-section">
                 <button class="accordion-header" onclick="toggleAccordion('tokens-standards')">
-                    <span>Tokens & Standards (6 terms)</span>
+                    <span>Tokens & Standards</span>
                     <span id="icon-tokens-standards" class="accordion-icon">▼</span>
                 </button>
                 <div id="content-tokens-standards" class="accordion-content">
@@ -324,7 +324,7 @@
                     </div>
                     <div class="term-definition">
                         <div class="term-title">ERC-721</div>
-                        <div class="term-desc">Standard for unique items. Each NFT is different, like collectible trading cards. Your mint.html creates ERC721 NFTs with SVG images.</div>
+                        <div class="term-desc">Standard for unique items. Each NFT is different, like collectible trading cards.</div>
                     </div>
                     <div class="term-definition">
                         <div class="term-title">NFT</div>
@@ -340,17 +340,17 @@
             <!-- Section 4: Base Network -->
             <div class="accordion-section">
                 <button class="accordion-header" onclick="toggleAccordion('base-network')">
-                    <span>Base Network (7 terms)</span>
+                    <span>Base Network</span>
                     <span id="icon-base-network" class="accordion-icon">▼</span>
                 </button>
                 <div id="content-base-network" class="accordion-content">
                     <div class="term-definition">
                         <div class="term-title">Base</div>
-                        <div class="term-desc">Fast, cheap network built by Coinbase on Ethereum (Layer 2). Processes transactions in 1-2 seconds, batches them, sends to Ethereum for security. Core to all your labs.</div>
+                        <div class="term-desc">Fast, cheap network built by Coinbase on Ethereum (Layer 2). Processes transactions in 1-2 seconds, batches them, sends to Ethereum for security.</div>
                     </div>
                     <div class="term-definition">
                         <div class="term-title">Base Sepolia</div>
-                        <div class="term-desc">Base testnet (chainId 84532). Used in all practice files for safe learning. Try Base Sepolia explorer</div>
+                        <div class="term-desc">Base testnet (chainId 84532). Used in all practice labs or processes for safe learning. Try Base Sepolia explorer!</div>
                     </div>
                     <div class="term-definition">
                         <div class="term-title">Faucet</div>
@@ -358,11 +358,11 @@
                     </div>
                     <div class="term-definition">
                         <div class="term-title">DEX (Decentralized Exchange)</div>
-                        <div class="term-desc">Decentralized exchange for token swaps without banks. lab5.js simulates fake SuperSwap vs real Coinbase rates.</div>
+                        <div class="term-desc">Decentralized exchange for token swaps without banks. Check Security LAB 5 for more.</div>
                     </div>
                     <div class="term-definition">
                         <div class="term-title">Block Explorer</div>
-                        <div class="term-desc">Website to track transactions: sepolia.basescan.org. Paste hash or address to see details. Check your mints/sends here.</div>
+                        <div class="term-desc">Website to track transactions. Paste hash or address to see details. Check your transactions here.</div>
                     </div>
                     <div class="term-definition">
                         <div class="term-title">Transaction Hash</div>
@@ -370,7 +370,7 @@
                     </div>
                     <div class="term-definition">
                         <div class="term-title">Sequencer</div>
-                        <div class="term-desc">Base's special computer that instantly processes transactions off-chain, then batches to Ethereum. Makes Base super fast.</div>
+                        <div class="term-desc">Base's special computer that instantly processes transactions off-chain, then batches to Ethereum. Makes Base super fast!</div>
                     </div>
                 </div>
             </div>
@@ -378,17 +378,17 @@
             <!-- Section 5: Smart Contracts -->
             <div class="accordion-section">
                 <button class="accordion-header" onclick="toggleAccordion('smart-contracts')">
-                    <span>Smart Contracts (5 terms)</span>
+                    <span>Smart Contracts</span>
                     <span id="icon-smart-contracts" class="accordion-icon">▼</span>
                 </button>
                 <div id="content-smart-contracts" class="accordion-content">
                     <div class="term-definition">
                         <div class="term-title">WalletConnect</div>
-                        <div class="term-desc">Secure wallet-web connection via QR code. Only safe method in lab4.js - never type keys manually!</div>
+                        <div class="term-desc">Secure wallet-web connection via QR code. You don't have to enter seed phrase to connect!</div>
                     </div>
                     <div class="term-definition">
                         <div class="term-title">Smart Contract</div>
-                        <div class="term-desc">Automatic program on blockchain like a vending machine: input condition, get result. Your NFT contract 0x726107... mints NFTs when called.</div>
+                        <div class="term-desc">Automatic program on blockchain, works like a vending machine: input condition, get result.</div>
                     </div>
                     <div class="term-definition">
                         <div class="term-title">Mint</div>
@@ -396,15 +396,60 @@
                     </div>
                     <div class="term-definition">
                         <div class="term-title">Metadata</div>
-                        <div class="term-desc">NFT description: name, image, text in JSON format. Your contract generates SVG directly on-chain as base64.</div>
+                        <div class="term-desc">NFT description: name, image, text in JSON format.</div>
                     </div>
                     <div class="term-definition">
                         <div class="term-title">Token URI</div>
-                        <div class="term-desc">Link to NFT metadata. Your contract returns base64 data directly, no external servers needed.</div>
+                        <div class="term-desc">Link to NFT metadata.</div>
                     </div>
                     <div class="term-definition">
                         <div class="term-title">On-chain</div>
-                        <div class="term-desc">Data stored directly on blockchain - forever and decentralized. Your NFTs store full SVG/metadata on-chain, no IPFS needed.</div>
+                        <div class="term-desc">Data stored directly on blockchain - forever and decentralized.</div>
+                    </div>
+                </div>
+            </div>
+
+                        <!-- Section 6: Why Base Ecosystem Is Better for Beginners -->
+            <div class="accordion-section">
+                <button class="accordion-header" onclick="toggleAccordion('why-base')">
+                    <span>BONUS: Why is Base ecosystem better than a “normal” blockchain</span>
+                    <span id="icon-why-base" class="accordion-icon">▼</span>
+                </button>
+                <div id="content-why-base" class="accordion-content">
+                    <div class="term-definition">
+                        <div class="term-title">Base = fast, cheap and still Ethereum-secure</div>
+                        <div class="term-desc">
+                            Base is an Ethereum Layer 2 network – it keeps Ethereum’s strong security, but makes transactions much faster and up to 95–99% cheaper than on Ethereum mainnet.
+                            This means you can safely try real onchain actions (sending tokens, minting NFTs, swapping) without paying several dollars every time.
+                        </div>
+                    </div>
+                    <div class="term-definition">
+                        <div class="term-title">Easy onboarding from normal apps</div>
+                        <div class="term-desc">
+                            Base is built by Coinbase, so many users start directly from a familiar exchange app or Wallet and move onchain in a few clicks instead of complex RPC and network setup.
+                            For beginners this feels much closer to a normal fintech app than to a complicated “raw blockchain” experience.
+                        </div>
+                    </div>
+                    <div class="term-definition">
+                        <div class="term-title">Base accounts and better wallet UX</div>
+                        <div class="term-desc">
+                            The Base ecosystem supports smart accounts (Base Accounts) that can use features like social-style logins, gas sponsorship and safer recovery instead of only seed phrases.
+                            This reduces the chance of losing funds through seed scams and lets apps hide low-level details (gas, nonces) from new users.
+                        </div>
+                    </div>
+                    <div class="term-definition">
+                        <div class="term-title">Farcaster and MiniApps: social layer for Base</div>
+                        <div class="term-desc">
+                            Farcaster acts as a social layer tightly integrated with Base: users have wallets connected to their social profiles and can use MiniApps directly inside the client without leaving the app.
+                            Base MiniApps (like BaseCamp) can connect to the wallet, show balances and sign transactions in-place, giving a smooth “in-app” experience instead of constant context switching between tabs and extensions.
+                        </div>
+                    </div>
+                    <div class="term-definition">
+                        <div class="term-title">Rich, connected ecosystem on one network</div>
+                        <div class="term-desc">
+                            DeFi, NFTs, games and identity tools on Base are built to work together: one Base wallet and one account usually work across many apps without changing networks or bridges.
+                            For beginners this means less confusion (one main network, one explorer, one set of faucets) and a clearer learning path compared to jumping across multiple separate blockchains.
+                        </div>
                     </div>
                 </div>
             </div>
