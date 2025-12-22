@@ -51,7 +51,73 @@ async function initUserOnBackend(wallet) {
 
     const data = await res.json();
     console.log("init-user result:", data);
+
+    // pokud backend vrátí { success: true, created: true } → zobraz welcome
+    if (data.success === true && data.created === true) {
+      showWelcomeModal();
+    }
   } catch (err) {
     console.error("initUserOnBackend error:", err);
   }
+}
+
+// jednoduché welcome okno přes DOM
+function showWelcomeModal() {
+  // wrapper přes celou obrazovku
+  const overlay = document.createElement("div");
+  overlay.style.position = "fixed";
+  overlay.style.inset = "0";
+  overlay.style.background = "rgba(15,23,42,0.75)";
+  overlay.style.display = "flex";
+  overlay.style.alignItems = "center";
+  overlay.style.justifyContent = "center";
+  overlay.style.zIndex = "9999";
+
+  const modal = document.createElement("div");
+  modal.style.maxWidth = "420px";
+  modal.style.width = "90%";
+  modal.style.background = "linear-gradient(145deg,#0f172a,#020617)";
+  modal.style.border = "1px solid rgba(148,163,184,0.4)";
+  modal.style.borderRadius = "18px";
+  modal.style.padding = "20px 22px";
+  modal.style.color = "white";
+  modal.style.boxShadow = "0 20px 45px rgba(15,23,42,0.8)";
+  modal.style.fontFamily = "system-ui, -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif";
+
+  modal.innerHTML = `
+    <h2 style="font-size: 20px; margin: 0 0 10px 0;display: flex;align-items: center; gap: 8px;">
+      <span>Welcome to BaseCamp</span>
+    </h2>
+    <p style="font-size: 14px; line-height: 1.5; margin: 0 0 10px 0; color: #e5e7eb;">
+      BaseCamp is an interactive MiniApp for learning blockchain on Base (Ethereum L2).
+    </p>
+    <p style="font-size: 14px; line-height: 1.5; margin: 0 0 10px 0; color: #e5e7eb;">
+      Complete hands-on labs to earn an NFT completion badge! Read theory, try your first test operations and then test yourself for scam recognition.
+    </p>
+    <p style="font-size: 14px; line-height: 1.5; margin: 0 0 16px 0; color: #bbf7d0;">
+      You can complete all the steps for free!!
+    </p>
+    <button id="welcome-close-btn" style="
+      width: 100%;
+      margin-top: 4px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+      background: #0052ff;
+      color: white;
+      font-weight: 600;
+      font-size: 14px;
+    ">
+      Let’s start learning
+    </button>
+  `;
+
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
+
+  const closeBtn = modal.querySelector("#welcome-close-btn");
+  closeBtn.addEventListener("click", () => {
+    document.body.removeChild(overlay);
+  });
 }
