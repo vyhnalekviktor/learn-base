@@ -51,7 +51,7 @@ User can send USDC on mainnet to the creator as a "Thank You" in the section 'Su
 
 Built with ❤️ for Base ecosystem by vikiase
 
-### Support me
+## Support me
 - **BASE:** 0x5b9aCe009440c286E9A236f90118343fc61Ee48F
 - **BTC:** bc1qrj5qykjvjsuavpfa3afj2u2m259lkw3afpef9z
 - **SOL:** EoVnfiykfpF21VSUZ4LnQfsXhFL4xypC9MYci1mokGCm
