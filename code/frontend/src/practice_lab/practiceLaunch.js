@@ -11,18 +11,16 @@ const FACTORY_ABI = [
 
 let ethProvider = null
 let originalChainId = null
-let originalChainId = null
 let currentWallet = null
 const API_BASE = "https://learn-base-backend.vercel.app"
 
 async function initApp() {
   try {
     ethProvider = await sdk.wallet.ethProvider
-    await sdk.actions.ready
+    await sdk.actions.ready()
 
     const contractEl = document.getElementById("tokenContract")
     if (contractEl) contractEl.textContent = "Not deployed yet"
-
   } catch (error) {
     console.error("Init error:", error)
   }
@@ -53,7 +51,7 @@ async function updatePracticeLaunchProgress(wallet) {
         field_name: "launch",
         value: true,
       }),
-    });
+    })
 
     if (!res.ok) {
       let msg = "Unknown backend error"
@@ -61,10 +59,12 @@ async function updatePracticeLaunchProgress(wallet) {
         const err = await res.json()
         msg = err.detail || JSON.stringify(err)
       } catch (_) {}
+      console.error("update_field error:", msg)
       return false
     }
     return true
   } catch (error) {
+    console.error("updatePracticeLaunchProgress error:", error)
     return false
   }
 }
@@ -73,9 +73,7 @@ window.launchToken = async function (tokenName) {
   const statusDiv = document.getElementById("launchStatus")
   const launchBtn = document.getElementById("launchTokenBtn")
 
-  if (!statusDiv) {
-    return
-  }
+  if (!statusDiv) return
 
   if (!tokenName || tokenName.trim().length < 3) {
     statusDiv.style.display = "block"
@@ -108,7 +106,6 @@ window.launchToken = async function (tokenName) {
     const network = await provider.getNetwork()
     originalChainId = Number(network.chainId)
 
-    // Ensure Base Sepolia
     if (originalChainId !== BASE_SEPOLIA_CHAIN_ID) {
       statusDiv.innerHTML += "<p>Switching to Base Sepolia testnet...</p>"
       try {
@@ -158,7 +155,18 @@ window.launchToken = async function (tokenName) {
 
     let tokenAddress = null
 
-    // Fallback: Transaction return value
+    if (receipt.logs) {
+      for (const log of receipt.logs) {
+        try {
+          const parsed = factory.interface.parseLog(log)
+          if (parsed && parsed.name === "TokenCreated") {
+            tokenAddress = parsed.args.token
+            break
+          }
+        } catch {}
+      }
+    }
+
     if (!tokenAddress && receipt.logs?.length > 0) {
       try {
         const lastLog = receipt.logs[receipt.logs.length - 1]
@@ -166,8 +174,7 @@ window.launchToken = async function (tokenName) {
         if (decoded?.token) {
           tokenAddress = decoded.token
         }
-      } catch (e) {
-      }
+      } catch {}
     }
 
     if (!tokenAddress) {
@@ -189,8 +196,7 @@ window.launchToken = async function (tokenName) {
 
     const scannerUrl = `https://sepolia.basescan.org/address/${tokenAddress}`
 
-    // Update progress
-    const progressUpdated = await updatePracticeLaunchProgress(wallet)
+    await updatePracticeLaunchProgress(wallet)
 
     statusDiv.className = "success-box"
     statusDiv.innerHTML = `
@@ -207,8 +213,6 @@ window.launchToken = async function (tokenName) {
         </button>
       </div>
     `
-
-
   } catch (error) {
     statusDiv.className = "error-box"
 
