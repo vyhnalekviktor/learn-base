@@ -3,23 +3,335 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Learn About Base</title>
+    <title>BaseCamp Crypto Glossary</title>
     <link rel="stylesheet" href="../../css/landing.css">
+    <style>
+        .theory-container {
+            max-width: 1000px;
+            width: 100%;
+            background: white;
+            border-radius: 24px;
+            padding: 60px 40px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            margin-bottom: 40px;
+        }
+
+        .theory-hero { margin-bottom: 3rem; }
+        .theory-hero h1 {
+            font-size: 48px;
+            font-weight: 800;
+            margin-bottom: 15px;
+            background: linear-gradient(135deg, #0052FF 0%, #0041CC 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .theory-hero .subtitle {
+            font-size: 20px;
+            color: #666;
+            margin-bottom: 2rem;
+            font-weight: 500;
+        }
+
+        .accordion-section { margin-bottom: 2rem; }
+
+        .accordion-header {
+            width: 100%;
+            padding: 1.5rem 2rem;
+            background: #f8fafc;
+            border: none;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+            border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        .accordion-header:hover {
+            background: linear-gradient(135deg, #0052FF 0%, #0041CC 100%);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 82, 255, 0.2);
+        }
+        .accordion-icon {
+            font-size: 1.2rem;
+            transition: transform 0.3s ease;
+            margin-left: 1rem;
+        }
+        .accordion-icon.active { transform: rotate(180deg); }
+
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease;
+            background: white;
+            padding: 0 2rem;
+        }
+        .accordion-content.active {
+            max-height: 2000px;
+            padding: 2rem;
+        }
+
+        .term-definition {
+            margin-bottom: 1.5rem;
+            text-align: left;
+            padding: 1rem 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .term-definition:last-child {
+            border-bottom: none;
+        }
+        .term-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 0.75rem;
+            background: linear-gradient(135deg, #0052FF 0%, #0041CC 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .term-desc {
+            color: #475569;
+            line-height: 1.7;
+            font-size: 1rem;
+        }
+        .back-link {
+            display: inline-block;
+            margin-top: 2rem;
+            color: #0052FF;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 1.1rem;
+            padding: 12px 24px;
+            border: 2px solid #0052FF;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+        .back-link:hover {
+            background: #0052FF;
+            color: white;
+        }
+        .sources {
+            font-size: 0.85rem;
+            color: #94a3b8;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        @media (max-width: 768px) {
+            .theory-container {
+                padding: 40px 20px;
+                margin: 20px;
+            }
+            .theory-hero h1 { font-size: 36px; }
+            .theory-hero .subtitle { font-size: 18px; }
+            .accordion-header {
+                padding: 1.25rem 1.5rem;
+                font-size: 1rem;
+            }
+            .accordion-content.active { padding: 1.5rem; }
+            .accordion-icon { font-size: 1rem; }
+        }
+    </style>
 </head>
 <body>
     <div class="container">
-        <div class="hero">
-            <h1>Learn About Base</h1>
-            <p>what is base</p>
-            <p>what is transaction</p>
-            <p>what is blockchain</p>
-            <p> understand gas fees</p>
-            <p>what is nft</p>
+        <div class="theory-container">
+            <div class="theory-hero">
+                <h1>BaseCamp Crypto Glossary</h1>
+                <p class="subtitle">Complete guide for total beginners. Every important term explained simply, step by step.</p>
+            </div>
 
-            <p class="subtitle">Coming soon...</p>
-            <br>
-            <a href="../../index.html" style="color: #0052FF; text-decoration: none; font-weight: bold;">Back to Home</a>
+            <div id="theory-progress-container" style="margin: 24px 0;">
+                <div style="font-size: 14px; margin-bottom: 4px; color: #64748b;">
+                    Progress <span id="theory-progress-percent">0%</span>
+                </div>
+                <div style="width: 100%; background-color: #1f2933; border-radius: 999px; overflow: hidden; height: 8px;">
+                <div id="theory-progress-bar-fill" style="width: 0%; height: 100%; background: linear-gradient(135deg, #0052FF 0%, #10b981 100%); transition: width 0.3s ease;"></div>
+                </div>
+            </div>
+
+
+            <!-- Core Blockchain Concepts -->
+            <div class="accordion-section">
+                <button class="accordion-header" onclick="toggleAccordion('core-blockchain')">
+                    <span>Core Blockchain Concepts (5 terms)</span>
+                    <span class="accordion-icon" id="icon-core-blockchain">▼</span>
+                </button>
+                <div class="accordion-content" id="content-core-blockchain">
+                    <div class="term-definition">
+                        <div class="term-title">Blockchain</div>
+                        <p class="term-desc">Think of blockchain as a public accounting book managed by thousands of computers worldwide. Every transaction (like sending money) gets permanently written here and nobody can change it. On Base, transactions process fast and cheap, then get batched and sent to Ethereum for security.</p>
+                    </div>
+                    <div class="term-definition">
+                        <div class="term-title">Testnet</div>
+                        <p class="term-desc">Testing version of blockchain where you use fake money with zero risk. Base Sepolia works exactly like mainnet but nothing costs real money. Perfect practice ground for all your labs.</p>
+                    </div>
+                    <div class="term-definition">
+                        <div class="term-title">Mainnet</div>
+                        <p class="term-desc">Live network with real money. Every transaction here is permanent and can't be undone. Be very careful what you sign!</p>
+                    </div>
+                    <div class="term-definition">
+                        <div class="term-title">Transaction</div>
+                        <p class="term-desc">Any sending of money, NFT, or running code on blockchain. Like a bank transfer but public and irreversible. Everyone can see it on block explorer.</p>
+                    </div>
+                    <div class="term-definition">
+                        <div class="term-title">Gas Fees</div>
+                        <p class="term-desc">Tiny ETH payment to process transactions - like gas for network computers. Base makes them 95-99% cheaper than Ethereum. You pay for sends, mints, and swaps.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Wallet and Security -->
+            <div class="accordion-section">
+                <button class="accordion-header" onclick="toggleAccordion('wallet-security')">
+                    <span>Wallet & Security (5 terms)</span>
+                    <span class="accordion-icon" id="icon-wallet-security">▼</span>
+                </button>
+                <div class="accordion-content" id="content-wallet-security">
+                    <div class="term-definition">
+                        <div class="term-title">Wallet</div>
+                        <p class="term-desc">App or device holding your private key and address. Doesn't store money directly - just lets you send/receive. Like digital bank account but YOU have full control.</p>
+                    </div>
+                    <div class="term-definition">
+                        <div class="term-title">Wallet Address</div>
+                        <p class="term-desc">Long string starting with 0x - your unique account number. Send money here. Share freely but always double-check before sending.</p>
+                    </div>
+                    <div class="term-definition">
+                        <div class="term-title">Private Key</div>
+                        <p class="term-desc">Your most important secret - password proving money belongs to you. NEVER share it! Wallet uses it to sign transactions without showing it.</p>
+                    </div>
+                    <div class="term-definition">
+                        <div class="term-title">Digital Signature</div>
+                        <p class="term-desc">Code created from your private key confirming transactions. Like your handwritten signature but cryptographically secure - nobody else can fake it.</p>
+                    </div>
+                    <div class="term-definition">
+                        <div class="term-title">Seed Phrase</div>
+                        <p class="term-desc">12-24 words to recover your wallet. Backup of your private key. Write on paper, store safely, NEVER enter on websites - that's always a scam!</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tokens and Standards -->
+            <div class="accordion-section">
+                <button class="accordion-header" onclick="toggleAccordion('tokens-standards')">
+                    <span>Tokens & Standards (6 terms)</span>
+                    <span class="accordion-icon" id="icon-tokens-standards">▼</span>
+                </button>
+                <div class="accordion-content" id="content-tokens-standards">
+                    <div class="term-definition">
+                        <div class="term-title">USDC</div>
+                        <p class="term-desc">Stablecoin always worth $1. Perfect for practice - free from faucets on testnet. You use it in labs for sending and swaps.</p>
+                    </div>
+                    <div class="term-definition">
+                        <div class="term-title">ETH</div>
+                        <p class="term-desc">Base currency of Ethereum and Base. Pays gas fees. Free from faucets on testnet, buy real ETH for mainnet.</p>
+                    </div>
+                    <div class="term-definition">
+                        <div class="term-title">ERC20</div>
+                        <p class="term-desc">Standard for interchangeable tokens like USDC. All ERC20 tokens work the same - send like regular money.</p>
+                    </div>
+                    <div class="term-definition">
+                        <div class="term-title">ERC721 (NFT)</div>
+                        <p class="term-desc">Standard for unique items. Each NFT is different, like collectible trading cards. Your mint.html creates ERC721 NFTs with SVG images.</p>
+                    </div>
+                    <div class="term-definition">
+                        <div class="term-title">NFT</div>
+                        <p class="term-desc">Non-Fungible Token = unique digital asset. Proof of ownership for images, videos, or collectibles. Created by calling smart contracts.</p>
+                    </div>
+                    <div class="term-definition">
+                        <div class="term-title">Token ID</div>
+                        <p class="term-desc">Number for each NFT (1, 2, 3...). Shows creation order. After minting, fetch it from contract's counter().</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Base Network -->
+            <div class="accordion-section">
+                <button class="accordion-header" onclick="toggleAccordion('base-network')">
+                    <span>Base Network & Tools (8 terms)</span>
+                    <span class="accordion-icon" id="icon-base-network">▼</span>
+                </button>
+                <div class="accordion-content" id="content-base-network">
+                    <div class="term-definition">
+                        <div class="term-title">Base</div>
+                        <p class="term-desc">Fast, cheap network built by Coinbase on Ethereum (Layer 2). Processes transactions in 1-2 seconds, batches them, sends to Ethereum for security. Core to all your labs.</p>
+                    </div>
+                    <div class="term-definition">
+                        <div class="term-title">Base Sepolia</div>
+                        <p class="term-desc">Base testnet (chainId 84532). Used in all practice files for safe learning. <a href="https://sepolia.basescan.org/" target="_blank">Try Base Sepolia explorer</a></p>
+                    </div>
+                    <div class="term-definition">
+                        <div class="term-title">Faucet</div>
+                        <p class="term-desc">Website giving free test tokens after captcha/address. Circle for USDC, Alchemy for ETH. Search "Base Sepolia faucet".</p>
+                    </div>
+                    <div class="term-definition">
+                        <div class="term-title">DEX</div>
+                        <p class="term-desc">Decentralized exchange for token swaps without banks. lab5.js simulates fake SuperSwap vs real Coinbase rates.</p>
+                    </div>
+                    <div class="term-definition">
+                        <div class="term-title">Block Explorer</div>
+                        <p class="term-desc">Website to track transactions: sepolia.basescan.org. Paste hash or address to see details. Check your mints/sends here.</p>
+                    </div>
+                    <div class="term-definition">
+                        <div class="term-title">Transaction Hash</div>
+                        <p class="term-desc">Unique 66-character ID (0x...) for every transaction. Paste into explorer to track status.</p>
+                    </div>
+                    <div class="term-definition">
+                        <div class="term-title">Sequencer</div>
+                        <p class="term-desc">Base's special computer that instantly processes transactions off-chain, then batches to Ethereum. Makes Base super fast.</p>
+                    </div>
+                    <div class="term-definition">
+                        <div class="term-title">WalletConnect</div>
+                        <p class="term-desc">Secure wallet-web connection via QR code. Only safe method in lab4.js - never type keys manually!</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Smart Contracts -->
+            <div class="accordion-section">
+                <button class="accordion-header" onclick="toggleAccordion('smart-contracts')">
+                    <span>Smart Contracts (5 terms)</span>
+                    <span class="accordion-icon" id="icon-smart-contracts">▼</span>
+                </button>
+                <div class="accordion-content" id="content-smart-contracts">
+                    <div class="term-definition">
+                        <div class="term-title">Smart Contract</div>
+                        <p class="term-desc">Automatic program on blockchain like a vending machine: input condition, get result. Your NFT contract 0x726107... mints NFTs when called.</p>
+                    </div>
+                    <div class="term-definition">
+                        <div class="term-title">Minting</div>
+                        <p class="term-desc">Creating new NFT by calling contract function (mintTo). Uploads to blockchain with your address as owner.</p>
+                    </div>
+                    <div class="term-definition">
+                        <div class="term-title">Token Metadata</div>
+                        <p class="term-desc">NFT description: name, image, text in JSON format. Your contract generates SVG directly on-chain as base64.</p>
+                    </div>
+                    <div class="term-definition">
+                        <div class="term-title">Token URI</div>
+                        <p class="term-desc">Link to NFT metadata. Your contract returns base64 data directly, no external servers needed.</p>
+                    </div>
+                    <div class="term-definition">
+                        <div class="term-title">On-chain</div>
+                        <p class="term-desc">Data stored directly on blockchain - forever and decentralized. Your NFTs store full SVG/metadata on-chain, no IPFS needed.</p>
+                    </div>
+                </div>
+            </div>
+
+            <a href="../../index.html" class="back-link">Back to Home</a>
+
+            <div class="sources">
+                <p><strong>Sources:</strong> Base.org docs, Coinbase Base announcement, Basescan.org, Ethereum.org standards, WalletConnect docs</p>
+            </div>
         </div>
     </div>
+
+    <script type="module" src="../../src/main_menu/theory.js"></script>
 </body>
 </html>
