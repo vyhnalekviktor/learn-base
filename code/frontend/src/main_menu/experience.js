@@ -33,7 +33,7 @@ window.addEventListener('load', async () => {
     const span = document.getElementById('wallet-address');
     if (span) span.textContent = wallet;
 
-    await getProgressAndSetupMint(wallet.toLowerCase(), ethProvider);
+    await getProgressAndSetupMint(wallet, ethProvider);
   } catch (error) {
     debug('Error during MiniApp wallet init: ' + (error.message || String(error)));
   }
@@ -129,7 +129,7 @@ async function handleFreeClaim(ethProvider) {
     const { ethers } = await import('https://esm.sh/ethers@6.9.0');
 
     const accounts = await ethProvider.request({ method: 'eth_requestAccounts' });
-    const userWallet = accounts && accounts[0] ? accounts[0].toLowerCase() : null;
+    const userWallet = accounts && accounts[0] ? accounts[0] : null;
     if (!userWallet) {
       debug('Wallet not found');
       alert('Wallet address not found');
