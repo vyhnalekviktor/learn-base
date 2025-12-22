@@ -6,21 +6,23 @@
   },
   "miniapp": {
     "version": "1",
-    "name": "BaseCamp Learning",
+    "name": "BaseCamp",
     "homeUrl": "https://learn-base-mu.vercel.app/index.html",
     "iconUrl": "https://learn-base-mu.vercel.app/images/icon.png",
     "splashImageUrl": "https://learn-base-mu.vercel.app/images/splash.png",
     "splashBackgroundColor": "#0052FF",
     "subtitle": "Learn Base!",
-    "description": "Interactive Base learning app. Try Base operations in safe testnet enviroment. Check common scams. And you are ready to go into the wilderness!",
+    "description": "Interactive Base learning app. Practice real onchain actions on testnet, learn core concepts and common scams, then mint an exclusive NFT badge for completion.",
     "screenshotUrls": [],
     "primaryCategory": "education",
-    "tags": ["education", "base"],
+    "tags": ["education", "base", "learn", "productivity", "beginner"],
     "heroImageUrl": "https://learn-base-mu.vercel.app/images/hero.png",
-    "tagline": "Learn Base the easy way",
+    "tagline": "Learn Base the easy way!",
     "ogTitle": "BaseCamp Learning",
-    "ogDescription": "Learn to send your first Base transaction.",
+    "ogDescription": "Learn Base the easy way! Are you a Base Beginner? Try Base operations in safe testnet environment. Read theory and check common scams.",
     "ogImageUrl": "https://learn-base-mu.vercel.app/images/og.png",
+    "author.display_name": "vikiase.base.eth",
+    "buttonTitle": "Start learning",
     "noindex": true
   }
 }
