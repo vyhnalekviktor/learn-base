@@ -24,7 +24,7 @@ window.addEventListener('load', async () => {
     await sdk.actions.ready();
     debug('BaseCamp mini app is ready!');
 
-    const ethProvider = await sdk.wallet.ethProvider();
+    const ethProvider = sdk.wallet.ethProvider;
     const accounts = await ethProvider.request({ method: 'eth_requestAccounts' });
     const wallet = accounts && accounts.length > 0 ? accounts[0] : null;
 
