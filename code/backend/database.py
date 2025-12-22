@@ -35,7 +35,12 @@ def init_user_progress(wallet: str) :
         "lab2": False,
         "lab3": False,
         "lab4": False,
-        "lab5": False
+        "lab5": False,
+        "theory1": False,
+        "theory2": False,
+        "theory3": False,
+        "theory4": False,
+        "theory5": False
     }
     response = supabase.table("USER_PROGRESS").insert(user_progress).execute()
     return response.data
@@ -122,6 +127,9 @@ def check_completion(wallet: str):
             if progress["lab1"] and progress["lab2"] and progress["lab3"] and progress["lab4"] and progress["lab5"]:
                 update_field("USER_INFO", "completed_security", wallet, True)
 
+        if not info["completed_theory"]:
+            if progress["theory1"] and progress["theory2"] and progress["theory3"] and progress["theory4"] and progress["theory5"]:
+                update_field("USER_INFO", "completed_theory", wallet, True)
 
         if not info["completed_all"] and info["completed_practice"] and info["completed_theory"] and info["completed_security"]:
             update_field("USER_INFO", "completed_all", wallet, True)
