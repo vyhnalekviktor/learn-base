@@ -131,11 +131,11 @@ function showFakeDEXDemo(runButton) {
                         <div class="exchange-logo">SS</div>
                         <div>
                             <div class="exchange-name">SuperSwap</div>
-                            <div class="exchange-subtitle">ETH / USDC · Spot</div>
+                            <div class="exchange-subtitle">ETH / USDC</div>
                         </div>
                     </div>
                     <div class="exchange-status exchange-status-warning">
-                        <span class="status-dot"></span>
+
                         UNVERIFIED EXCHANGE
                     </div>
                 </div>
@@ -206,11 +206,11 @@ function showFakeDEXDemo(runButton) {
                         <div class="exchange-logo exchange-logo-blue">CB</div>
                         <div>
                             <div class="exchange-name">Coinbase</div>
-                            <div class="exchange-subtitle">ETH / USDC · Spot</div>
+                            <div class="exchange-subtitle">ETH / USDC</div>
                         </div>
                     </div>
                     <div class="exchange-status exchange-status-ok">
-                        <span class="status-dot"></span>
+
                         VERIFIED EXCHANGE
                     </div>
                 </div>

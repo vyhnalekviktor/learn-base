@@ -502,6 +502,7 @@
     border-radius: 10px;
     border: 1px solid rgba(148, 163, 184, 0.5);
     overflow: hidden;
+    width: 100%;
 }
 
 .order-input {
@@ -510,15 +511,19 @@
     background: transparent;
     color: #e5e7eb;
     font-size: 13px;
-    padding: 6px 8px;
+    padding: 8px 10px;
     outline: none;
+    min-width: 0;
 }
 
 .order-input-suffix {
-    padding: 6px 10px;
+    padding: 8px 12px;
     font-size: 12px;
+    font-weight: 600;
     background: #0b1120;
     border-left: 1px solid rgba(148, 163, 184, 0.5);
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .order-meta {
