@@ -1,10 +1,14 @@
+// experience.js – Security lab + NFT claim za 4 USDC na Base mainnet
+
 import sdk from 'https://esm.sh/@farcaster/miniapp-sdk';
 
 const API_BASE = 'https://learn-base-backend.vercel.app';
 
 const BASE_CHAIN_ID_HEX = '0x2105'; // Base mainnet
 const NFT_CONTRACT = '0xA76F456f6FbaB161069fc891c528Eb56672D3e69';
+const USDC = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913';
 
+// ========== DEBUG ==========
 function debug(msg) {
   console.log(msg);
   const box = document.getElementById('debugLog');
@@ -14,6 +18,7 @@ function debug(msg) {
   box.scrollTop = box.scrollHeight;
 }
 
+// ========== INIT ==========
 window.addEventListener('load', async () => {
   try {
     debug('Page loaded, calling sdk.actions.ready()...');
@@ -39,6 +44,7 @@ window.addEventListener('load', async () => {
   }
 });
 
+// ========== PROGRESS + MINT ODEMKNUTÍ ==========
 async function getProgressAndSetupMint(wallet, ethProvider) {
   try {
     debug('Loading user progress from backend for wallet: ' + wallet);
@@ -68,13 +74,14 @@ async function getProgressAndSetupMint(wallet, ethProvider) {
       return;
     }
 
-    // Progress bary
+    // Theory progress
     const theoryBar = document.getElementById('theoryProgressBar');
     const theoryText = document.getElementById('theoryProgressText');
     const theoryPercent = info.completed_theory ? 100 : 0;
     if (theoryBar) theoryBar.style.width = `${theoryPercent}%`;
     if (theoryText) theoryText.textContent = `${theoryPercent}%`;
 
+    // Base labs
     const baseParts = [progress.faucet, progress.send, progress.receive, progress.mint, progress.launch];
     let baseCompleted = 0;
     for (const part of baseParts) if (part === true) baseCompleted++;
@@ -85,6 +92,7 @@ async function getProgressAndSetupMint(wallet, ethProvider) {
     if (baseBar) baseBar.style.width = `${basePercent}%`;
     if (baseText) baseText.textContent = `${basePercent}%`;
 
+    // Security labs
     const securityParts = [progress.lab1, progress.lab2, progress.lab3, progress.lab4, progress.lab5];
     let securityCompleted = 0;
     for (const part of securityParts) if (part === true) securityCompleted++;
@@ -95,7 +103,7 @@ async function getProgressAndSetupMint(wallet, ethProvider) {
     if (secBar) secBar.style.width = `${securityPercent}%`;
     if (secText) secText.textContent = `${securityPercent}%`;
 
-    // completed_all odemkne mint
+    // completed_all odemkne claim
     const completedAll = info.completed_all === true;
     debug('completed_all from USER_INFO: ' + JSON.stringify(completedAll));
 
@@ -103,16 +111,16 @@ async function getProgressAndSetupMint(wallet, ethProvider) {
     const mintBtn = document.getElementById('mintNftBtn');
 
     if (completedAll) {
-      debug('All labs completed - unlocking NFT mint');
+      debug('All labs completed - unlocking NFT claim');
       if (nftSection) nftSection.classList.remove('locked');
       if (mintBtn) mintBtn.disabled = false;
     } else {
-      debug('Not all labs completed - mint button stays locked');
+      debug('Not all labs completed - claim button stays locked');
     }
 
     if (mintBtn) {
       mintBtn.onclick = async () => {
-        await handleFreeClaim(ethProvider);
+        await handlePaidClaim(ethProvider);
       };
     }
   } catch (err) {
@@ -120,11 +128,11 @@ async function getProgressAndSetupMint(wallet, ethProvider) {
   }
 }
 
-// FREE CLAIM na Thirdweb Drop kontrakt (0 ETH)
-async function handleFreeClaim(ethProvider) {
+// ========== CLAIM ZA 4 USDC (stejné parametry jako thirdweb curl) ==========
+async function handlePaidClaim(ethProvider) {
   const mintBtn = document.getElementById('mintNftBtn');
   try {
-    debug('FREE CLAIM START - Base mainnet 0x2105');
+    debug('PAID CLAIM START – Base mainnet 0x2105, 4 USDC');
 
     const { ethers } = await import('https://esm.sh/ethers@6.9.0');
 
@@ -137,7 +145,7 @@ async function handleFreeClaim(ethProvider) {
     }
     debug('Using wallet: ' + userWallet);
 
-    // Chain check - Base mainnet
+    // 1) Chain check – Base mainnet
     let chainId = await ethProvider.request({ method: 'eth_chainId' });
     debug('Current chain: ' + chainId);
     if (chainId !== BASE_CHAIN_ID_HEX) {
@@ -167,23 +175,28 @@ async function handleFreeClaim(ethProvider) {
       await new Promise(r => setTimeout(r, 1500));
     }
 
-    // Thirdweb Drop claim signature z ABI
+    // 2) Ethers interface pro claim
     const iface = new ethers.Interface([
       'function claim(address _receiver, uint256 _tokenId, uint256 _quantity, address _currency, uint256 _pricePerToken, (bytes32[] proof, uint256 quantityLimitPerWallet, uint256 pricePerToken, address currency) _allowlistProof, bytes _data) payable'
     ]);
 
-    // FREE MINT parametry
+    // Parametry podle tvého curl:
+    // _receiver = userWallet
+    // _tokenId = 0
+    // _quantity = 1
+    // _currency = USDC na Base
+    // _pricePerToken = 4000000 (4 USDC s 6 decimály)
     const receiver = userWallet;
-    const tokenId = 0n;        // první token ID (uprav podle tvého drop setupu)
-    const quantity = 1n;       // 1 NFT
-    const currency = '0x0000000000000000000000000000000000000000'; // native ETH
-    const pricePerToken = 0n;  // FREE
+    const tokenId = 0n;
+    const quantity = 1n;
+    const currency = USDC;
+    const pricePerToken = 4000000n;
 
     const allowlistProof = {
       proof: [],
       quantityLimitPerWallet: 0n,
-      pricePerToken: 0n,
-      currency: '0x0000000000000000000000000000000000000000',
+      pricePerToken: pricePerToken,
+      currency: currency,
     };
 
     const dataBytes = '0x';
@@ -198,22 +211,22 @@ async function handleFreeClaim(ethProvider) {
       dataBytes,
     ]);
 
-    debug('claimData generated (length: ' + claimData.length + '): ' + claimData.slice(0, 66) + '...');
-
-    // Pošli transakci
+    debug('claimData generated (length: ' + claimData.length + '): ' + claimData.slice(0, 80) + '...');
     debug('Sending claim transaction to ' + NFT_CONTRACT);
-    const claimTx = await ethProvider.request({
+
+    // 3) Uživatel podepíše tx (platí 4 USDC z vlastního účtu)
+    const txHash = await ethProvider.request({
       method: 'eth_sendTransaction',
       params: [{
         from: userWallet,
         to: NFT_CONTRACT,
         data: claimData,
+        // value: '0x0'  // platba je v USDC, ne v ETH
       }],
     });
 
-    debug('Claim tx sent! Hash: ' + claimTx);
+    debug('Claim tx sent! Hash: ' + txHash);
 
-    // UI update
     const ownedSection = document.getElementById('ownedNftSection');
     if (ownedSection) ownedSection.style.display = 'block';
     if (mintBtn) {
@@ -222,13 +235,13 @@ async function handleFreeClaim(ethProvider) {
     }
 
     debug('SUCCESS - NFT claimed!');
-    alert(`NFT claimed successfully!\nTx hash: ${claimTx}\nView on: https://basescan.org/tx/${claimTx}`);
+    alert(`NFT claimed successfully!\nTx hash: ${txHash}\nView on: https://basescan.org/tx/${txHash}`);
   } catch (e) {
     debug('Claim error: ' + (e.message || String(e)));
     if (e.code === 4001) {
       debug('User rejected transaction');
     } else if (e.message && e.message.toLowerCase().includes('insufficient')) {
-      debug('Insufficient funds for gas');
+      debug('Insufficient funds or allowance');
     }
     alert('Error: ' + (e.message || e));
   }
