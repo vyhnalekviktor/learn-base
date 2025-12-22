@@ -212,12 +212,12 @@ window.launchToken = async function (tokenName) {
       <p><strong>Token launched successfully!</strong></p>
       <p><strong>${cleanName}</strong> (${symbol})</p>
       <p>Supply: 1,000,000 tokens</p>
-      <p>Contract: <code>${tokenAddress}</code></p>
+      <p>Contract: <code>${tokenAddress.slice(0,4)}...${tokenAddress.slice(-4)}</code></p>
       <div style="margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap;">
         <button onclick="window.open('${scannerUrl}', '_blank')"
                 style="padding: 8px 16px; background: #0052FF; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600;">
           View on BaseScan
-        </button>
+        </button><br>
         <button onclick="window.open('https://account.base.app/activity', '_blank')"
                 style="padding: 8px 16px; background: #0052FF; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600;">
           View in Wallet
