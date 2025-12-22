@@ -22,10 +22,10 @@ def init_user_info(wallet: str) :
     }
     response = supabase.table("USER_INFO").insert(user_info).execute()
     return response.data
+
 def init_user_progress(wallet: str) :
     user_progress = {
         "wallet": wallet,
-        "theory": False,
         "faucet": False,
         "send": False,
         "receive": False,
