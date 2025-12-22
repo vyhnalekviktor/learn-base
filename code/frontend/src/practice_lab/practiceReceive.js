@@ -86,8 +86,6 @@ window.requestTestUSDC = async function() {
 
     await new Promise(resolve => setTimeout(resolve, 1000));
 
-    statusDiv.innerHTML = '\n\nYour friend confirmed! Sending 1 USDC...';
-
     const response = await fetch('https://learn-base-backend.vercel.app/api/testnet/send-test', {
       method: 'POST',
       headers: {
