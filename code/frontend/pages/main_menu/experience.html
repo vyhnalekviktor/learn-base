@@ -92,6 +92,15 @@
             color: #555;
             word-break: break-all;
         }
+
+        .badge-image {
+            max-width: 220px;
+            width: 100%;
+            border-radius: 16px;
+            display: block;
+            margin: 0 auto 12px;
+        }
+
     </style>
 </head>
 <body>
@@ -133,18 +142,22 @@
                 </p>
 
                 <button class="primary-btn" id="mintNftBtn" disabled>
-                    Mint NFT for 4 USDC
+                    Mint NFT for 2 USDC
                 </button>
             </div>
 
             <section id="ownedNftSection" style="display: none;">
                 <h3>Your NFT</h3>
-                <img alt="Your NFT" src="../../images/nft1.png" />
-                <p><a href="../../images/nft1.png" target="_blank">View your NFT</a></p>
+                <img id="badge-image" src="../../images/nft1.png" alt="BaseCamp NFT" style="max-width: 220px; width: 100%; border-radius: 16px;" />
+                <a id="view-nft-link"
+                    href="#"
+                    target="_blank"
+                    rel="noopener noreferrer">
+                    View in block explorer
+                </a>
+
+
             </section>
-
-            <div id="debugLog" style="white-space:pre-wrap;font-family:monospace;border:1px solid #444;padding:8px;margin-top:16px;max-height:200px;overflow:auto;"></div>
-
             <a href="../../index.html" class="back-link">Back to Home</a>
         </div>
 
