@@ -115,7 +115,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       showModal(
         "success",
         "CONGRATS! Lab 5 COMPLETE!\n\n" +
-        "You identified suspicious token.\n"
+        "You identified suspicious token.\n" +
           "1250% APY is a red flag.\n" +
           "Token can be easily bought, but there is huge fee on selling.\n" +
           "Always verify token and simulate transactions if possible."
