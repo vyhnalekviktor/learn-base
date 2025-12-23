@@ -265,7 +265,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
               <div style="margin-top:10px; font-size:11px; opacity:0.9;">
                 For real research you can use independent honeypot scanners like
-                <a href="https://honeypot.is/base" target="_blank" rel="noopener noreferrer" style="color:#4aa8ff; text-decoration:underline;">
+                <a href="#" onclick="openLink(); return false;" rel="noopener noreferrer" style="color:#4aa8ff; text-decoration:underline;">
                   honeypot.is/base
                 </a>
                 and compare results with BaseScan and DEX simulators.
@@ -402,3 +402,7 @@ function showModal(type, message) {
     if (e.target === modal) modal.remove();
   });
 }
+
+window.openLink = function() {
+  sdk.actions.openUrl(`https://honeypot.is/base`);
+};
