@@ -1,31 +1,20 @@
 import { sdk } from 'https://esm.sh/@farcaster/miniapp-sdk';
+import { pay } from 'https://esm.sh/@base-org/account';
 
 const API_BASE = "https://learn-base-backend.vercel.app";
 const RECIPIENT_ADDRESS = '0x5b9aCe009440c286E9A236f90118343fc61Ee48F';
 const AMOUNT_USDC = '1';
-const USDC_CONTRACT = '0x036CbD53842c5426634e7929541eC2318f3dCF7e';
-
-const BASE_SEPOLIA_CHAIN_ID = 84532;
-const BASE_MAINNET_CHAIN_ID = 8453;
-
-const USDC_ABI = [
-  'function transfer(address to, uint256 amount) returns (bool)',
-  'function balanceOf(address account) view returns (uint256)'
-];
 
 let ethProvider = null;
 let currentWallet = null;
-let originalChainId = null;
 
 async function initApp() {
   try {
     console.log('Initializing Base App...');
     ethProvider = await sdk.wallet.ethProvider;
     await sdk.actions.ready();
-
     const accounts = await ethProvider.request({ method: "eth_requestAccounts" });
     currentWallet = accounts && accounts.length > 0 ? accounts[0] : null;
-
     console.log('Base App ready');
     console.log('Connected wallet:', currentWallet);
   } catch (error) {
@@ -40,7 +29,6 @@ async function callPracticeSent(wallet) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ wallet }),
     });
-
     if (!res.ok) {
       let msg = "Unknown backend error";
       try {
@@ -68,7 +56,6 @@ async function updatePracticeSendProgress(wallet) {
       value: true,
     }),
   });
-
   if (!res.ok) {
     let msg = "Unknown backend error";
     try {
@@ -81,22 +68,9 @@ async function updatePracticeSendProgress(wallet) {
   return true;
 }
 
-async function switchToMainnet() {
-  try {
-    await ethProvider.request({
-      method: 'wallet_switchEthereumChain',
-      params: [{ chainId: '0x2105' }]
-    });
-    console.log('Switched back to Base Mainnet');
-  } catch (error) {
-    console.error('Failed to switch back to mainnet:', error);
-  }
-}
-
 window.toggleAccordion = function(id) {
   const content = document.getElementById('content-' + id);
   const icon = document.getElementById('icon-' + id);
-
   if (content.style.maxHeight) {
     content.style.maxHeight = null;
     icon.textContent = '▼';
@@ -115,82 +89,14 @@ window.sendTransaction = async function() {
     statusDiv.className = 'info-box';
     statusDiv.innerHTML = 'Preparing USDC payment...';
 
-    const { BrowserProvider, Contract, parseUnits } = await import('https://esm.sh/ethers@6.9.0');
+    statusDiv.innerHTML = 'Please confirm the payment in your wallet...';
+    const payment = await pay({
+      amount: AMOUNT_USDC,
+      to: RECIPIENT_ADDRESS,
+      testnet: true
+    });
 
-    const provider = new BrowserProvider(ethProvider);
-    const network = await provider.getNetwork();
-    originalChainId = Number(network.chainId);
-
-    if (originalChainId !== BASE_SEPOLIA_CHAIN_ID) {
-      statusDiv.innerHTML = 'Switching to Base Sepolia testnet...';
-
-      try {
-        await ethProvider.request({
-          method: 'wallet_switchEthereumChain',
-          params: [{ chainId: '0x14a34' }]
-        });
-      } catch (switchError) {
-        if (switchError.code === 4902) {
-          await ethProvider.request({
-            method: 'wallet_addEthereumChain',
-            params: [{
-              chainId: '0x14a34',
-              chainName: 'Base Sepolia',
-              nativeCurrency: { name: 'Ethereum', symbol: 'ETH', decimals: 18 },
-              rpcUrls: ['https://sepolia.base.org'],
-              blockExplorerUrls: ['https://sepolia.basescan.org']
-            }]
-          });
-        } else {
-          throw switchError;
-        }
-      }
-
-      await new Promise(resolve => setTimeout(resolve, 1500));
-    }
-
-    const sepoliaProvider = new BrowserProvider(ethProvider);
-    const signer = await sepoliaProvider.getSigner();
-    const userAddress = await signer.getAddress();
-
-    const usdcContract = new Contract(USDC_CONTRACT, USDC_ABI, signer);
-
-    statusDiv.innerHTML = 'Checking USDC balance...';
-
-    const balance = await usdcContract.balanceOf(userAddress);
-    const amount = parseUnits(AMOUNT_USDC, 6);
-
-    if (balance < amount) {
-      statusDiv.className = 'error-box';
-      statusDiv.innerHTML = `
-        <strong>Insufficient USDC balance</strong><br><br>
-        You need ${AMOUNT_USDC} USDC but have ${(Number(balance) / 1e6).toFixed(2)} USDC<br><br>
-        <button onclick="openCircleFaucet()"
-          style="padding: 8px 16px; background: #0052FF; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600;">
-          Get testnet USDC
-        </button>
-      `;
-
-      if (originalChainId === BASE_MAINNET_CHAIN_ID) {
-        await switchToMainnet();
-      }
-      return;
-    }
-
-    statusDiv.innerHTML = 'Please confirm the transaction in your wallet...';
-
-    const tx = await usdcContract.transfer(RECIPIENT_ADDRESS, amount);
-
-    const txHash = tx.hash;
-    const shortHash = txHash.substring(0, 10) + '...' + txHash.substring(txHash.length - 8);
-
-    statusDiv.innerHTML = `
-      <strong>Transaction submitted!</strong><br><br>
-      <strong>Hash:</strong> <code>${shortHash}</code><br><br>
-      Waiting for confirmation...
-    `;
-
-    await tx.wait();
+    console.log('Payment sent!', payment);
 
     if (currentWallet) {
       const okPractice = await callPracticeSent(currentWallet);
@@ -200,41 +106,21 @@ window.sendTransaction = async function() {
 
     statusDiv.className = 'info-box';
     statusDiv.innerHTML = `
-      <strong>Payment Sent!</strong><br><br>
-      <strong>Amount:</strong> ${AMOUNT_USDC} USDC<br>
-      <strong>To:</strong> ${RECIPIENT_ADDRESS.substring(0, 6)}...${RECIPIENT_ADDRESS.substring(38)}<br><br>
-      <button onclick="openBaseScan()"
-        style="padding: 8px 16px; background: #0052FF; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600;">
-        View on BaseScan
-      </button><br><br>
-      <small style="color: #666;">Payment successfully processed on Base Sepolia testnet</small>
+      <strong>Payment Sent!</strong><br>
+      Amount: ${AMOUNT_USDC} USDC<br>
+      To: ${RECIPIENT_ADDRESS.substring(0, 6)}...${RECIPIENT_ADDRESS.substring(38)}<br><br>
+      <small>Payment successfully processed on Base Sepolia testnet</small>
+      <small>Check it in your wallet</small>
     `;
-
-    if (originalChainId === BASE_MAINNET_CHAIN_ID) {
-      statusDiv.innerHTML += '<br><br>Switching back to Base Mainnet...';
-      await switchToMainnet();
-    }
-
   } catch (error) {
     console.error('Payment error:', error);
     statusDiv.className = 'error-box';
-
-    if (error.code === 4001 || error.message.includes('User rejected') || error.message.includes('rejected')) {
+    if (error.message.includes('User rejected') || error.message.includes('rejected')) {
       statusDiv.innerHTML = 'Payment rejected by user';
     } else if (error.message.includes('insufficient')) {
-      statusDiv.innerHTML = `
-        <strong>Insufficient USDC balance</strong><br><br>
-        <button onclick="openCircleFaucet()"
-          style="padding: 8px 16px; background: #0052FF; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600;">
-          Get testnet USDC
-        </button>
-      `;
+      statusDiv.innerHTML = 'Insufficient USDC balance. Get testnet USDC from Circle Faucet.';
     } else {
-      statusDiv.innerHTML = `<strong>Payment failed:</strong><br><br>${error.message}`;
-    }
-
-    if (originalChainId === BASE_MAINNET_CHAIN_ID) {
-      await switchToMainnet();
+      statusDiv.innerHTML = `Payment failed: ${error.message}`;
     }
   }
 };
