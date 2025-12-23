@@ -2,21 +2,56 @@ import { sdk } from "https://esm.sh/@farcaster/miniapp-sdk";
 
 const API_BASE = "https://learn-base-backend.vercel.app";
 
-window.addEventListener("load", async () => {
-  try {
-    console.log("Page loaded, calling sdk.actions.ready()...");
-    await sdk.actions.ready();
+function debugLog(...args) {
+  const panel = document.getElementById("debug-log");
+  if (!panel) return;
+  const msg = args
+    .map((a) => {
+      try {
+        if (typeof a === "string") return a;
+        return JSON.stringify(a, null, 2);
+      } catch {
+        return String(a);
+      }
+    })
+    .join(" ");
+  const ts = new Date().toISOString().split("T")[1].slice(0, 8);
+  panel.textContent += `[${ts}] ${msg}\n`;
+  panel.scrollTop = panel.scrollHeight;
+}
 
-    console.log("BaseCamp mini app is ready!");
+function initDebugToggle() {
+  const btn = document.getElementById("debug-toggle");
+  const panel = document.getElementById("debug-panel");
+  if (!btn || !panel) return;
+  let hidden = false;
+  btn.addEventListener("click", () => {
+    hidden = !hidden;
+    panel.style.maxHeight = hidden ? "22px" : "40vh";
+    btn.textContent = hidden ? "Show" : "Hide";
+  });
+}
+
+window.addEventListener("load", async () => {
+  initDebugToggle();
+  debugLog("Window load start");
+
+  try {
+    debugLog("Calling sdk.actions.ready()...");
+    await sdk.actions.ready();
+    debugLog("sdk.actions.ready() done");
+
+    debugLog("BaseCamp mini app is ready!");
 
     // ==== USER CONTEXT / AVATAR ====
 
     let ctx = null;
     try {
       ctx = await sdk.context.getContext();
-      console.log("MiniApp context:", ctx);
+      debugLog("MiniApp context:", ctx);
     } catch (e) {
       console.error("Failed to get context", e);
+      debugLog("Failed to get context", String(e));
     }
 
     const userInfo = document.getElementById("user-info");
@@ -26,7 +61,9 @@ window.addEventListener("load", async () => {
 
     if (userInfo) {
       userInfo.style.display = "flex";
-      console.log("user-info made visible");
+      debugLog("user-info made visible");
+    } else {
+      debugLog("user-info element NOT FOUND");
     }
 
     const user =
@@ -34,6 +71,8 @@ window.addEventListener("load", async () => {
       ctx?.viewer ||
       ctx?.cast?.author ||
       null;
+
+    debugLog("Resolved user object:", user);
 
     const displayName =
       (user && (user.displayName || user.username || user.name)) ||
@@ -51,48 +90,74 @@ window.addEventListener("load", async () => {
       ctx?.fid ||
       null;
 
+    debugLog("displayName:", displayName);
+    debugLog("avatarUrl:", avatarUrl);
+    debugLog("fid:", fid);
+
     if (avatarUrl && placeholder) {
       placeholder.style.backgroundImage = `url(${avatarUrl})`;
       placeholder.style.backgroundSize = "cover";
       placeholder.style.backgroundPosition = "center";
+      debugLog("Avatar background set");
+    } else {
+      debugLog("Avatar URL missing or placeholder not found");
     }
 
-    if (nameEl) nameEl.textContent = displayName;
-    if (fidEl && fid) fidEl.textContent = `@${fid}`;
-    if (fidEl && !fid) fidEl.textContent = "";
+    if (nameEl) {
+      nameEl.textContent = displayName;
+    } else {
+      debugLog("user-name element NOT FOUND");
+    }
+
+    if (fidEl && fid) {
+      fidEl.textContent = `@${fid}`;
+    } else if (fidEl) {
+      fidEl.textContent = "";
+    } else {
+      debugLog("user-fid element NOT FOUND");
+    }
 
     // ==== WALLET / BACKEND INIT ====
 
     const ethProvider = await sdk.wallet.ethProvider;
+    debugLog("ethProvider obtained");
 
     const accounts = await ethProvider.request({
       method: "eth_requestAccounts",
     });
+    debugLog("eth_requestAccounts result:", accounts);
+
     const wallet = accounts && accounts.length > 0 ? accounts[0] : null;
 
     if (!wallet) {
       console.warn("Wallet address not found from ethProvider.request()");
+      debugLog("Wallet address not found");
       return;
     }
 
-    console.log("Connected wallet from SDK:", wallet);
+    debugLog("Connected wallet:", wallet);
 
     const span = document.getElementById("wallet-address");
     if (span) span.textContent = wallet;
+    else debugLog("wallet-address element NOT FOUND");
 
     await initUserOnBackend(wallet);
   } catch (error) {
     console.error("Error during MiniApp wallet init:", error);
+    debugLog("Global error:", String(error));
   }
 });
 
 async function initUserOnBackend(wallet) {
+  debugLog("initUserOnBackend start for wallet:", wallet);
   try {
     const res = await fetch(`${API_BASE}/api/database/init-user`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ wallet }),
     });
+
+    debugLog("init-user response status:", res.status);
 
     if (!res.ok) {
       let msg = "Unknown backend error";
@@ -101,21 +166,25 @@ async function initUserOnBackend(wallet) {
         msg = err.detail || JSON.stringify(err);
       } catch (_) {}
       console.error("init-user error:", msg);
+      debugLog("init-user error:", msg);
       return;
     }
 
     const data = await res.json();
     console.log("init-user result:", data);
-
+    debugLog("init-user result:", data);
 
     if (data.success === true && data.created === true) {
+      debugLog("New user detected, showing welcome modal");
       showWelcomeModal();
+    } else {
+      debugLog("User already exists or success false");
     }
   } catch (err) {
     console.error("initUserOnBackend error:", err);
+    debugLog("initUserOnBackend error:", String(err));
   }
 }
-
 
 function showWelcomeModal() {
   const overlay = document.createElement("div");
