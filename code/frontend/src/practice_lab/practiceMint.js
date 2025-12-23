@@ -253,7 +253,7 @@ window.mintNFT = async function () {
       ${newTokenId ? `<strong>Your new token ID:</strong> #${newTokenId}<br>` : ''}
       ${nftImageHtml}
       <br>
-      <button onclick="window.open('${scannerUrl}', '_blank')"
+      <button onclick="openSepoliaScanAddress('${address}')"
               style="margin-top: 12px; padding: 8px 16px; background: #0052FF; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600;">
         View on BaseScan
       </button><br><br>
@@ -291,6 +291,10 @@ window.mintNFT = async function () {
       mintBtn.textContent = 'Mint NFT';
     }
   }
+};
+
+window.openSepoliaScanAddress = function(addr) {
+  sdk.actions.openUrl(`${addr}`);
 };
 
 initApp();
