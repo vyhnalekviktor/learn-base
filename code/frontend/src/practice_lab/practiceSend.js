@@ -109,8 +109,8 @@ window.sendTransaction = async function() {
       <strong>Payment Sent!</strong><br>
       Amount: ${AMOUNT_USDC} USDC<br>
       To: ${RECIPIENT_ADDRESS.substring(0, 6)}...${RECIPIENT_ADDRESS.substring(38)}<br><br>
-      <a href="#" onclick="openBaseScan(); return false;">View in Wallet</a><br><br>
       <small>Payment successfully processed on Base Sepolia testnet</small>
+      <small>Check it in your wallet</small>
     `;
   } catch (error) {
     console.error('Payment error:', error);
