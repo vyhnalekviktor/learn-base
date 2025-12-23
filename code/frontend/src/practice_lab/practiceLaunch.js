@@ -181,8 +181,6 @@ window.launchToken = async function (tokenName) {
       statusDiv.className = "warn-box"
       statusDiv.innerHTML = `
         <p>⚠️ Transaction successful but token detection failed</p>
-        <p>Check your token: <a href="https://sepolia.basescan.org/tx/${txHash}" target="_blank" class="learn-more">View TX</a></p>
-        <p>Factory deployed it successfully!</p>
       `
       if (launchBtn) {
         launchBtn.disabled = false
@@ -205,11 +203,8 @@ window.launchToken = async function (tokenName) {
       <p>Supply: 1,000,000 tokens</p>
       <p>Contract: <code>${tokenAddress.slice(0,4)}...${tokenAddress.slice(-4)}</code></p>
       <div style="margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap;">
-        <button onclick="window.open('${scannerUrl}', '_blank')" style="padding: 8px 16px; background: #0052FF; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600;">
+        <button onclick="openSepoliaScanAddress('${scannerUrl}')" style="padding: 8px 16px; background: #0052FF; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600;">
           View on BaseScan
-        </button>
-        <button onclick="window.open('https://account.base.app/activity', '_blank')" style="padding: 8px 16px; background: #0052FF; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600;">
-          View in Wallet
         </button>
       </div>
     `
@@ -230,5 +225,10 @@ window.launchToken = async function (tokenName) {
     }
   }
 }
+
+window.openSepoliaScanAddress = function(addr) {
+  sdk.actions.openUrl(`${addr}`);
+};
+
 
 initApp()
