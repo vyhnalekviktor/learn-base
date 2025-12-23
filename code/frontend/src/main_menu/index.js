@@ -8,6 +8,22 @@ window.addEventListener("load", async () => {
     await sdk.actions.ready();
     console.log("BaseCamp mini app is ready!");
 
+        // Po await sdk.actions.ready()
+    const profile = await sdk.cast.profile()
+    console.log('User profile:', profile)
+
+    if (profile) {
+        const userInfo = document.getElementById('user-info')
+        const avatar = document.getElementById('user-avatar')
+        const name = document.getElementById('user-name')
+        const fid = document.getElementById('user-fid')
+
+        if (userInfo) userInfo.style.display = 'flex'
+        if (avatar && profile.imageUrl) avatar.src = profile.imageUrl
+        if (name) name.textContent = profile.displayName || 'Farcaster User'
+        if (fid) fid.textContent = `@${profile.fid}`
+    }
+
     const ethProvider = await sdk.wallet.ethProvider;
 
     const accounts = await ethProvider.request({
