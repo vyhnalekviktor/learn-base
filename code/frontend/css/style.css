@@ -323,3 +323,48 @@ body {
     font-size: 13px;
   }
 }
+
+/* Bottom navigation bar – MiniApp style */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: rgba(15, 23, 42, 0.98);
+  border-top: 1px solid #1e293b;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  z-index: 50;
+  backdrop-filter: blur(10px);
+}
+
+.bottom-nav a {
+  flex: 1;
+  text-align: center;
+  text-decoration: none;
+  color: #9ca3af;
+  font-size: 11px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.bottom-nav-icon {
+  font-size: 18px;
+}
+
+.bottom-nav a span {
+  line-height: 1;
+}
+
+.bottom-nav a.active {
+  color: #60a5fa;
+  font-weight: 600;
+}
+
+.page-content {
+  padding-bottom: 72px; /* rezerva, aby obsah nebyl pod navem */
+}
