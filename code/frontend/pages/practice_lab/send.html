@@ -13,7 +13,6 @@
             <h1>How to Send Funds on Base</h1>
             <p class="subtitle">Guide to your first transaction on Base</p>
 
-            <!-- Step 1 -->
             <div class="accordion-item completed">
                 <button class="accordion-header" onclick="toggleAccordion('section1')">
                     <span>Step 1: Setup and Fund Your Wallet</span>
@@ -22,13 +21,12 @@
                 <div class="accordion-content" id="content-section1">
                     <p>You need <strong>USDC and ETH on Base</strong> for transactions. USDC is what you'll send, while ETH pays for gas fees (transaction costs). Gas fees on Base are extremely cheap - typically $0.01-0.05 per transaction.</p>
 
-                    <p><strong>For Mainnet:</strong> You can bridge USDC from Ethereum to Base using <a href="#" onclick="openBridge();return false;">bridge.base.org</a>, or buy USDC directly on an exchange and withdraw it to your Base wallet address.</p>
+                    <p><strong>For Mainnet:</strong> You can bridge USDC from Ethereum to Base using <a href="#" onclick="openBridgeBase(); return false;" style="color: #0052FF; text-decoration: underline;">bridge.base.org</a>, or buy USDC directly on an exchange and withdraw it to your Base wallet address.</p>
 
-                    <p><strong>For Testnet:</strong> We're using Base Sepolia testnet, so you don't have to buy anything! Get free test USDC from <a href="#" onclick="openCircleFaucet(); return false;">Circle Faucet</a> (select "Base Sepolia"). You already got free test funds from the faucet in the previous step.</p>
+                    <p><strong>For Testnet:</strong> We're using Base Sepolia testnet, so you don't have to buy anything! Get free test USDC from <a href="#" onclick="openCircleFaucet(); return false;" style="color: #0052FF; text-decoration: underline;">Circle Faucet</a> (select "Base Sepolia"). You already got free test funds from the faucet in the previous step.</p>
                 </div>
             </div>
 
-            <!-- Step 2 -->
             <div class="accordion-item">
                 <button class="accordion-header" onclick="toggleAccordion('section2')">
                     <span>Step 2: Initiate the Transaction</span>
@@ -51,7 +49,6 @@
                 </div>
             </div>
 
-            <!-- Step 3 -->
             <div class="accordion-item">
                 <button class="accordion-header" onclick="toggleAccordion('section3')">
                     <span>Step 3: Sign the Transaction</span>
@@ -82,7 +79,6 @@
                 </div>
             </div>
 
-            <!-- Step 4 -->
             <div class="accordion-item">
                 <button class="accordion-header" onclick="toggleAccordion('section4')">
                     <span>Step 4: Transaction Processing</span>
@@ -120,7 +116,6 @@
                 </div>
             </div>
 
-            <!-- Step 5 -->
             <div class="accordion-item">
                 <button class="accordion-header" onclick="toggleAccordion('section5')">
                     <span>Step 5: Verify Transaction</span>
@@ -137,7 +132,7 @@
 
                     <h4>On Block Explorer:</h4>
                     <ol>
-                        <li>Visit <a href="#" onclick="openBaseScan(); return false;">sepolia.basescan.org</a> (for testnet)</li>
+                        <li>Visit <a href="#" onclick="openBaseScan(); return false;" style="color: #0052FF; text-decoration: underline;">sepolia.basescan.org</a> (for testnet)</li>
                         <li>Paste your transaction hash (starts with "0x")</li>
                         <li>View full details:
                             <ul>
@@ -155,13 +150,11 @@
                 </div>
             </div>
 
-            <!-- Bonus Section -->
             <div class="bonus-section">
                 <h3>💡 Bonus: Understanding Gas Fees</h3>
                 <p>Gas fees are paid in ETH to process your USDC transaction on the blockchain. On Base, they're <strong>95-99% cheaper</strong> than Ethereum mainnet!</p>
             </div>
 
-            <!-- Try it Section -->
             <div class="try-section">
                 <h3>Try it yourself!</h3>
                 <p>Practice sending a small amount of test USDC on Base Sepolia:</p>
@@ -176,7 +169,6 @@
                 <div id="txStatus" style="display: none; margin-top: 20px;"></div>
             </div>
 
-            <!-- Navigation Footer -->
             <div class="nav-footer">
                 <a href="faucet.html" class="nav-btn back-btn">
                     <span>Previous</span>
