@@ -2,60 +2,19 @@ import { sdk } from "https://esm.sh/@farcaster/miniapp-sdk";
 
 const API_BASE = "https://learn-base-backend.vercel.app";
 
-// ---- jednoduchý debug panel ----
-function debugLog(...args) {
-  const panel = document.getElementById("debug-log");
-  if (!panel) return;
-  const msg = args
-    .map((a) => {
-      try {
-        if (typeof a === "string") return a;
-        return JSON.stringify(a, null, 2);
-      } catch {
-        return String(a);
-      }
-    })
-    .join(" ");
-  const ts = new Date().toISOString().split("T")[1].slice(0, 8);
-  panel.textContent += `[${ts}] ${msg}\n`;
-  panel.scrollTop = panel.scrollHeight;
-}
-
-function initDebugToggle() {
-  const btn = document.getElementById("debug-toggle");
-  const panel = document.getElementById("debug-panel");
-  if (!btn || !panel) return;
-  let hidden = false;
-  btn.addEventListener("click", () => {
-    hidden = !hidden;
-    panel.style.height = hidden ? "22px" : "26vh";
-    btn.textContent = hidden ? "Show" : "Hide";
-  });
-}
-
-// ---- hlavní logika MiniAppky ----
 window.addEventListener("load", async () => {
-  initDebugToggle();
-  debugLog("Window load start");
-
   try {
-    debugLog("Calling sdk.actions.ready()...");
     await sdk.actions.ready();
-    debugLog("sdk.actions.ready() done");
 
     // ====== CONTEXT: USER / AVATAR ======
     let ctx = null;
     try {
-      // podle docs má sdk.context tvar MiniAppContext
       ctx = await sdk.context;
-      debugLog("MiniApp context:", ctx);
-    } catch (e) {
-      console.error("Failed to read sdk.context", e);
-      debugLog("Failed to read sdk.context:", String(e));
+    } catch {
+      ctx = null;
     }
 
     const user = ctx?.user || null;
-    debugLog("Resolved user from context:", user);
 
     const userInfo = document.getElementById("user-info");
     const placeholder = document.getElementById("user-avatar-placeholder");
@@ -64,9 +23,6 @@ window.addEventListener("load", async () => {
 
     if (userInfo) {
       userInfo.style.display = "flex";
-      debugLog("user-info made visible");
-    } else {
-      debugLog("user-info element NOT FOUND");
     }
 
     const displayName =
@@ -75,24 +31,14 @@ window.addEventListener("load", async () => {
     const fid = user?.fid ?? null;
     const username = user?.username ?? null;
 
-    debugLog("displayName:", displayName);
-    debugLog("avatarUrl:", avatarUrl);
-    debugLog("fid:", fid);
-    debugLog("username:", username);
-
     if (avatarUrl && placeholder) {
       placeholder.style.backgroundImage = `url(${avatarUrl})`;
       placeholder.style.backgroundSize = "cover";
       placeholder.style.backgroundPosition = "center";
-      debugLog("Avatar background set");
-    } else {
-      debugLog("Avatar URL missing or placeholder not found");
     }
 
     if (nameEl) {
       nameEl.textContent = displayName;
-    } else {
-      debugLog("user-name element NOT FOUND");
     }
 
     if (fidEl) {
@@ -103,43 +49,31 @@ window.addEventListener("load", async () => {
       } else {
         fidEl.textContent = "";
       }
-    } else {
-      debugLog("user-fid element NOT FOUND");
     }
 
     // ====== WALLET / BACKEND INIT ======
     const ethProvider = await sdk.wallet.ethProvider;
-    debugLog("ethProvider obtained");
 
     const accounts = await ethProvider.request({
       method: "eth_requestAccounts",
     });
-    debugLog("eth_requestAccounts result:", accounts);
 
     const wallet = accounts && accounts.length > 0 ? accounts[0] : null;
 
     if (!wallet) {
-      console.warn("Wallet address not found from ethProvider.request()");
-      debugLog("Wallet address not found");
       return;
     }
 
-    debugLog("Connected wallet:", wallet);
-
     const span = document.getElementById("wallet-address");
     if (span) span.textContent = wallet;
-    else debugLog("wallet-address element NOT FOUND");
 
     await initUserOnBackend(wallet);
   } catch (error) {
     console.error("Error during MiniApp init:", error);
-    debugLog("Global error:", String(error));
   }
 });
 
-// ---- volání backendu ----
 async function initUserOnBackend(wallet) {
-  debugLog("initUserOnBackend start for wallet:", wallet);
   try {
     const res = await fetch(`${API_BASE}/api/database/init-user`, {
       method: "POST",
@@ -147,36 +81,20 @@ async function initUserOnBackend(wallet) {
       body: JSON.stringify({ wallet }),
     });
 
-    debugLog("init-user response status:", res.status);
-
     if (!res.ok) {
-      let msg = "Unknown backend error";
-      try {
-        const err = await res.json();
-        msg = err.detail || JSON.stringify(err);
-      } catch (_) {}
-      console.error("init-user error:", msg);
-      debugLog("init-user error:", msg);
       return;
     }
 
     const data = await res.json();
-    console.log("init-user result:", data);
-    debugLog("init-user result:", data);
 
     if (data.success === true && data.created === true) {
-      debugLog("New user detected, showing welcome modal");
       showWelcomeModal();
-    } else {
-      debugLog("User already exists or success false");
     }
   } catch (err) {
     console.error("initUserOnBackend error:", err);
-    debugLog("initUserOnBackend error:", String(err));
   }
 }
 
-// ---- welcome modal ----
 function showWelcomeModal() {
   const overlay = document.createElement("div");
   overlay.style.position = "fixed";
