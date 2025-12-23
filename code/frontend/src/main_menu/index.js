@@ -143,19 +143,19 @@ function showCompatibilityWarning(type) {
   let isPersistent = false;
 
   if (type === 'wallet') {
-    title = "🔒 Wallet Required";
+    title = "Wallet Required";
     message = "This MiniApp requires wallet access for interactive blockchain tutorials.";
-    suggestion = "Please open BaseCamp in <strong>Coinbase Wallet</strong> or <strong>Base App</strong> to access all features.";
+    suggestion = "Please open BaseCamp with <strong>Coinbase Wallet</strong> or <strong>Base App</strong> to access all features.";
     isPersistent = true;
   } else if (type === 'chain') {
-    title = "ℹ️ Limited Network Support";
+    title = "ℹLimited Network Support";
     message = "<strong>Your environment does not support Base Sepolia testnet.</strong>";
-    suggestion = "Practice labs will show errors during transaction signing. <strong>Don't worry - you've been automatically granted 100% practice progress</strong> and can still mint your completion badge! For full interactive experience, open in <strong>Coinbase Wallet</strong>.";
+    suggestion = "Practice labs will show errors during transaction signing. <strong>Don't worry - you've been automatically granted practice progress</strong> and can still mint your completion badge! For full interactive experience, open in <strong>Coinbase Wallet</strong>.";
     isPersistent = true;
   } else {
-    title = "❌ Initialization Error";
+    title = "Initialization Error";
     message = "Failed to initialize the MiniApp.";
-    suggestion = "Try opening in <strong>Coinbase Wallet</strong> or refreshing the page.";
+    suggestion = "Try opening with <strong>Coinbase Wallet</strong> or refreshing the page.";
     isPersistent = true;
   }
 
