@@ -1,37 +1,25 @@
-    import { sdk } from "https://esm.sh/@farcaster/miniapp-sdk";
+import { sdk } from "https://esm.sh/@farcaster/miniapp-sdk";
 
 const API_BASE = "https://learn-base-backend.vercel.app";
+const BASE_SEPOLIA_CHAIN_ID_DEC = 84532;
 
 window.addEventListener("load", async () => {
   try {
     await sdk.actions.ready();
-
-    const capabilities = await sdk.getCapabilities();
-    const chains = await sdk.getChains();
-
-    console.log('Supported capabilities:', capabilities);
-    console.log('Supported chains:', chains);
-
-    const hasWallet = capabilities.includes('wallet.getEthereumProvider');
-    const hasBaseSepolia = chains.includes('eip155:84532');
-
-    if (!hasWallet) {
-      showCompatibilityWarning('wallet');
-      return;
-    }
 
     // ====== CONTEXT: USER / AVATAR ======
     let ctx = null;
     try {
       ctx = await sdk.context;
     } catch (error) {
-      console.log('sdk.context failed:', error);
+      console.log("sdk.context failed:", error);
       ctx = null;
     }
 
     const user = ctx?.user || null;
     const userInfo = document.getElementById("user-info");
     const placeholder = document.getElementById("user-avatar-placeholder");
+    const initialsEl = document.getElementById("user-initials");
     const nameEl = document.getElementById("user-name");
     const fidEl = document.getElementById("user-fid");
 
@@ -39,16 +27,19 @@ window.addEventListener("load", async () => {
       userInfo.style.display = "flex";
     }
 
-    // EXPLICITNÍ FALLBACK LOGIKA pro "Unknown user"
     let displayName = "Unknown user";
     let fidDisplay = "Unknown user";
 
     if (user) {
-      displayName = user.displayName || user.username || (user.fid ? `FID ${user.fid}` : "Unknown user");
-      fidDisplay = user.username ? `@${user.username}` : (user.fid ? `FID ${user.fid}` : "Unknown user");
-    } else {
-      displayName = "Unknown user";
-      fidDisplay = "Unknown user";
+      displayName =
+        user.displayName ||
+        user.username ||
+        (user.fid ? `FID ${user.fid}` : "Unknown user");
+      fidDisplay = user.username
+        ? `@${user.username}`
+        : user.fid
+        ? `FID ${user.fid}`
+        : "Unknown user";
     }
 
     const avatarUrl = user?.pfpUrl || null;
@@ -57,33 +48,32 @@ window.addEventListener("load", async () => {
       placeholder.style.backgroundImage = `url(${avatarUrl})`;
       placeholder.style.backgroundSize = "cover";
       placeholder.style.backgroundPosition = "center";
-    } else {
-      // Default avatar pokud není pfp
-      placeholder.style.backgroundImage = `url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMjAiIGZpbGw9IiM0QTREOEYiLz4KPHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMTIiIGN5PSI2IiByPSIyIiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBkPSJNMTIgMTZDOC44ODU3OSAxNiA4IDE1LjExNDIgOCAxNGgxNnYgMiIvPgo8L3N2Zz4KPC9zdmc+')`;
-      placeholder.style.backgroundSize = "cover";
-      placeholder.style.backgroundPosition = "center";
+      if (initialsEl) initialsEl.textContent = "";
+    } else if (placeholder) {
+      placeholder.style.backgroundImage = "";
+      if (initialsEl) initialsEl.textContent = "?";
     }
 
-    if (nameEl) {
-      nameEl.textContent = displayName;
-    }
+    if (nameEl) nameEl.textContent = displayName;
+    if (fidEl) fidEl.textContent = fidDisplay;
 
-    if (fidEl) {
-      fidEl.textContent = fidDisplay;
-    }
-
-    console.log('User display:', { displayName, fidDisplay, avatarUrl, user }); // DEBUG
+    console.log("User display:", { displayName, fidDisplay, avatarUrl, user });
 
     // ====== WALLET / BACKEND INIT ======
     const ethProvider = await sdk.wallet.ethProvider;
+    if (!ethProvider) {
+      showCompatibilityWarning("wallet");
+      return;
+    }
+
     const accounts = await ethProvider.request({
       method: "eth_requestAccounts",
     });
-
-    const wallet = accounts && accounts.length > 0 ? accounts[0] : null;
+    const wallet =
+      accounts && accounts.length > 0 ? accounts[0] : null;
 
     if (!wallet) {
-      showCompatibilityWarning('wallet');
+      showCompatibilityWarning("wallet");
       return;
     }
 
@@ -92,23 +82,67 @@ window.addEventListener("load", async () => {
 
     await initUserOnBackend(wallet);
 
-    if (!hasBaseSepolia) {
-      await grantFullPracticeProgress(wallet);
-      showCompatibilityWarning('chain');
-    }
+    // ====== DETEKCE BASE SEPOLIA PODPORY ======
+    const supportsSepolia = await detectBaseSepoliaSupport(ethProvider);
+    console.log("Base Sepolia support:", supportsSepolia);
 
+    if (!supportsSepolia) {
+      await grantFullPracticeProgress(wallet);
+      showCompatibilityWarning("chain");
+    }
   } catch (error) {
     console.error("Error during MiniApp init:", error);
-    showCompatibilityWarning('error');
+    showCompatibilityWarning("error");
   }
 });
+
+// pokusne zjisti, jestli host umi Base Sepolia
+async function detectBaseSepoliaSupport(ethProvider) {
+  try {
+    const { JsonRpcProvider } = await import(
+      "https://esm.sh/ethers@6.9.0"
+    );
+
+    // 1) Zjisti aktualni chain v host wallet
+    let chainIdDec = null;
+    try {
+      const chainIdHex = await ethProvider.request({
+        method: "eth_chainId",
+      });
+      chainIdDec = parseInt(chainIdHex, 16);
+      console.log("Current chain from ethProvider:", chainIdDec);
+    } catch (e) {
+      console.log("eth_chainId failed:", e);
+    }
+
+    // 2) Zkus Base Sepolia RPC přímo
+    try {
+      const readProvider = new JsonRpcProvider("https://sepolia.base.org");
+      await readProvider.getBlockNumber(); // jednoduchý health check
+      // Pokud se tohle povede, RPC funguje – ale pořád nevíme,
+      // jestli host umí přepnout wallet. To ale nevadí: v prostředí
+      // jako Warpcast stejně transakce přes wallet nepůjdou.
+      // Použijeme to jen jako indikaci, že naše app UMÍ číst z testnetu.
+      return chainIdDec === BASE_SEPOLIA_CHAIN_ID_DEC;
+    } catch (e) {
+      console.log("Base Sepolia RPC check failed:", e);
+      return false;
+    }
+  } catch (e) {
+    console.log("detectBaseSepoliaSupport fatal:", e);
+    return false;
+  }
+}
 
 async function grantFullPracticeProgress(wallet) {
   if (!wallet) return;
 
-  console.log('Granting full practice progress for wallet without Base Sepolia support:', wallet);
+  console.log(
+    "Granting full practice progress for wallet without Base Sepolia support:",
+    wallet
+  );
 
-  const practiceFields = ['send', 'receive', 'mint', 'launch'];
+  const practiceFields = ["send", "receive", "mint", "launch"];
 
   try {
     for (const field of practiceFields) {
@@ -119,20 +153,20 @@ async function grantFullPracticeProgress(wallet) {
           wallet,
           table_name: "USER_PROGRESS",
           field_name: field,
-          value: true
-        })
+          value: true,
+        }),
       });
     }
 
     await fetch(`${API_BASE}/api/database/practice-sent`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ wallet })
+      body: JSON.stringify({ wallet }),
     });
 
-    console.log('Full practice progress granted successfully');
+    console.log("Full practice progress granted successfully");
   } catch (error) {
-    console.error('Error granting practice progress:', error);
+    console.error("Error granting practice progress:", error);
   }
 }
 
@@ -140,32 +174,37 @@ function showCompatibilityWarning(type) {
   let title = "⚠️ Compatibility Issue";
   let message = "";
   let suggestion = "";
-  let isPersistent = false;
 
-  if (type === 'wallet') {
+  if (type === "wallet") {
     title = "Wallet Required";
-    message = "This MiniApp requires wallet access for interactive blockchain tutorials.";
-    suggestion = "Please open BaseCamp with <strong>Coinbase Wallet</strong> or <strong>Base App</strong> to access all features.";
-    isPersistent = true;
-  } else if (type === 'chain') {
-    title = "ℹLimited Network Support";
-    message = "<strong>Your environment does not support Base Sepolia testnet.</strong>";
-    suggestion = "Practice labs will show errors during transaction signing. <strong>Don't worry - you've been automatically granted practice progress</strong> and can still mint your completion badge! For full interactive experience, open in <strong>Coinbase Wallet</strong>.";
-    isPersistent = true;
+    message =
+      "This MiniApp requires wallet access for interactive blockchain tutorials.";
+    suggestion =
+      "Please open BaseCamp in <strong>Coinbase Wallet</strong> or <strong>Base App</strong> to access all features.";
+  } else if (type === "chain") {
+    title = "Limited Network Support";
+    message =
+      "<strong>Your environment does not support Base Sepolia testnet.</strong>";
+    suggestion =
+      "Practice labs will likely fail during transaction signing. <strong>Don't worry – you've been automatically granted 100% practice progress</strong> and can still mint your completion badge. For full experience, open in <strong>Coinbase Wallet</strong>.";
   } else {
     title = "Initialization Error";
     message = "Failed to initialize the MiniApp.";
-    suggestion = "Try opening with <strong>Coinbase Wallet</strong> or refreshing the page.";
-    isPersistent = true;
+    suggestion =
+      "Try opening in <strong>Coinbase Wallet</strong> or refreshing the page.";
   }
 
-  const banner = document.createElement('div');
+  const banner = document.createElement("div");
   banner.style.cssText = `
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
-    background: ${type === 'chain' ? 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' : 'linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%)'};
+    background: ${
+      type === "chain"
+        ? "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)"
+        : "linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%)"
+    };
     color: white;
     padding: 16px 20px;
     text-align: center;
@@ -185,24 +224,22 @@ function showCompatibilityWarning(type) {
       <div style="font-size: 13px; line-height: 1.5; opacity: 0.95;">
         ${suggestion}
       </div>
-      ${isPersistent && type === 'chain' ? `
-        <button
-          onclick="this.parentElement.parentElement.remove()"
-          style="
-            margin-top: 12px;
-            padding: 8px 20px;
-            background: rgba(255,255,255,0.25);
-            border: 1px solid rgba(255,255,255,0.4);
-            border-radius: 8px;
-            color: white;
-            font-weight: 600;
-            cursor: pointer;
-            font-size: 13px;
-          "
-        >
-          Got it, continue ✓
-        </button>
-      ` : ''}
+      <button
+        onclick="this.parentElement.parentElement.remove()"
+        style="
+          margin-top: 12px;
+          padding: 8px 20px;
+          background: rgba(255,255,255,0.25);
+          border: 1px solid rgba(255,255,255,0.4);
+          border-radius: 8px;
+          color: white;
+          font-weight: 600;
+          cursor: pointer;
+          font-size: 13px;
+        "
+      >
+        Got it, continue ✓
+      </button>
     </div>
   `;
 
@@ -217,9 +254,7 @@ async function initUserOnBackend(wallet) {
       body: JSON.stringify({ wallet }),
     });
 
-    if (!res.ok) {
-      return;
-    }
+    if (!res.ok) return;
 
     const data = await res.json();
 
