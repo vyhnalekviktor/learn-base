@@ -180,18 +180,18 @@ function showCompatibilityWarning(type) {
     message =
       "This MiniApp requires wallet access for interactive blockchain tutorials.";
     suggestion =
-      "Please open BaseCamp in <strong>Coinbase Wallet</strong> or <strong>Base App</strong> to access all features.";
+      "Please open BaseCamp with <strong>Coinbase Wallet</strong> or <strong>Base App</strong> to access all features.";
   } else if (type === "chain") {
     title = "Limited Network Support";
     message =
       "<strong>Your environment does not support Base Sepolia testnet.</strong>";
     suggestion =
-      "Practice labs will likely fail during transaction signing. <strong>Don't worry – you've been automatically granted 100% practice progress</strong> and can still mint your completion badge. For full experience, open in <strong>Coinbase Wallet</strong>.";
+      "Practice labs will likely fail during transaction signing. <strong>Don't worry – you've been automatically granted practice progress</strong> and can still mint your completion badge. For full experience, open in <strong>Coinbase Wallet</strong>.";
   } else {
     title = "Initialization Error";
     message = "Failed to initialize the MiniApp.";
     suggestion =
-      "Try opening in <strong>Coinbase Wallet</strong> or refreshing the page.";
+      "Try opening with <strong>Coinbase Wallet</strong> or refreshing the page.";
   }
 
   const banner = document.createElement("div");
@@ -238,7 +238,7 @@ function showCompatibilityWarning(type) {
           font-size: 13px;
         "
       >
-        Got it, continue ✓
+        Got it, continue
       </button>
     </div>
   `;
