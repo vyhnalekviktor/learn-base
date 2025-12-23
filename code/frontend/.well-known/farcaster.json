@@ -13,7 +13,7 @@
     "splashBackgroundColor": "#0052FF",
     "subtitle": "Learn Base!",
     "description": "Learn Base the easy way! Are you a Base Beginner? Try Base operations in safe testnet environment. Read theory and check common scams.",
-    "screenshotUrls": [],
+    "screenshotUrls": ["https://learn-base-mu.vercel.app/images/screen1.png","https://learn-base-mu.vercel.app/images/screen2.png","https://learn-base-mu.vercel.app/images/screen3.png"],
     "primaryCategory": "education",
     "tags": ["education", "base", "learn", "productivity", "beginner"],
     "heroImageUrl": "https://learn-base-mu.vercel.app/images/hero.png",
