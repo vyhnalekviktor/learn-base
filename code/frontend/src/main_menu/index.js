@@ -6,27 +6,62 @@ window.addEventListener("load", async () => {
   try {
     console.log("Page loaded, calling sdk.actions.ready()...");
     await sdk.actions.ready();
-    console.log('BaseCamp mini app is ready!')
-    const profile = await sdk.cast.profile()
-    console.log('User profile:', profile)
 
-    if (profile) {
-        const userInfo = document.getElementById('user-info')
-        const placeholder = document.getElementById('user-avatar-placeholder')
-        const nameEl = document.getElementById('user-name')
-        const fidEl = document.getElementById('user-fid')
+    console.log("BaseCamp mini app is ready!");
 
-        if (userInfo) userInfo.style.display = 'flex'
+    // ==== USER CONTEXT / AVATAR ====
 
-        if (profile.imageUrl && placeholder) {
-            placeholder.style.backgroundImage = `url(${profile.imageUrl})`
-            placeholder.style.backgroundSize = 'cover'
-            placeholder.style.backgroundPosition = 'center'
-        }
-
-        if (nameEl) nameEl.textContent = profile.displayName || 'Farcaster User'
-        if (fidEl) fidEl.textContent = `@${profile.fid}`
+    let ctx = null;
+    try {
+      ctx = await sdk.context.getContext();
+      console.log("MiniApp context:", ctx);
+    } catch (e) {
+      console.error("Failed to get context", e);
     }
+
+    const userInfo = document.getElementById("user-info");
+    const placeholder = document.getElementById("user-avatar-placeholder");
+    const nameEl = document.getElementById("user-name");
+    const fidEl = document.getElementById("user-fid");
+
+    if (userInfo) {
+      userInfo.style.display = "flex";
+      console.log("user-info made visible");
+    }
+
+    const user =
+      ctx?.user ||
+      ctx?.viewer ||
+      ctx?.cast?.author ||
+      null;
+
+    const displayName =
+      (user && (user.displayName || user.username || user.name)) ||
+      "Farcaster user";
+
+    const avatarUrl =
+      (user &&
+        (user.pfpUrl ||
+          user.avatarUrl ||
+          (user.pfp && user.pfp.url))) ||
+      null;
+
+    const fid =
+      (user && user.fid) ||
+      ctx?.fid ||
+      null;
+
+    if (avatarUrl && placeholder) {
+      placeholder.style.backgroundImage = `url(${avatarUrl})`;
+      placeholder.style.backgroundSize = "cover";
+      placeholder.style.backgroundPosition = "center";
+    }
+
+    if (nameEl) nameEl.textContent = displayName;
+    if (fidEl && fid) fidEl.textContent = `@${fid}`;
+    if (fidEl && !fid) fidEl.textContent = "";
+
+    // ==== WALLET / BACKEND INIT ====
 
     const ethProvider = await sdk.wallet.ethProvider;
 
@@ -72,7 +107,7 @@ async function initUserOnBackend(wallet) {
     const data = await res.json();
     console.log("init-user result:", data);
 
-    // pokud backend vrátí { success: true, created: true } → zobraz welcome
+
     if (data.success === true && data.created === true) {
       showWelcomeModal();
     }
@@ -81,9 +116,8 @@ async function initUserOnBackend(wallet) {
   }
 }
 
-// jednoduché welcome okno přes DOM
+
 function showWelcomeModal() {
-  // wrapper přes celou obrazovku
   const overlay = document.createElement("div");
   overlay.style.position = "fixed";
   overlay.style.inset = "0";
@@ -102,7 +136,8 @@ function showWelcomeModal() {
   modal.style.padding = "20px 22px";
   modal.style.color = "white";
   modal.style.boxShadow = "0 20px 45px rgba(15,23,42,0.8)";
-  modal.style.fontFamily = "system-ui, -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif";
+  modal.style.fontFamily =
+    "system-ui, -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif";
 
   modal.innerHTML = `
     <h2 style="font-size: 20px; margin: 0 0 10px 0;display: flex;align-items: center; gap: 8px;">
@@ -137,7 +172,9 @@ function showWelcomeModal() {
   document.body.appendChild(overlay);
 
   const closeBtn = modal.querySelector("#welcome-close-btn");
-  closeBtn.addEventListener("click", () => {
-    document.body.removeChild(overlay);
-  });
+  if (closeBtn) {
+    closeBtn.addEventListener("click", () => {
+      document.body.removeChild(overlay);
+    });
+  }
 }
