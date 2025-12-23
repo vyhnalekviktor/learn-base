@@ -23,7 +23,8 @@
     "ogImageUrl": "https://learn-base-mu.vercel.app/images/og.png",
     "author.display_name": "vikiase.base.eth",
     "buttonTitle": "Start learning",
-    "noindex": true
+    "noindex": true,
+    "imageUrl": "https://learn-base-mu.vercel.app/images/og.png"
   }
 }
 
