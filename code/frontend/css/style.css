@@ -10,14 +10,13 @@ body {
   background: #0f172a;
   color: #e5e7eb;
   min-height: 100vh;
-  display: flex;
-  justify-content: center;
+  margin: 0;
+  padding: 0;
 }
 
 /* Jednoduchý „app shell“ bez karty */
 .container {
   width: 100%;
-  max-width: 480px;
   min-height: 100vh;
   background: #020617;
   padding: 20px 16px 28px 16px;
@@ -303,13 +302,8 @@ body {
 
 /* Mobilní úpravy */
 @media (max-width: 480px) {
-  body {
-    padding: 12px;
-  }
-
   .container {
     padding: 18px 14px 24px 14px;
-    border-radius: 16px;
   }
 
   .hero h1 {
