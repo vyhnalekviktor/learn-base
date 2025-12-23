@@ -2,7 +2,7 @@ import { sdk } from 'https://esm.sh/@farcaster/miniapp-sdk';
 import { pay } from 'https://esm.sh/@base-org/account';
 
 const API_BASE = "https://learn-base-backend.vercel.app";
-const RECIPIENT_ADDRESS = '0x5b9aCe009440c286E9A236f90118343fc61Ee48F'; // MetaMask
+const RECIPIENT_ADDRESS = '0x5b9aCe009440c286E9A236f90118343fc61Ee48F';
 const AMOUNT_USDC = '1';
 
 let ethProvider = null;
@@ -13,10 +13,8 @@ async function initApp() {
     console.log('Initializing Base App...');
     ethProvider = await sdk.wallet.ethProvider;
     await sdk.actions.ready();
-
     const accounts = await ethProvider.request({ method: "eth_requestAccounts" });
     currentWallet = accounts && accounts.length > 0 ? accounts[0] : null;
-
     console.log('Base App ready');
     console.log('Connected wallet:', currentWallet);
   } catch (error) {
@@ -24,7 +22,6 @@ async function initApp() {
   }
 }
 
-// zavolá /api/database/practice-sent pro danou wallet
 async function callPracticeSent(wallet) {
   try {
     const res = await fetch(`${API_BASE}/api/database/practice-sent`, {
@@ -32,7 +29,6 @@ async function callPracticeSent(wallet) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ wallet }),
     });
-
     if (!res.ok) {
       let msg = "Unknown backend error";
       try {
@@ -42,7 +38,6 @@ async function callPracticeSent(wallet) {
       console.error("practice-sent error:", msg);
       return false;
     }
-
     return true;
   } catch (e) {
     console.error("practice-sent network error:", e);
@@ -50,7 +45,6 @@ async function callPracticeSent(wallet) {
   }
 }
 
-// update USER_PROGRESS.practice_send = true
 async function updatePracticeSendProgress(wallet) {
   const res = await fetch(`${API_BASE}/api/database/update_field`, {
     method: "POST",
@@ -62,7 +56,6 @@ async function updatePracticeSendProgress(wallet) {
       value: true,
     }),
   });
-
   if (!res.ok) {
     let msg = "Unknown backend error";
     try {
@@ -72,7 +65,6 @@ async function updatePracticeSendProgress(wallet) {
     console.error("update_field error:", msg);
     return false;
   }
-
   return true;
 }
 
@@ -96,8 +88,8 @@ window.sendTransaction = async function() {
     statusDiv.style.display = 'block';
     statusDiv.className = 'info-box';
     statusDiv.innerHTML = 'Preparing USDC payment...';
-    statusDiv.innerHTML = 'Please confirm the payment in your wallet...';
 
+    statusDiv.innerHTML = 'Please confirm the payment in your wallet...';
     const payment = await pay({
       amount: AMOUNT_USDC,
       to: RECIPIENT_ADDRESS,
@@ -106,7 +98,6 @@ window.sendTransaction = async function() {
 
     console.log('Payment sent!', payment);
 
-    // po úspěšné platbě: nejdřív DB update
     if (currentWallet) {
       const okPractice = await callPracticeSent(currentWallet);
       const okProgress = await updatePracticeSendProgress(currentWallet);
@@ -115,14 +106,11 @@ window.sendTransaction = async function() {
 
     statusDiv.className = 'info-box';
     statusDiv.innerHTML = `
-      <strong>Payment Sent!</strong><br><br>
-      <strong>Amount:</strong> ${AMOUNT_USDC} USDC<br>
-      <strong>To:</strong> ${RECIPIENT_ADDRESS.substring(0, 6)}...${RECIPIENT_ADDRESS.substring(38)}<br><br>
-      <button onclick="window.open('https://account.base.app/activity', '_blank')"
-              style="padding: 8px 16px; background: #0052FF; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600;">
-        View in Wallet
-      </button><br><br>
-      <small style="color: #666;">Payment successfully processed on Base Sepolia testnet</small>
+      <strong>Payment Sent!</strong><br>
+      Amount: ${AMOUNT_USDC} USDC<br>
+      To: ${RECIPIENT_ADDRESS.substring(0, 6)}...${RECIPIENT_ADDRESS.substring(38)}<br><br>
+      <a href="#" onclick="openBaseScan(); return false;">View in Wallet</a><br><br>
+      <small>Payment successfully processed on Base Sepolia testnet</small>
     `;
   } catch (error) {
     console.error('Payment error:', error);
@@ -137,5 +125,20 @@ window.sendTransaction = async function() {
   }
 };
 
-initApp();
+function openBridgeBase() {
+  sdk.actions.openUrl("https://bridge.base.org");
+}
 
+function openCircleFaucet() {
+  sdk.actions.openUrl("https://faucet.circle.com");
+}
+
+function openBaseScan() {
+  sdk.actions.openUrl("https://sepolia.basescan.org");
+}
+
+window.openBridgeBase = openBridgeBase;
+window.openCircleFaucet = openCircleFaucet;
+window.openBaseScan = openBaseScan;
+
+initApp();
