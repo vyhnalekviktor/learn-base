@@ -50,6 +50,12 @@
             opacity: 0.5;
         }
 
+        .nft-block.claimed {
+            background: #e8f5e9;
+            border-color: #4caf50;
+            opacity: 1;
+        }
+
         .nft-block-title {
             font-size: 16px;
             font-weight: 600;
@@ -108,44 +114,41 @@
         <div class="hero">
             <h1>BaseCamp Progress</h1>
 
-            <!-- Theory progress -->
             <p class="section-title">Theory</p>
             <div class="progress-wrapper">
                 <div class="progress-fill" id="theoryProgressBar"></div>
             </div>
-            <p class="progress-text" id="theoryProgressText">0 / 100 %</p>
+            <p class="progress-text" id="theoryProgressText">0%</p>
 
-            <!-- Base Chain Lab -->
             <p class="section-title">Base Chain Lab</p>
             <div class="progress-wrapper">
                 <div class="progress-fill" id="baseLabProgressBar"></div>
             </div>
-            <p class="progress-text" id="baseLabProgressText">0 / 100%</p>
+            <p class="progress-text" id="baseLabProgressText">0%</p>
 
-            <!-- Security lab -->
             <p class="section-title">Security lab</p>
             <div class="progress-wrapper">
                 <div class="progress-fill" id="securityProgressBar"></div>
             </div>
-            <p class="progress-text" id="securityProgressText">0 / 100 %</p>
+            <p class="progress-text" id="securityProgressText">0%</p>
 
-            <!-- Receive NFT -->
             <div class="nft-block locked" id="nftSection">
-                <p class="nft-block-title">Receive NFT?</p>
-                <p>
-                    This section is locked until you
-                    <strong>complete every part</strong> of BaseCamp.
-                </p>
-                <p>
-                    Once unlocked, you can mint an NFT on Base mainnet
-                    as a reward!
-                </p>
+                <p class="nft-block-title" id="nftBlockTitle">Receive NFT?</p>
+                <div id="nftBlockContent">
+                    <p>
+                        This section is locked until you
+                        <strong>complete every part</strong> of BaseCamp.
+                    </p>
+                    <p>
+                        Once unlocked, you can mint an NFT on Base mainnet
+                        as a reward!
+                    </p>
 
-                <button class="primary-btn" id="mintNftBtn" disabled>
-                    Mint NFT for 2 USDC
-                </button>
+                    <button class="primary-btn" id="mintNftBtn" disabled>
+                        Mint NFT for 2 USDC
+                    </button>
+                </div>
             </div>
-            <p id="claimed-status" class="claimed-status"></p>
 
             <section id="ownedNftSection" style="display: none;">
                 <h3>Your NFT</h3>

@@ -1,15 +1,10 @@
-// experience.js – Security lab + NFT claim za 2 USDC na Base mainnet
-
 import sdk from 'https://esm.sh/@farcaster/miniapp-sdk';
 
 const API_BASE = 'https://learn-base-backend.vercel.app';
-const BASE_CHAIN_ID_HEX = '0x2105'; // Base mainnet
+const BASE_CHAIN_ID_HEX = '0x2105';
 
-// NOVÝ badge kontrakt a USDC
 const NFT_CONTRACT = '0xE0F8cb7B89DB4619B21526AC70786444dd9d2f0f';
 const USDC = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913';
-
-// ========== INIT ==========
 
 window.addEventListener('load', async () => {
   try {
@@ -28,11 +23,8 @@ window.addEventListener('load', async () => {
 
     await getProgressAndSetupMint(wallet, ethProvider);
   } catch (_) {
-    // intentional no-op
   }
 });
-
-// ========== PROGRESS + MINT ODEMKNUTÍ ==========
 
 async function getProgressAndSetupMint(wallet, ethProvider) {
   try {
@@ -54,14 +46,12 @@ async function getProgressAndSetupMint(wallet, ethProvider) {
       return;
     }
 
-    // Theory progress
     const theoryBar = document.getElementById('theoryProgressBar');
     const theoryText = document.getElementById('theoryProgressText');
     const theoryPercent = info.completed_theory ? 100 : 0;
     if (theoryBar) theoryBar.style.width = `${theoryPercent}%`;
     if (theoryText) theoryText.textContent = `${theoryPercent}%`;
 
-    // Base labs
     const baseParts = [progress.faucet, progress.send, progress.receive, progress.mint, progress.launch];
     let baseCompleted = 0;
     for (const part of baseParts) if (part === true) baseCompleted++;
@@ -71,7 +61,6 @@ async function getProgressAndSetupMint(wallet, ethProvider) {
     if (baseBar) baseBar.style.width = `${basePercent}%`;
     if (baseText) baseText.textContent = `${basePercent}%`;
 
-    // Security labs
     const securityParts = [progress.lab1, progress.lab2, progress.lab3, progress.lab4, progress.lab5];
     let securityCompleted = 0;
     for (const part of securityParts) if (part === true) securityCompleted++;
@@ -81,31 +70,38 @@ async function getProgressAndSetupMint(wallet, ethProvider) {
     if (secBar) secBar.style.width = `${securityPercent}%`;
     if (secText) secText.textContent = `${securityPercent}%`;
 
-    // completed_all odemkne claim
     const completedAll = info.completed_all === true;
+    const claimedNft = info.claimed_nft === true;
 
     const nftSection = document.getElementById('nftSection');
+    const nftBlockTitle = document.getElementById('nftBlockTitle');
+    const nftBlockContent = document.getElementById('nftBlockContent');
     const mintBtn = document.getElementById('mintNftBtn');
+    const ownedSection = document.getElementById('ownedNftSection');
 
-    if (completedAll) {
+    if (claimedNft) {
+      if (nftSection) {
+        nftSection.classList.remove('locked');
+        nftSection.classList.add('claimed');
+      }
+      if (nftBlockTitle) nftBlockTitle.textContent = 'Already claimed!';
+      if (nftBlockContent) nftBlockContent.style.display = 'none';
+      if (ownedSection) ownedSection.style.display = 'block';
+    } else if (completedAll) {
       if (nftSection) nftSection.classList.remove('locked');
       if (mintBtn) mintBtn.disabled = false;
     }
 
-    if (mintBtn) {
-      // hlavní tlačítko pro claim za 2 USDC
+    if (mintBtn && !claimedNft) {
       mintBtn.onclick = async () => {
-        await handlePaidClaim(ethProvider);
+        await handlePaidClaim(ethProvider, wallet);
       };
     }
   } catch (_) {
-    // intentional no-op
   }
 }
 
-// ========== CLAIM ZA 2 USDC (BaseCampBadge ERC721) ==========
-
-async function handlePaidClaim(ethProvider) {
+async function handlePaidClaim(ethProvider, wallet) {
   const mintBtn = document.getElementById('mintNftBtn');
 
   try {
@@ -118,7 +114,6 @@ async function handlePaidClaim(ethProvider) {
       return;
     }
 
-    // 1) Chain check – Base mainnet
     let chainId = await ethProvider.request({ method: 'eth_chainId' });
     if (chainId !== BASE_CHAIN_ID_HEX) {
       try {
@@ -145,7 +140,6 @@ async function handlePaidClaim(ethProvider) {
       await new Promise(r => setTimeout(r, 1500));
     }
 
-    // 2) Interfaces – USDC approve + badge mint
     const usdcIface = new ethers.Interface([
       'function approve(address spender, uint256 amount) external returns (bool)'
     ]);
@@ -153,9 +147,8 @@ async function handlePaidClaim(ethProvider) {
       'function mintWithUSDC() external'
     ]);
 
-    const price = 2000000n; // 2 USDC (6 decimals)
+    const price = 2000000n;
 
-    // 3) Approve 2 USDC pro BaseCampBadge kontrakt
     const approveData = usdcIface.encodeFunctionData('approve', [
       NFT_CONTRACT,
       price,
@@ -169,10 +162,8 @@ async function handlePaidClaim(ethProvider) {
       }],
     });
 
-    // malý delay, aby se approve propsal
     await new Promise(r => setTimeout(r, 2000));
 
-    // 4) Mint NFT za 2 USDC
     const mintData = badgeIface.encodeFunctionData('mintWithUSDC', []);
     const mintTx = await ethProvider.request({
       method: 'eth_sendTransaction',
@@ -188,17 +179,45 @@ async function handlePaidClaim(ethProvider) {
       viewLink.href = `https://basescan.org/tx/${mintTx}`;
     }
 
+    const nftSection = document.getElementById('nftSection');
+    const nftBlockTitle = document.getElementById('nftBlockTitle');
+    const nftBlockContent = document.getElementById('nftBlockContent');
     const ownedSection = document.getElementById('ownedNftSection');
+
+    if (nftSection) {
+      nftSection.classList.remove('locked');
+      nftSection.classList.add('claimed');
+    }
+    if (nftBlockTitle) nftBlockTitle.textContent = 'Already claimed!';
+    if (nftBlockContent) nftBlockContent.style.display = 'none';
     if (ownedSection) ownedSection.style.display = 'block';
     if (mintBtn) {
       mintBtn.disabled = true;
       mintBtn.textContent = 'NFT Claimed!';
     }
 
+    try {
+      const res = await fetch(`${API_BASE}/api/database/update_field`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          wallet: wallet,
+          table_name: 'USER_INFO',
+          field_name: 'claimed_nft',
+          value: true
+        })
+      });
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error(`Update failed (${res.status}):`, errorText);
+      }
+    } catch (error) {
+      console.error('Update claimed_nft error:', error);
+    }
+
     alert(`NFT claimed successfully!\nTx hash: ${mintTx}\nView on: https://basescan.org/tx/${mintTx}`);
 
-    zavolej muj api endpoint update field
-    USER_INFO, claimed_nft, True
   } catch (e) {
     if (!(e && e.code === 4001)) {
       alert('Error: ' + (e && e.message ? e.message : e));
