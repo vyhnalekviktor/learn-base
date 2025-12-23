@@ -175,8 +175,13 @@ async function handlePaidClaim(ethProvider, wallet) {
     });
 
     const viewLink = document.getElementById('view-nft-link');
+    const txLinkSection = document.getElementById('txLinkSection');
+
     if (viewLink) {
       viewLink.href = `https://basescan.org/tx/${mintTx}`;
+    }
+    if (txLinkSection) {
+      txLinkSection.style.display = 'block';
     }
 
     const nftSection = document.getElementById('nftSection');
