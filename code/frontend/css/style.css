@@ -368,3 +368,315 @@ body {
 .page-content {
   padding-bottom: 72px; /* rezerva, aby obsah nebyl pod navem */
 }
+
+
+/* Support page layout */
+.support-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1.3fr);
+  gap: 18px;
+  margin-top: 12px;
+}
+
+.support-main {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Preset donation buttons */
+.preset-donations {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.donate-btn {
+  flex: 1;
+  min-width: 120px;
+  padding: 12px 10px;
+  border-radius: 999px;
+  border: 1px solid #1e293b;
+  background: #020617;
+  color: #e5e7eb;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s ease, transform 0.18s ease, border-color 0.18s ease;
+}
+
+.donate-btn:hover {
+  background: #1d4ed8;
+  border-color: #2563eb;
+  transform: translateY(-1px);
+}
+
+/* Custom amount card */
+.custom-card {
+  background: #020617;
+  border-radius: 12px;
+  border: 1px solid #1e293b;
+  padding: 14px 14px 16px 14px;
+}
+
+.custom-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 10px;
+}
+
+.custom-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #e5e7eb;
+}
+
+.custom-caption {
+  font-size: 11px;
+  color: #9ca3af;
+}
+
+.custom-input-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.custom-input-row input {
+  flex: 1;
+  padding: 10px 12px;
+  border-radius: 999px;
+  border: 1px solid #334155;
+  background: #020617;
+  color: #e5e7eb;
+  font-size: 14px;
+}
+
+.custom-input-row input::placeholder {
+  color: #6b7280;
+}
+
+/* reuse btn-primary z landing.css */
+.btn-primary {
+  display: inline-block;
+  padding: 10px 16px;
+  border-radius: 999px;
+  border: 1px solid #1e293b;
+  background: #2563eb;
+  color: #f9fafb;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.18s ease, transform 0.18s ease, border-color 0.18s ease;
+}
+
+.btn-primary:hover {
+  background: #1d4ed8;
+  border-color: #2563eb;
+  transform: translateY(-1px);
+}
+
+/* Status + wallet info */
+.support-status {
+  min-height: 18px;
+  font-size: 13px;
+  color: #e5e7eb;
+}
+
+.wallet-status {
+  background: #020617;
+  border-radius: 10px;
+  border: 1px solid #1e293b;
+  padding: 10px 12px;
+  margin-top: 4px;
+  display: none;
+}
+
+.wallet-status p {
+  margin: 4px 0;
+  font-size: 13px;
+}
+
+#walletInfo #address {
+  font-family: 'Courier New', monospace;
+  color: #38bdf8;
+  font-weight: 600;
+}
+
+/* Right column info */
+.support-side {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.support-info {
+  background: #020617;
+  border-radius: 12px;
+  border: 1px solid #1e293b;
+  padding: 14px 14px 16px 14px;
+  font-size: 13px;
+  color: #e5e7eb;
+}
+
+.support-info h3,
+.support-info h4 {
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.support-info ul {
+  margin: 8px 0 0 18px;
+  padding: 0;
+}
+
+.support-info li {
+  margin: 4px 0;
+  color: #9ca3af;
+}
+
+.support-info.secondary {
+  border-left: 3px solid #60a5fa;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .support-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .preset-donations {
+    flex-direction: column;
+  }
+}
+
+.custom-input-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.custom-input-row input {
+  flex: 1;
+  padding: 10px 12px;
+  border-radius: 999px;
+  border: 1px solid #334155;
+  background: #020617;
+  color: #e5e7eb;
+  font-size: 14px;
+}
+
+/* +/- tlačítka vedle inputu */
+.amount-stepper {
+  height: 38px;
+  border-radius: 999px;
+  border: 1px solid #1e293b;
+  background: #020617;
+  color: #e5e7eb;
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.18s ease, transform 0.18s ease, border-color 0.18s ease;
+}
+
+.amount-stepper:hover {
+  background: #111827;
+  border-color: #2563eb;
+  transform: translateY(-1px);
+}
+
+@media (max-width: 480px) {
+  .custom-input-row {
+    gap: 6px;
+  }
+
+  .amount-stepper {
+    width: 34px;
+    height: 34px;
+    font-size: 16px;
+  }
+}
+
+
+/* Remove native number input arrows */
+#customAmount {
+  -moz-appearance: textfield;
+}
+
+#customAmount::-webkit-outer-spin-button,
+#customAmount::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.custom-input-block {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* input na samostatném řádku */
+.custom-input-block input {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 999px;
+  border: 1px solid #334155;
+  background: #020617;
+  color: #e5e7eb;
+  font-size: 14px;
+}
+
+/* řádek s třemi tlačítky */
+.custom-actions-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 2fr; /* −, +, Send širší */
+  gap: 8px;
+}
+
+/* +/- tlačítka */
+.amount-stepper {
+  height: 38px;
+  border-radius: 999px;
+  border: 1px solid #1e293b;
+  background: #020617;
+  color: #e5e7eb;
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.18s ease, transform 0.18s ease, border-color 0.18s ease;
+}
+
+.amount-stepper:hover {
+  background: #111827;
+  border-color: #2563eb;
+  transform: translateY(-1px);
+}
+
+/* Send button přesně do gridu */
+.custom-actions-row .btn-primary.full {
+  width: 100%;
+  height: 38px;
+  border-radius: 999px;
+  padding: 0 14px;
+}
+
+/* mobil – trochu menší mezery */
+@media (max-width: 480px) {
+  .custom-actions-row {
+    gap: 6px;
+  }
+
+  .amount-stepper,
+  .custom-actions-row .btn-primary.full {
+    height: 36px;
+  }
+}

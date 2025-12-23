@@ -8,30 +8,38 @@ const BASE_CHAIN_ID = '0x2105';
 let ethProvider = null;
 
 async function initApp() {
-    try {
-        console.log('Initializing Base App...');
+  try {
+    console.log('Initializing Base App...');
 
-        ethProvider = await sdk.wallet.ethProvider;
-        console.log('Provider:', ethProvider);
+    ethProvider = await sdk.wallet.ethProvider;
+    console.log('Provider:', ethProvider);
 
-        document.getElementById('paymentButtons').style.opacity = '1';
-        document.getElementById('paymentButtons').style.pointerEvents = 'auto';
-        document.getElementById('customPayment').style.opacity = '1';
-        document.getElementById('customPayment').style.pointerEvents = 'auto';
+    const paymentButtons = document.getElementById('paymentButtons');
+    const customPayment = document.getElementById('customPayment');
 
-        const connectBtn = document.getElementById('connectBtn');
-        if (connectBtn) connectBtn.style.display = 'none';
-
-        await sdk.actions.ready();
-        console.log('Base App ready');
-
-    } catch (error) {
-        console.error('Init error:', error);
+    if (paymentButtons) {
+      paymentButtons.style.opacity = '1';
+      paymentButtons.style.pointerEvents = 'auto';
     }
+    if (customPayment) {
+      customPayment.style.opacity = '1';
+      customPayment.style.pointerEvents = 'auto';
+    }
+
+    const connectBtn = document.getElementById('connectBtn');
+    if (connectBtn) connectBtn.style.display = 'none';
+
+    await sdk.actions.ready();
+    console.log('Base App ready');
+  } catch (error) {
+    console.error('Init error:', error);
+  }
 }
 
 async function donate(amount) {
   const statusDiv = document.getElementById('status');
+  if (!statusDiv) return;
+
   statusDiv.innerHTML = 'Processing payment...';
 
   try {
@@ -39,7 +47,6 @@ async function donate(amount) {
       throw new Error('Provider not available');
     }
 
-    // Zkontroluj a přepni na Base mainnet
     const { BrowserProvider } = await import('https://esm.sh/ethers@6.9.0');
     const provider = new BrowserProvider(ethProvider);
     const network = await provider.getNetwork();
@@ -90,7 +97,7 @@ async function donate(amount) {
     const userAddress = accounts[0];
     console.log('User address:', userAddress);
 
-    const amountInWei = BigInt(Math.floor(parseFloat(amount) * 1000000));
+    const amountInWei = BigInt(Math.floor(parseFloat(amount) * 1_000_000));
     const transferFunctionSelector = '0xa9059cbb';
     const recipientPadded = YOUR_WALLET.substring(2).padStart(64, '0');
     const amountPadded = amountInWei.toString(16).padStart(64, '0');
@@ -103,7 +110,7 @@ async function donate(amount) {
       params: [{
         from: userAddress,
         to: USDC_ADDRESS,
-        data: data
+        data
       }]
     });
 
@@ -125,29 +132,49 @@ async function donate(amount) {
 
     if (verifyResult.success) {
       statusDiv.innerHTML = `Thank you for ${amount} USDC support!`;
-      document.getElementById('walletInfo').style.display = 'block';
-      document.getElementById('address').textContent =
-        userAddress.substring(0, 6) + '...' + userAddress.substring(38);
+      const walletInfo = document.getElementById('walletInfo');
+      const addrSpan = document.getElementById('address');
+      if (walletInfo) walletInfo.style.display = 'block';
+      if (addrSpan) {
+        addrSpan.textContent =
+          userAddress.substring(0, 6) + '...' + userAddress.substring(38);
+      }
     } else {
       statusDiv.innerHTML = `Verification failed: ${verifyResult.msg}`;
     }
-
   } catch (error) {
     console.error('Payment error:', error);
     statusDiv.innerHTML = `Payment failed: ${error.message}`;
   }
 }
 
+function stepAmount(delta) {
+  const input = document.getElementById('customAmount');
+  if (!input) return;
+
+  const current = parseFloat(input.value || '0') || 0;
+  let next = current + delta;
+
+  if (next < 1) next = 1;
+  if (next > 10000) next = 10000;
+
+  input.value = String(Math.floor(next));
+}
+
 function donateCustom() {
-    const amount = document.getElementById('customAmount').value;
-    if (amount && parseFloat(amount) >= 1) {
-        donate(amount);
-    } else {
-        alert('Minimum amount is 1 USDC');
-    }
+  const input = document.getElementById('customAmount');
+  if (!input) return;
+
+  const amount = input.value;
+  if (amount && parseFloat(amount) >= 1) {
+    donate(amount);
+  } else {
+    alert('Minimum amount is 1 USDC');
+  }
 }
 
 window.donate = donate;
 window.donateCustom = donateCustom;
+window.stepAmount = stepAmount;
 
 initApp();
