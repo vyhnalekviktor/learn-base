@@ -2,6 +2,7 @@ import { sdk } from "https://esm.sh/@farcaster/miniapp-sdk";
 
 const API_BASE = "https://learn-base-backend.vercel.app";
 
+// ---- jednoduchý debug panel ----
 function debugLog(...args) {
   const panel = document.getElementById("debug-log");
   if (!panel) return;
@@ -27,27 +28,34 @@ function initDebugToggle() {
   let hidden = false;
   btn.addEventListener("click", () => {
     hidden = !hidden;
-    panel.style.maxHeight = hidden ? "22px" : "40vh";
+    panel.style.height = hidden ? "22px" : "26vh";
     btn.textContent = hidden ? "Show" : "Hide";
   });
 }
 
+// ---- hlavní logika MiniAppky ----
 window.addEventListener("load", async () => {
   initDebugToggle();
+  debugLog("Window load start");
 
   try {
+    debugLog("Calling sdk.actions.ready()...");
     await sdk.actions.ready();
+    debugLog("sdk.actions.ready() done");
 
-    // ==== USER CONTEXT / AVATAR ====
-
+    // ====== CONTEXT: USER / AVATAR ======
     let ctx = null;
     try {
-      ctx = await sdk.context.getContext();
+      // podle docs má sdk.context tvar MiniAppContext
+      ctx = await sdk.context;
       debugLog("MiniApp context:", ctx);
     } catch (e) {
-      console.error("Failed to get context", e);
-      debugLog("Failed to get context", String(e));
+      console.error("Failed to read sdk.context", e);
+      debugLog("Failed to read sdk.context:", String(e));
     }
+
+    const user = ctx?.user || null;
+    debugLog("Resolved user from context:", user);
 
     const userInfo = document.getElementById("user-info");
     const placeholder = document.getElementById("user-avatar-placeholder");
@@ -61,33 +69,16 @@ window.addEventListener("load", async () => {
       debugLog("user-info element NOT FOUND");
     }
 
-    const user =
-      ctx?.user ||
-      ctx?.viewer ||
-      ctx?.cast?.author ||
-      null;
-
-    debugLog("Resolved user object:", user);
-
     const displayName =
-      (user && (user.displayName || user.username || user.name)) ||
-      "Farcaster user";
-
-    const avatarUrl =
-      (user &&
-        (user.pfpUrl ||
-          user.avatarUrl ||
-          (user.pfp && user.pfp.url))) ||
-      null;
-
-    const fid =
-      (user && user.fid) ||
-      ctx?.fid ||
-      null;
+      user?.displayName || user?.username || (user?.fid ? `FID ${user.fid}` : "Farcaster user");
+    const avatarUrl = user?.pfpUrl || null;
+    const fid = user?.fid ?? null;
+    const username = user?.username ?? null;
 
     debugLog("displayName:", displayName);
     debugLog("avatarUrl:", avatarUrl);
     debugLog("fid:", fid);
+    debugLog("username:", username);
 
     if (avatarUrl && placeholder) {
       placeholder.style.backgroundImage = `url(${avatarUrl})`;
@@ -104,16 +95,19 @@ window.addEventListener("load", async () => {
       debugLog("user-name element NOT FOUND");
     }
 
-    if (fidEl && fid) {
-      fidEl.textContent = `@${fid}`;
-    } else if (fidEl) {
-      fidEl.textContent = "";
+    if (fidEl) {
+      if (username) {
+        fidEl.textContent = `@${username}`;
+      } else if (fid) {
+        fidEl.textContent = `FID ${fid}`;
+      } else {
+        fidEl.textContent = "";
+      }
     } else {
       debugLog("user-fid element NOT FOUND");
     }
 
-    // ==== WALLET / BACKEND INIT ====
-
+    // ====== WALLET / BACKEND INIT ======
     const ethProvider = await sdk.wallet.ethProvider;
     debugLog("ethProvider obtained");
 
@@ -138,11 +132,12 @@ window.addEventListener("load", async () => {
 
     await initUserOnBackend(wallet);
   } catch (error) {
-    console.error("Error during MiniApp wallet init:", error);
+    console.error("Error during MiniApp init:", error);
     debugLog("Global error:", String(error));
   }
 });
 
+// ---- volání backendu ----
 async function initUserOnBackend(wallet) {
   debugLog("initUserOnBackend start for wallet:", wallet);
   try {
@@ -181,6 +176,7 @@ async function initUserOnBackend(wallet) {
   }
 }
 
+// ---- welcome modal ----
 function showWelcomeModal() {
   const overlay = document.createElement("div");
   overlay.style.position = "fixed";
