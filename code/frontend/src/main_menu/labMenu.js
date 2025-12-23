@@ -32,7 +32,6 @@ window.addEventListener("load", async () => {
     const span = document.getElementById("wallet-address");
     if (span) span.textContent = wallet;
 
-    // Sepolia detekce přesunuta sem
     const supportsSepolia = await detectBaseSepoliaSupport(ethProvider);
     console.log("Base Sepolia support (lab menu):", supportsSepolia);
 

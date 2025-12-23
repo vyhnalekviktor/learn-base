@@ -82,169 +82,12 @@ window.addEventListener("load", async () => {
 
     await initUserOnBackend(wallet);
 
-    // ====== DETEKCE BASE SEPOLIA PODPORY ======
-    const supportsSepolia = await detectBaseSepoliaSupport(ethProvider);
-    console.log("Base Sepolia support:", supportsSepolia);
-
-    if (!supportsSepolia) {
-      await grantFullPracticeProgress(wallet);
-      showCompatibilityWarning("chain");
-    }
   } catch (error) {
     console.error("Error during MiniApp init:", error);
     showCompatibilityWarning("error");
   }
 });
 
-// pokusne zjisti, jestli host umi Base Sepolia
-async function detectBaseSepoliaSupport(ethProvider) {
-  try {
-    const { JsonRpcProvider } = await import(
-      "https://esm.sh/ethers@6.9.0"
-    );
-
-    // 1) Zjisti aktualni chain v host wallet
-    let chainIdDec = null;
-    try {
-      const chainIdHex = await ethProvider.request({
-        method: "eth_chainId",
-      });
-      chainIdDec = parseInt(chainIdHex, 16);
-      console.log("Current chain from ethProvider:", chainIdDec);
-    } catch (e) {
-      console.log("eth_chainId failed:", e);
-    }
-
-    // 2) Zkus Base Sepolia RPC přímo
-    try {
-      const readProvider = new JsonRpcProvider("https://sepolia.base.org");
-      await readProvider.getBlockNumber(); // jednoduchý health check
-      // Pokud se tohle povede, RPC funguje – ale pořád nevíme,
-      // jestli host umí přepnout wallet. To ale nevadí: v prostředí
-      // jako Warpcast stejně transakce přes wallet nepůjdou.
-      // Použijeme to jen jako indikaci, že naše app UMÍ číst z testnetu.
-      return chainIdDec === BASE_SEPOLIA_CHAIN_ID_DEC;
-    } catch (e) {
-      console.log("Base Sepolia RPC check failed:", e);
-      return false;
-    }
-  } catch (e) {
-    console.log("detectBaseSepoliaSupport fatal:", e);
-    return false;
-  }
-}
-
-async function grantFullPracticeProgress(wallet) {
-  if (!wallet) return;
-
-  console.log(
-    "Granting full practice progress for wallet without Base Sepolia support:",
-    wallet
-  );
-
-  const practiceFields = ["send", "receive", "mint", "launch"];
-
-  try {
-    for (const field of practiceFields) {
-      await fetch(`${API_BASE}/api/database/update_field`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          wallet,
-          table_name: "USER_PROGRESS",
-          field_name: field,
-          value: true,
-        }),
-      });
-    }
-
-    await fetch(`${API_BASE}/api/database/practice-sent`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ wallet }),
-    });
-
-    console.log("Full practice progress granted successfully");
-  } catch (error) {
-    console.error("Error granting practice progress:", error);
-  }
-}
-
-function showCompatibilityWarning(type) {
-  let title = "⚠️ Compatibility Issue";
-  let message = "";
-  let suggestion = "";
-
-  if (type === "wallet") {
-    title = "Wallet Required";
-    message =
-      "This MiniApp requires wallet access for interactive blockchain tutorials.";
-    suggestion =
-      "Please open BaseCamp with <strong>Coinbase Wallet</strong> or <strong>Base App</strong> to access all features.";
-  } else if (type === "chain") {
-    title = "Limited Network Support";
-    message =
-      "<strong>Your environment does not support Base Sepolia testnet.</strong>";
-    suggestion =
-      "Practice labs will likely fail during transaction signing. <strong>Don't worry – you've been automatically granted practice progress</strong> and can still mint your completion badge. For full experience, open in <strong>Coinbase Wallet</strong>.";
-  } else {
-    title = "Initialization Error";
-    message = "Failed to initialize the MiniApp.";
-    suggestion =
-      "Try opening with <strong>Coinbase Wallet</strong> or refreshing the page.";
-  }
-
-  const banner = document.createElement("div");
-  banner.style.cssText = `
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    background: ${
-      type === "chain"
-        ? "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)"
-        : "linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%)"
-    };
-    color: white;
-    padding: 16px 20px;
-    text-align: center;
-    z-index: 10000;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    font-family: system-ui, -apple-system, sans-serif;
-  `;
-
-  banner.innerHTML = `
-    <div style="max-width: 700px; margin: 0 auto;">
-      <div style="font-size: 18px; font-weight: 700; margin-bottom: 8px;">
-        ${title}
-      </div>
-      <div style="font-size: 14px; line-height: 1.5; opacity: 0.95; margin-bottom: 6px;">
-        ${message}
-      </div>
-      <div style="font-size: 13px; line-height: 1.5; opacity: 0.95;">
-        ${suggestion}
-      </div>
-      <button
-        onclick="this.parentElement.parentElement.remove()"
-        style="
-          margin-top: 12px;
-          padding: 8px 20px;
-          background: rgba(255,255,255,0.25);
-          border: 1px solid rgba(255,255,255,0.4);
-          border-radius: 8px;
-          color: white;
-          font-weight: 600;
-          cursor: pointer;
-          font-size: 13px;
-        "
-      >
-        Got it, continue
-      </button>
-    </div>
-  `;
-
-  document.body.insertBefore(banner, document.body.firstChild);
-}
 
 async function initUserOnBackend(wallet) {
   try {
@@ -316,7 +159,7 @@ function showWelcomeModal() {
         cursor:pointer;
       "
     >
-      Let's Start Learning! 🚀
+      Let's Start Learning!
     </button>
   `;
 
