@@ -76,8 +76,8 @@ async function handleNextClick(event) {
     console.error("Wallet not available yet");
     return;
   }
-  window.location.href = "send.html";
   await updateFaucetProgress(currentWallet);
+  window.location.href = "send.html";
 }
 
 window.addEventListener("load", initWallet);
