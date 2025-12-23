@@ -1,9 +1,13 @@
 import { sdk } from 'https://esm.sh/@farcaster/miniapp-sdk';
-import { pay } from 'https://esm.sh/@base-org/account';
 
 const API_BASE = "https://learn-base-backend.vercel.app";
 const RECIPIENT_ADDRESS = '0x5b9aCe009440c286E9A236f90118343fc61Ee48F';
 const AMOUNT_USDC = '1';
+const USDC_CONTRACT = '0x036CbD53842c5426634e7929541eC2318f3dCF7e';
+
+const USDC_ABI = [
+  'function transfer(address to, uint256 amount) returns (bool)'
+];
 
 let ethProvider = null;
 let currentWallet = null;
@@ -13,8 +17,10 @@ async function initApp() {
     console.log('Initializing Base App...');
     ethProvider = await sdk.wallet.ethProvider;
     await sdk.actions.ready();
+
     const accounts = await ethProvider.request({ method: "eth_requestAccounts" });
     currentWallet = accounts && accounts.length > 0 ? accounts[0] : null;
+
     console.log('Base App ready');
     console.log('Connected wallet:', currentWallet);
   } catch (error) {
@@ -29,6 +35,7 @@ async function callPracticeSent(wallet) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ wallet }),
     });
+
     if (!res.ok) {
       let msg = "Unknown backend error";
       try {
@@ -56,6 +63,7 @@ async function updatePracticeSendProgress(wallet) {
       value: true,
     }),
   });
+
   if (!res.ok) {
     let msg = "Unknown backend error";
     try {
@@ -71,6 +79,7 @@ async function updatePracticeSendProgress(wallet) {
 window.toggleAccordion = function(id) {
   const content = document.getElementById('content-' + id);
   const icon = document.getElementById('icon-' + id);
+
   if (content.style.maxHeight) {
     content.style.maxHeight = null;
     icon.textContent = '▼';
@@ -89,14 +98,28 @@ window.sendTransaction = async function() {
     statusDiv.className = 'info-box';
     statusDiv.innerHTML = 'Preparing USDC payment...';
 
-    statusDiv.innerHTML = 'Please confirm the payment in your wallet...';
-    const payment = await pay({
-      amount: AMOUNT_USDC,
-      to: RECIPIENT_ADDRESS,
-      testnet: true
-    });
+    const { BrowserProvider, Contract, parseUnits } = await import('https://esm.sh/ethers@6.9.0');
 
-    console.log('Payment sent!', payment);
+    const provider = new BrowserProvider(ethProvider);
+    const signer = await provider.getSigner();
+
+    const usdcContract = new Contract(USDC_CONTRACT, USDC_ABI, signer);
+
+    statusDiv.innerHTML = 'Please confirm the transaction in your wallet...';
+
+    const amount = parseUnits(AMOUNT_USDC, 6);
+    const tx = await usdcContract.transfer(RECIPIENT_ADDRESS, amount);
+
+    const txHash = tx.hash;
+    const shortHash = txHash.substring(0, 10) + '...' + txHash.substring(txHash.length - 8);
+
+    statusDiv.innerHTML = `
+      <strong>Transaction submitted!</strong><br><br>
+      <strong>Hash:</strong> <code>${shortHash}</code><br><br>
+      Waiting for confirmation...
+    `;
+
+    await tx.wait();
 
     if (currentWallet) {
       const okPractice = await callPracticeSent(currentWallet);
@@ -106,19 +129,24 @@ window.sendTransaction = async function() {
 
     statusDiv.className = 'info-box';
     statusDiv.innerHTML = `
-      <strong>Payment Sent!</strong><br>
-      Amount: ${AMOUNT_USDC} USDC<br>
-      To: ${RECIPIENT_ADDRESS.substring(0, 6)}...${RECIPIENT_ADDRESS.substring(38)}<br><br>
-      <small>Payment successfully processed on Base Sepolia testnet</small>
-      <small>Check it in your wallet</small>
+      <strong>Payment Sent!</strong><br><br>
+      <strong>Amount:</strong> ${AMOUNT_USDC} USDC<br>
+      <strong>To:</strong> ${RECIPIENT_ADDRESS.substring(0, 6)}...${RECIPIENT_ADDRESS.substring(38)}<br><br>
+      <button onclick="openBaseScan()"
+        style="padding: 8px 16px; background: #0052FF; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600;">
+        View on BaseScan
+      </button><br><br>
+      <small style="color: #666;">Payment successfully processed on Base Sepolia testnet</small>
     `;
+
   } catch (error) {
     console.error('Payment error:', error);
     statusDiv.className = 'error-box';
-    if (error.message.includes('User rejected') || error.message.includes('rejected')) {
+
+    if (error.code === 4001 || error.message.includes('User rejected') || error.message.includes('rejected')) {
       statusDiv.innerHTML = 'Payment rejected by user';
     } else if (error.message.includes('insufficient')) {
-      statusDiv.innerHTML = 'Insufficient USDC balance. Get testnet USDC from Circle Faucet.';
+      statusDiv.innerHTML = 'Insufficient USDC balance. Get testnet USDC from <a href="#" onclick="openCircleFaucet(); return false;" style="color: #0052FF;">Circle Faucet</a>.';
     } else {
       statusDiv.innerHTML = `Payment failed: ${error.message}`;
     }
