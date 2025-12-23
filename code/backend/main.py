@@ -199,6 +199,7 @@ async def get_field(request: Request):
         raise HTTPException(status_code=400, detail="Error getting field from DB.")
     return {"success": True, "value": response}
 
+#user sent practice USDC to my bot wallet
 @app.post("/api/database/practice-sent")
 async def practice_sent(request: Request):
     data = await request.json()
