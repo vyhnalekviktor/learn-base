@@ -4,13 +4,18 @@ const API_BASE = "https://learn-base-backend.vercel.app";
 const BASE_SEPOLIA_CHAIN_ID_DEC = 84532;
 
 window.addEventListener("load", async () => {
+  let loadingOverlay = null;
+
   try {
     console.log("Lab menu loaded, calling sdk.actions.ready()...");
     await sdk.actions.ready();
     console.log("BaseCamp mini app is ready!");
 
+    loadingOverlay = showLoadingOverlay();
+
     const ethProvider = await sdk.wallet.ethProvider;
     if (!ethProvider) {
+      hideLoadingOverlay(loadingOverlay);
       showCompatibilityWarning("wallet");
       return;
     }
@@ -23,6 +28,7 @@ window.addEventListener("load", async () => {
 
     if (!wallet) {
       console.warn("Wallet address not found from ethProvider.request()");
+      hideLoadingOverlay(loadingOverlay);
       showCompatibilityWarning("wallet");
       return;
     }
@@ -37,18 +43,81 @@ window.addEventListener("load", async () => {
 
     if (!supportsSepolia) {
       await grantFullPracticeProgress(wallet);
+      hideLoadingOverlay(loadingOverlay);
       showCompatibilityWarning("chain");
+    } else {
+      hideLoadingOverlay(loadingOverlay);
     }
 
-    // načti progress jako dřív
     await getProgress(wallet);
   } catch (error) {
     console.error("Error during MiniApp wallet init (labMenu):", error);
+    if (loadingOverlay) hideLoadingOverlay(loadingOverlay);
     showCompatibilityWarning("error");
   }
 });
 
-// zjištění, jestli host umí Base Sepolia
+function showLoadingOverlay() {
+  const overlay = document.createElement("div");
+  overlay.style.cssText = `
+    position: fixed;
+    inset: 0;
+    background: rgba(2, 6, 23, 0.95);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    backdrop-filter: blur(8px);
+  `;
+
+  const spinner = document.createElement("div");
+  spinner.style.cssText = `
+    width: 48px;
+    height: 48px;
+    border: 4px solid rgba(96, 165, 250, 0.2);
+    border-top-color: #60a5fa;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  `;
+
+  const text = document.createElement("div");
+  text.style.cssText = `
+    margin-top: 20px;
+    color: #e5e7eb;
+    font-size: 15px;
+    font-weight: 600;
+    font-family: system-ui, -apple-system, Inter;
+  `;
+  text.textContent = "Checking network compatibility...";
+
+  overlay.appendChild(spinner);
+  overlay.appendChild(text);
+
+  const style = document.createElement("style");
+  style.textContent = `
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  `;
+  document.head.appendChild(style);
+
+  document.body.appendChild(overlay);
+  return overlay;
+}
+
+function hideLoadingOverlay(overlay) {
+  if (overlay && overlay.parentNode) {
+    overlay.style.opacity = "0";
+    overlay.style.transition = "opacity 0.3s ease";
+    setTimeout(() => {
+      if (overlay.parentNode) {
+        overlay.parentNode.removeChild(overlay);
+      }
+    }, 300);
+  }
+}
+
 async function detectBaseSepoliaSupport(ethProvider) {
   try {
     const { JsonRpcProvider } = await import(
@@ -177,7 +246,6 @@ function showCompatibilityWarning(type) {
   document.body.insertBefore(banner, document.body.firstChild);
 }
 
-// původní getProgress beze změny
 async function getProgress(wallet) {
   try {
     const res = await fetch(`${API_BASE}/api/database/get-user`, {
