@@ -63,7 +63,9 @@
 #debug-log {
   margin: 0;
   padding: 6px 8px;
-  overflow: auto;
+  flex: 1;                 /* vyplní zbytek panelu */
+  overflow-y: auto;        /* vertikální scroll uvnitř logu */
+  overflow-x: hidden;
   white-space: pre-wrap;
   word-break: break-word;
 }
