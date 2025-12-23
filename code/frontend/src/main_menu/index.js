@@ -34,14 +34,9 @@ function initDebugToggle() {
 
 window.addEventListener("load", async () => {
   initDebugToggle();
-  debugLog("Window load start");
 
   try {
-    debugLog("Calling sdk.actions.ready()...");
     await sdk.actions.ready();
-    debugLog("sdk.actions.ready() done");
-
-    debugLog("BaseCamp mini app is ready!");
 
     // ==== USER CONTEXT / AVATAR ====
 
