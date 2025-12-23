@@ -201,7 +201,7 @@ function showCompatibilityWarning(type) {
     message =
       "Your environment does not support Base Sepolia testnet.";
     suggestion =
-      "Practice transactions may fail. You have been automatically granted 100% practice progress and can still mint your completion badge.";
+      "Practice transactions may fail. You have been automatically granted practice progress and can still mint your completion badge.";
   } else {
     title = "Initialization Error";
     message = "Failed to initialize the practice lab.";

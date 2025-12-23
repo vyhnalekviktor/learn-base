@@ -299,3 +299,73 @@
 .page-content {
   padding-bottom: 72px; /* rezerva, aby obsah nebyl pod navem */
 }
+
+/* Completed lab items – same green as theory */
+.menu-item.completed,
+#item-faucet.completed,
+#item-send.completed,
+#item-receive.completed,
+#item-mint.completed,
+#item-launch.completed {
+  background: #022c22 !important;
+  border-color: #14532d !important;
+  color: #bbf7d0 !important;
+}
+
+.menu-item.completed h3,
+.menu-item.completed p,
+#item-faucet.completed h3,
+#item-faucet.completed p,
+#item-send.completed h3,
+#item-send.completed p,
+#item-receive.completed h3,
+#item-receive.completed p,
+#item-mint.completed h3,
+#item-mint.completed p,
+#item-launch.completed h3,
+#item-launch.completed p {
+  color: #bbf7d0 !important;
+}
+
+/* Hover efekt pro completed (jemně světlejší) */
+.menu-item.completed:hover {
+  background: #034532 !important;
+  border-color: #16a34a !important;
+  transform: translateY(-2px);
+}
+
+/* Security lab completed items – same green as theory */
+#item-lab1.completed,
+#item-lab2.completed,
+#item-lab3.completed,
+#item-lab4.completed,
+#item-lab5.completed,
+.security-item.completed {
+  background: #022c22 !important;
+  border-color: #14532d !important;
+  color: #bbf7d0 !important;
+}
+
+#item-lab1.completed h3,
+#item-lab1.completed p,
+#item-lab2.completed h3,
+#item-lab2.completed p,
+#item-lab3.completed h3,
+#item-lab3.completed p,
+#item-lab4.completed h3,
+#item-lab4.completed p,
+#item-lab5.completed h3,
+#item-lab5.completed p {
+  color: #bbf7d0 !important;
+}
+
+/* Hover pro completed security items */
+#item-lab1.completed:hover,
+#item-lab2.completed:hover,
+#item-lab3.completed:hover,
+#item-lab4.completed:hover,
+#item-lab5.completed:hover {
+  background: #034532 !important;
+  border-color: #16a34a !important;
+  transform: translateY(-1px);
+}
