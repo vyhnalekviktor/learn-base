@@ -1,142 +1,118 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BaseCamp - Faucet</title>
-    <link rel="stylesheet" href="../../css/style.css" />
-    <link rel="stylesheet" href="../../css/tutorial.css" />
-  </head>
-  <body>
+    <link rel="stylesheet" href="../../css/style.css">
+    <link rel="stylesheet" href="../../css/tutorial.css">
+</head>
+<body>
     <div class="container">
-      <div class="hero">
-        <h1>Receiving Funds from Faucet</h1>
-        <p class="subtitle">
-          Learn how to get free testnet crypto
-        </p>
-        <br />
+        <div class="hero">
+            <h1>Receiving Funds from Faucet</h1>
+            <p class="subtitle">Learn how to get free testnet crypto</p>
+            <br>
 
-        <!-- Expandable Section 1 -->
-        <div class="accordion-item">
-          <button class="accordion-header" onclick="toggleAccordion('faucet')">
-            <span>What is a Faucet?</span>
-            <span class="accordion-icon" id="icon-faucet">+</span>
-          </button>
-          <div class="accordion-content" id="content-faucet">
-            <p>
-              A crypto faucet is a website or app that gives you
-              <strong>small amounts of cryptocurrency for free</strong> by
-              completing simple tasks like solving captchas, watching ads, or
-              clicking buttons.
-            </p>
-            <p>
-              The name comes from how a leaky faucet drips water slowly—similarly,
-              these platforms drip tiny amounts of crypto to users. Faucets were
-              originally created in 2010 to promote Bitcoin adoption and introduce
-              beginners to cryptocurrency without requiring them to buy it.
-            </p>
-            <p>
-              Today, they're commonly used on testnets (like Base Sepolia) to give
-              developers and users free tokens for testing apps and smart contracts.
-              While the rewards are very small, faucets remain a valuable tool for
-              newcomers to get hands-on experience with crypto wallets and
-              transactions in a <strong>risk-free environment</strong>.
-            </p>
-          </div>
-        </div>
+            <!-- Expandable Section 1 -->
+            <div class="accordion-item">
+                <button class="accordion-header" onclick="toggleAccordion('faucet')">
+                    <span>What is a Faucet?</span>
+                    <span class="accordion-icon" id="icon-faucet">▼</span>
+                </button>
+                <div class="accordion-content" id="content-faucet">
+                    <p>A crypto faucet is a website or app that gives you <strong>small amounts of cryptocurrency for free</strong> by completing simple tasks like solving captchas, watching ads, or clicking buttons.</p>
 
-        <!-- Expandable Section 2 -->
-        <div class="accordion-item">
-          <button class="accordion-header" onclick="toggleAccordion('testnet')">
-            <span>What is a Testnet?</span>
-            <span class="accordion-icon" id="icon-testnet">+</span>
-          </button>
-          <div class="accordion-content" id="content-testnet">
-            <p>
-              A testnet is a <strong>separate blockchain network</strong> that copies
-              how the real mainnet blockchain works but uses valueless test coins.
-            </p>
-            <p>
-              It is used by developers and users to safely test transactions, smart
-              contracts, and new features <strong>without risking real money</strong>.
-            </p>
+                    <p>The name comes from how a leaky faucet "drips" water slowly—similarly, these platforms "drip" tiny amounts of crypto to users. Faucets were originally created in 2010 to promote Bitcoin adoption and introduce beginners to cryptocurrency without requiring them to buy it.</p>
 
-            <div class="comparison-box">
-              <div class="compare-item">
-                <h4>Mainnet</h4>
-                <ul>
-                  <li>Real money</li>
-                  <li>Permanent transactions</li>
-                  <li>Production environment</li>
-                </ul>
-              </div>
-              <div class="compare-item">
-                <h4>Testnet</h4>
-                <ul>
-                  <li>Free test coins</li>
-                  <li>Safe to experiment</li>
-                  <li>Learning environment</li>
-                </ul>
-              </div>
+                    <p>Today, they're commonly used on testnets <i>(like Base Sepolia)</i> to give developers and users free tokens for testing apps and smart contracts. While the rewards are very small, faucets remain a valuable tool for newcomers to get hands-on experience with crypto wallets and transactions in a <strong>risk-free environment</strong>.</p>
+                </div>
             </div>
-          </div>
+
+            <!-- Expandable Section 2 -->
+            <div class="accordion-item">
+                <button class="accordion-header" onclick="toggleAccordion('testnet')">
+                    <span>What is a Testnet?</span>
+                    <span class="accordion-icon" id="icon-testnet">▼</span>
+                </button>
+                <div class="accordion-content" id="content-testnet">
+                    <p>A testnet is a <strong>separate blockchain network</strong> that copies how the real (mainnet) blockchain works but uses valueless test coins.</p>
+
+                    <p>It is used by developers and users to safely test transactions, smart contracts, and new features <strong>without risking real money</strong>.</p>
+
+                    <div class="comparison-box">
+                        <div class="compare-item">
+                            <h4>Mainnet</h4>
+                            <ul>
+                                <li>Real money</li>
+                                <li>Permanent transactions</li>
+                                <li>Production environment</li>
+                            </ul>
+                        </div>
+                        <div class="compare-item">
+                            <h4>Testnet</h4>
+                            <ul>
+                                <li>Free test coins</li>
+                                <li>Safe to experiment</li>
+                                <li>Learning environment</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Expandable Section 3 -->
+            <div class="accordion-item">
+                <button class="accordion-header" onclick="toggleAccordion('get')">
+                    <span>How to? practically</span>
+                    <span class="accordion-icon" id="icon-get">▼</span>
+                </button>
+                <div class="accordion-content" id="content-get">
+                    <p>Go to the link and choose <i>Base Sepolia</i> network.</p>
+                    <p>Enter your wallet address and solve Captcha.</p>
+                    <p>You did it! They will send you 1 testnet USDC for free.
+                        Now you can continue in this course and use it for test transactions!
+                    </p>
+                    <p>Be aware of the limit - 1 USDC for 2 hours!</p>
+                    <p>You can also claim some ETH it might be useful for your future testing.</p>
+                </div>
+            </div>
+
+            <!-- Try it Section -->
+            <div class="try-section">
+                <h3>Try it yourself!</h3>
+                <p>Get free Base Sepolia USDC from the official circle faucet:</p>
+                <a
+                    href="#"
+                    class="cta-button"
+                    onclick="openUsdcFaucet(); return false;"
+                >
+                    Go To USDC Faucet
+                </a>
+                <p>Get free Base Sepolia ETH from the official Alchemy faucet</p>
+                <a
+                    href="#"
+                    class="cta-button"
+                    onclick="openEthFaucet(); return false;"
+                >
+                    Go to ETH Faucet
+                </a>
+            </div>
+
+            <div class="nav-footer">
+                <a href="../main_menu/base-chain-lab.html" class="nav-btn back-btn">
+                    <span>Previous</span>
+                    <span class="nav-label">Menu</span>
+                </a>
+
+                <a href="send.html" class="nav-btn next-btn">
+                    <span>Next</span>
+                    <span class="nav-label">Send Funds</span>
+                </a>
+            </div>
         </div>
-
-        <!-- Expandable Section 3 -->
-        <div class="accordion-item">
-          <button class="accordion-header" onclick="toggleAccordion('get')">
-            <span>How to? practically</span>
-            <span class="accordion-icon" id="icon-get">+</span>
-          </button>
-          <div class="accordion-content" id="content-get">
-            <p>Go to the link and choose <i>Base Sepolia</i> network.</p>
-            <p>Enter your wallet address and solve Captcha.</p>
-            <p>
-              You did it! They will send you 1 testnet USDC for free. Now you can
-              continue in this course and use it for test transactions!
-            </p>
-            <p>Be aware of the limit - 1 USDC for 2 hours!</p>
-            <p>
-              You can also claim some ETH – it might be useful for your future
-              testing.
-            </p>
-          </div>
-        </div>
-
-        <!-- Try it Section -->
-        <div class="try-section">
-          <h3>Try it yourself!</h3>
-
-          <p>Get free Base Sepolia USDC from the official Circle faucet</p>
-          <button class="cta-button" id="usdc-faucet-btn">
-            Go to USDC Faucet
-          </button>
-
-          <p>Get free Base Sepolia ETH from the official Alchemy faucet</p>
-          <button class="cta-button" id="eth-faucet-btn">
-            Go to ETH Faucet
-          </button>
-        </div>
-
-        <div class="wallet-box">
-          <p><strong>Your connected wallet:</strong></p>
-          <p id="wallet-address">Loading...</p>
-        </div>
-
-        <div class="nav-footer">
-          <a href="../main_menu/base-chain-lab.html" class="nav-btn back-btn">
-            <span>Previous</span>
-            <span class="nav-label">Menu</span>
-          </a>
-
-          <a href="send.html" class="nav-btn next-btn">
-            <span>Next</span>
-            <span class="nav-label">Send Funds</span>
-          </a>
-        </div>
-      </div>
     </div>
 
     <script type="module" src="../../src/practice_lab/faucet.js"></script>
-  </body>
+</body>
 </html>
