@@ -16,16 +16,17 @@ window.addEventListener("load", async () => {
         const nameEl = document.getElementById('user-name')
         const fidEl = document.getElementById('user-fid')
 
-        userInfo.style.display = 'flex'
-        if (profile.imageUrl) {
+        if (userInfo) userInfo.style.display = 'flex'
+
+        if (profile.imageUrl && placeholder) {
             placeholder.style.backgroundImage = `url(${profile.imageUrl})`
             placeholder.style.backgroundSize = 'cover'
             placeholder.style.backgroundPosition = 'center'
         }
-        nameEl.textContent = profile.displayName || 'Farcaster User'
-        fidEl.textContent = `@${profile.fid}`
-    }
 
+        if (nameEl) nameEl.textContent = profile.displayName || 'Farcaster User'
+        if (fidEl) fidEl.textContent = `@${profile.fid}`
+    }
 
     const ethProvider = await sdk.wallet.ethProvider;
 
