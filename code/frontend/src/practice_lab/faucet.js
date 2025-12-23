@@ -72,16 +72,12 @@ async function updateFaucetProgress(wallet) {
 
 async function handleNextClick(event) {
   event.preventDefault();
-
   if (!currentWallet) {
     console.error("Wallet not available yet");
     return;
   }
-
-  const ok = await updateFaucetProgress(currentWallet);
-  if (ok) {
-    window.location.href = "send.html";
-  }
+  window.location.href = "send.html";
+  await updateFaucetProgress(currentWallet);
 }
 
 window.addEventListener("load", initWallet);
