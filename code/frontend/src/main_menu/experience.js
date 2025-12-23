@@ -46,9 +46,13 @@ async function getProgressAndSetupMint(wallet, ethProvider) {
       return;
     }
 
+
+    const theoryParts = [progress.theory1, progress.theory2, progress.theory3, progress.theory4, progress.theory5];
+    let theoryCompleted = 0;
+    for (const part of theoryParts) if (part === true) theoryCompleted++;
+    const theoryPercent = Math.round((theoryCompleted / theoryParts.length) * 100);
     const theoryBar = document.getElementById('theoryProgressBar');
     const theoryText = document.getElementById('theoryProgressText');
-    const theoryPercent = info.completed_theory ? 100 : 0;
     if (theoryBar) theoryBar.style.width = `${theoryPercent}%`;
     if (theoryText) theoryText.textContent = `${theoryPercent}%`;
 
