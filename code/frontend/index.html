@@ -1,6 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<script>
+(function() {
+  const theme = localStorage.getItem('theme') ||
+               (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+  document.documentElement.setAttribute('data-theme', theme);
+})();
+</script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="base:app_id" content="69419e4bd77c069a945bdf69" />
@@ -20,6 +27,7 @@
     <title>BASECAMP - learn BASE ecosystem</title>
     <link rel="stylesheet" href="css/landing.css">
 </head>
+
 <body>
     <div class="container">
         <div class="hero">
@@ -32,12 +40,24 @@
         </div>
 
         <div class="user-info" id="user-info">
-          <div class="user-avatar-placeholder" id="user-avatar-placeholder"></div>
-            <div class="user-details">
-                <span id="user-name" class="user-name">satoshi, is it you? (unknown)</span>
-                <span id="user-fid" class="user-fid"></span>
-            </div>
-        </div>
+  <div class="user-left">
+    <div class="user-avatar-placeholder" id="user-avatar-placeholder"></div>
+    <div class="user-details">
+      <span id="user-name" class="user-name">Loading...</span>
+      <span id="user-fid" class="user-fid"></span>
+    </div>
+  </div>
+
+  <div class="theme-toggle-wrapper">
+    <span class="theme-toggle-label">Mode:</span>
+    <button id="themeToggle" class="theme-toggle" aria-label="Toggle theme">
+      <span class="theme-toggle-knob"></span>
+      <span class="theme-toggle-icon"></span>
+    </button>
+  </div>
+</div>
+
+
 
 
         <nav class="menu">
@@ -113,6 +133,6 @@
     <span>Support me</span>
   </a>
 </nav>
-    <script type="module" src="src/main_menu/index.js"></script>
+<script type="module" src="src/main_menu/index.js"></script>
 </body>
 </html>

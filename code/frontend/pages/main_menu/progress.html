@@ -1,6 +1,103 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="../../src/theme.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Learn About Base</title>
+    <link rel="stylesheet" href="../../css/landing.css">
+    <style>
+        .menu-item.completed {
+            background: #d5f1cc;
+            border-color: #b8e3b0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="hero">
+            <h1>Base Chain Lab</h1>
+            <p class="subtitle">Everything is in a safe environment for testing</p>
+
+            <p class="description">
+                Work through the steps below to learn how to use Base. Your progress updates automatically.
+            </p>
+
+            <div id="progress-container" style="margin: 24px 0;">
+                <div style="font-size: 14px; margin-bottom: 4px;">
+                    Progress: <span id="progress-percent">Loading...</span>
+                </div>
+                <div style="width: 100%; background-color: #1f2933; border-radius: 999px; overflow: hidden; height: 8px;">
+                    <div
+                        id="progress-bar-fill"
+                        style="width: 0%; height: 100%; background: linear-gradient(135deg, #0052FF 0%, #10b981 100%); transition: width 0.3s ease;"
+                    ></div>
+                </div>
+            </div>
+
+            <div class="menu">
+                <a id="item-faucet" href="../practice_lab/faucet.html" class="menu-item">
+                    <h3>Receive funds from Faucet</h3>
+                    <p>Get testnet funds to start experimenting on Base without risk.</p>
+                </a>
+
+                <a id="item-send" href="../practice_lab/send.html" class="menu-item">
+                    <h3>Send funds</h3>
+                    <p>Practice sending transactions to another address on Base.</p>
+                </a>
+
+                <a id="item-receive" href="../practice_lab/receive.html" class="menu-item">
+                    <h3>Receive funds</h3>
+                    <p>Learn how to receive tokens securely from other users.</p>
+                </a>
+
+                <a id="item-mint" href="../practice_lab/mint.html" class="menu-item">
+                    <h3>Mint an NFT</h3>
+                    <p>Create an NFT on Base and see how minting works in practice.</p>
+                </a>
+
+                <a id="item-launch" href="../practice_lab/launch.html" class="menu-item">
+                    <h3>Launch a token</h3>
+                    <p>Walk through the steps of launching a new token on Base.</p>
+                </a>
+            </div>
+
+        </div>
+    </div>
+<nav class="bottom-nav">
+  <a href="../../index.html">
+    <span class="bottom-nav-icon">??</span>
+    <span>Home</span>
+  </a>
+  <a href="progress.html">
+    <span class="bottom-nav-icon">??</span>
+    <span>Progress</span>
+  </a>
+  <a href="./theory.html">
+    <span class="bottom-nav-icon">??</span>
+    <span>Theory</span>
+  </a>
+  <a href="./base-chain-lab.html" class="active">
+    <span class="bottom-nav-icon">??</span>
+    <span>Practice</span>
+  </a>
+  <a href="./security-lab.html">
+    <span class="bottom-nav-icon">??</span>
+    <span>Security</span>
+  </a>
+  <a href="./support.html">
+    <span class="bottom-nav-icon">??</span>
+    <span>Support me</span>
+  </a>
+</nav>
+    <script type="module" src="../../src/main_menu/labMenu.js"></script>
+</body>
+</html>
+
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Experience</title>

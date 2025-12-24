@@ -1,82 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<script src="../../src/theme.js"></script>
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Support the Creator</title>
     <link rel="stylesheet" href="../../css/style.css">
 </head>
-<style>
-    /* Custom amount block jen pro support stránku */
-.custom-input-block {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-/* input na samostatném řádku */
-.custom-input-block input {
-  width: 100%;
-  padding: 12px 14px;
-  border-radius: 999px;
-  border: 1px solid #334155;
-  background: #020617;
-  color: #e5e7eb;
-  font-size: 15px;
-}
-
-/* řádek s třemi tlačítky: - (1), + (1), Send (2) */
-.custom-actions-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr 2fr;
-  gap: 10px;
-}
-
-/* +/- tlačítka */
-.amount-stepper {
-  height: 44px;
-  border-radius: 999px;
-  border: 1px solid #1e293b;
-  background: #020617;
-  color: #e5e7eb;
-  font-size: 20px;
-  font-weight: 600;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.18s ease, transform 0.18s ease, border-color 0.18s ease;
-}
-
-.amount-stepper:hover {
-  background: #111827;
-  border-color: #2563eb;
-  transform: translateY(-1px);
-}
-
-/* Send button přesně do svého sloupce */
-.custom-actions-row .btn-primary.full {
-  width: 100%;
-  height: 44px;
-  border-radius: 999px;
-  padding: 0 16px;
-  font-size: 15px;
-}
-
-/* Mobil – pořád velká tlačítka */
-@media (max-width: 480px) {
-  .custom-actions-row {
-    gap: 8px;
-  }
-
-  .amount-stepper,
-  .custom-actions-row .btn-primary.full {
-    height: 42px;
-    font-size: 18px;
-  }
-}
-
-</style>
 <body>
   <div class="container page-content">
     <header class="hero">
@@ -124,7 +55,6 @@
         <div id="walletInfo" class="wallet-status">
           <p>Thank you very much!</p>
         </div>
-      </div>
 
     </section>
   </div>
@@ -158,5 +88,4 @@
 
   <script type="module" src="../../src/main_menu/supportMe.js"></script>
 </body>
-
 </html>
