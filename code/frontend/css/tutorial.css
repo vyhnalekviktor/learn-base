@@ -733,3 +733,35 @@ footer strong {
     height: 56px;
   }
 }
+
+/* COMPLETED STATES - THEORY + TUTORIAL */
+#theory-item-1.completed,
+#theory-item-2.completed,
+#theory-item-3.completed,
+#theory-item-4.completed,
+#theory-item-5.completed,
+.accordion-item.completed {
+  background: var(--success-bg) !important;
+  border-color: var(--success-border) !important;
+  color: var(--success-text) !important;
+}
+
+#theory-item-1.completed h3,
+#theory-item-1.completed p,
+#theory-item-2.completed h3,
+#theory-item-2.completed p,
+#theory-item-3.completed h3,
+#theory-item-3.completed p,
+#theory-item-4.completed h3,
+#theory-item-4.completed p,
+#theory-item-5.completed h3,
+#theory-item-5.completed p,
+.accordion-item.completed .accordion-header,
+.accordion-item.completed .accordion-header span {
+  color: var(--success-text) !important;
+}
+
+.accordion-item.completed:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(22, 163, 74, 0.35);
+}
