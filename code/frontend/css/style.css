@@ -1,4 +1,18 @@
 /* NO FLASH - PŘED :root */
+
+html[data-theme="light"] body,
+body.light {
+background: #f3f4f6 !important;
+color: #111827 !important;
+}
+
+html[data-theme="dark"] body,
+body.dark {
+background: #0f172a !important;
+color: #e5e7eb !important;
+}
+
+/* NO FLASH - PŘED :root */
 html[data-theme="light"] body,
 body.light {
   background: #f3f4f6 !important;
@@ -15,41 +29,42 @@ body.dark {
 
 /* CSS VARIABLES - DARK THEME */
 :root[data-theme="dark"] {
-  --bg-primary: #0f172a;
-  --bg-secondary: #020617;
-  --bg-card: #0b1120;
-  --bg-hover: #111827;
-  --text-primary: #e5e7eb;
-  --text-secondary: #9ca3af;
-  --text-muted: #94a3b8;
-  --border: #1e293b;
-  --input-bg: #020617;
-  --input-border: #334155;
-  --success-bg: #022c22;
-  --success-border: #22c55e;
-  --success-text: #bbf7d0;
-  --accent: #60a5fa;
-  --bg-primary-rgb: 15, 23, 42;
+--bg-primary: #0f172a;
+--bg-secondary: #020617;
+--bg-card: #0b1120;
+--bg-hover: #111827;
+--text-primary: #e5e7eb;
+--text-secondary: #9ca3af;
+--text-muted: #94a3b8;
+--border: #1e293b;
+--toggle-bg: #111827;
+--toggle-on: #0f172a;
+--toggle-knob: #f9fafb;
+--success-bg: #022c22;
+--success-border: #14532d;
+--success-text: #bbf7d0;
+--bg-primary-rgb: 15, 23, 42;
 }
 
-/* CSS VARIABLES - LIGHT THEME */
 :root[data-theme="light"] {
-  --bg-primary: #f3f4f6;
-  --bg-secondary: #ffffff;
-  --bg-card: #f9fafb;
-  --bg-hover: #e5e7eb;
-  --text-primary: #111827;
-  --text-secondary: #6b7280;
-  --text-muted: #6b7280;
-  --border: #e5e7eb;
-  --input-bg: #ffffff;
-  --input-border: #d1d5db;
-  --success-bg: #ecfdf5;
-  --success-border: #22c55e;
-  --success-text: #166534;
-  --accent: #2563eb;
-  --bg-primary-rgb: 243, 244, 246;
+--bg-primary: #f3f4f6;
+--bg-secondary: #ffffff;
+--bg-card: #f9fafb;
+--bg-hover: #e5e7eb;
+--text-primary: #111827;
+--text-secondary: #6b7280;
+--text-muted: #6b7280;
+--border: #e5e7eb;
+--toggle-bg: #e5e7eb;
+--toggle-on: #f3f4f6;
+--toggle-knob: #f9fafb;
+--success-bg: #d5f1cc;
+--success-border: #b8e3b0;
+--success-text: #166534;
+--bg-primary-rgb: 243, 244, 246;
 }
+
+
 
 /* APLIKUJ NA HLAVNÍ ELEMENTS */
 * {
@@ -59,7 +74,7 @@ body.dark {
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Inter', Roboto, Inter;
   background: var(--bg-primary);
   color: var(--text-primary);
   min-height: 100vh;
