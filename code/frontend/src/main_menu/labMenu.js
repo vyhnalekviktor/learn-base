@@ -173,12 +173,6 @@ async function grantFullPracticeProgress(wallet) {
       });
     }
 
-    await fetch(`${API_BASE}/api/database/practice-sent`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ wallet }),
-    });
-
     console.log("Full practice progress granted successfully (lab menu)");
   } catch (error) {
     console.error("Error granting practice progress (lab menu):", error);
