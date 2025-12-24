@@ -11,7 +11,6 @@ body.dark {
   color: #e5e7eb !important;
 }
 
-
 /* style.css (support.css) - PROFESIONÁLNÍ DARK/LIGHT READY */
 
 /* CSS VARIABLES - DARK THEME */
@@ -60,110 +59,278 @@ body.dark {
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, Inter, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
   background: var(--bg-primary);
   color: var(--text-primary);
   min-height: 100vh;
   margin: 0;
   padding: 0;
   transition: all 0.2s ease;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .container {
   width: 100%;
   min-height: 100vh;
   background: var(--bg-secondary);
-  padding: 20px 16px 28px 16px;
+  padding: 16px;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 /* Hero header */
 .hero {
   text-align: left;
-  padding: 0 0 20px 0;
+  padding: 12px 0 24px 0;
   background: transparent;
 }
 
 .hero h1 {
-  font-size: 24px;
-  line-height: 1.3;
+  font-size: 26px;
+  line-height: 1.2;
   color: var(--text-primary);
-  margin-bottom: 6px;
+  margin-bottom: 8px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
 }
 
 .hero .subtitle {
-  font-size: 14px;
+  font-size: 15px;
   color: var(--text-secondary);
   line-height: 1.5;
+  font-weight: 400;
 }
 
-/* Buttons */
-.donation-btn, .donate-btn, .btn-primary {
+/* DONATION BUTTONS - MODERNÍ DESIGN */
+.donation-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.donation-btn, .donate-btn {
+  position: relative;
   background: var(--bg-card);
-  border-color: var(--border);
+  border: 2px solid var(--border);
   color: var(--text-primary);
-  transition: all 0.18s ease;
+  padding: 18px 12px;
+  font-size: 17px;
+  font-weight: 700;
+  border-radius: 14px;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  min-height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.donation-btn::before,
+.donate-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, var(--accent) 0%, color-mix(in srgb, var(--accent) 70%, #764ba2) 100%);
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  border-radius: 12px;
+}
+
+.donation-btn:hover::before,
+.donate-btn:hover::before {
+  display: none;
 }
 
 .donation-btn:hover,
-.donate-btn:hover,
-.btn-primary:hover {
-  background: var(--accent);
+.donate-btn:hover {
   border-color: var(--accent);
-  transform: translateY(-1px);
+    background: var(--bg-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.25);
 }
 
-.donation-btn:active, .donate-btn:active, .btn-primary:active {
+.donation-btn span,
+.donate-btn span {
+  position: relative;
+  z-index: 1;
+}
+
+.donation-btn:active,
+.donate-btn:active {
   transform: translateY(0);
+  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.15);
+}
+
+/* CUSTOM AMOUNT CARD */
+.custom-card {
+  background: var(--bg-card);
+  border-radius: 16px;
+  border: 2px solid var(--border);
+  padding: 18px 16px 20px;
+}
+
+.custom-card h3,
+.custom-section h3 {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 14px;
+}
+
+/* INPUT FIELD */
+.custom-input-block input {
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 2px solid var(--border);
+  background: var(--input-bg);
+  color: var(--text-primary);
+  font-size: 16px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.custom-input-block input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.custom-input-block input::placeholder {
+  color: var(--text-secondary);
+  opacity: 0.7;
+}
+
+/* +/- BUTTONS */
+.amount-stepper {
+  min-height: 52px;
+  border-radius: 12px;
+  border: 2px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-size: 22px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.amount-stepper:hover {
+  background: var(--bg-hover);
+  border-color: var(--accent);
+  color: var(--accent);
+  transform: scale(1.05);
+}
+
+.amount-stepper:active {
+  transform: scale(0.98);
+}
+
+/* SEND BUTTON - ACCENT */
+.btn-primary.full {
+  position: relative;
+  background: linear-gradient(135deg, var(--accent) 0%, color-mix(in srgb, var(--accent) 85%, #1d4ed8) 100%);
+  border: 2px solid transparent;
+  color: white;
+  padding: 14px 24px;
+  font-size: 16px;
+  font-weight: 700;
+  border-radius: 12px;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  min-height: 52px;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3);
+}
+
+.btn-primary.full:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.4);
+}
+
+.btn-primary.full:active {
+  transform: translateY(0);
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3);
+}
+
+/* CUSTOM ACTIONS ROW */
+.custom-actions-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 2fr;
+  gap: 10px;
 }
 
 /* Cards & Sections */
 .custom-section,
-.custom-card,
 .wallet-status,
 .support-info {
   background: var(--bg-card);
-  border-color: var(--border);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
 }
 
 .custom-input-group input,
-#messageField,
-.custom-input-block input {
+#messageField {
   background: var(--input-bg);
-  border-color: var(--input-border);
+  border: 2px solid var(--input-border);
   color: var(--text-primary);
+  font-size: 16px;
+  border-radius: 10px;
+  padding: 12px 14px;
 }
 
 .custom-input-group input::placeholder,
-.custom-input-row input::placeholder {
+#messageField::placeholder {
   color: var(--text-secondary);
+  opacity: 0.7;
 }
 
 .custom-input-group input:focus,
 #messageField:focus {
   outline: none;
   border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.1);
 }
 
 .info-box {
   background: var(--success-bg);
   border-left: 3px solid var(--success-border);
   color: var(--success-text);
+  padding: 12px 14px;
+  border-radius: 8px;
+  font-size: 14px;
+  margin: 12px 0;
 }
 
-/* BOTTOM NAV - THEME READY (JEDINÁ DEFINICE) */
+/* BOTTOM NAV - THEME READY */
 .bottom-nav {
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
-  height: 60px;
-  background: rgba(var(--bg-primary-rgb), 0.98);
+  height: 68px;
+  background: rgba(var(--bg-primary-rgb), 0.95);
   border-top: 1px solid var(--border);
   display: flex;
   justify-content: space-around;
   align-items: center;
-  z-index: 50;
-  backdrop-filter: blur(10px);
+  z-index: 100;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
 .bottom-nav a {
@@ -176,97 +343,65 @@ body {
   flex-direction: column;
   align-items: center;
   gap: 4px;
+  padding: 8px;
+  transition: all 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .bottom-nav-icon {
-  font-size: 18px;
+  font-size: 22px;
+  transition: transform 0.2s ease;
+}
+
+.bottom-nav a:active .bottom-nav-icon {
+  transform: scale(0.9);
 }
 
 .bottom-nav a span {
   line-height: 1;
+  font-weight: 500;
 }
 
 .bottom-nav a.active {
   color: var(--accent);
-  font-weight: 600;
+  font-weight: 700;
+}
+
+.bottom-nav a.active .bottom-nav-icon {
+  transform: scale(1.1);
 }
 
 .page-content {
-  padding-bottom: 72px;
-}
-
-/* Donation Grid */
-.donation-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-  margin-bottom: 20px;
-}
-
-.donation-btn {
-  padding: 12px 8px;
-  font-size: 14px;
-  font-weight: 600;
-  border-radius: 10px;
-  cursor: pointer;
-  text-align: center;
-}
-
-/* Custom Input */
-.custom-input-group,
-.custom-input-row {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
-.custom-input-group input,
-.custom-input-row input {
-  flex: 1;
-  padding: 10px 12px;
-  font-size: 14px;
-  border-radius: 8px;
-}
-
-.custom-input-group button {
-  padding: 10px 14px;
-  font-size: 14px;
-  font-weight: 600;
-  border-radius: 8px;
-  white-space: nowrap;
-}
-
-/* Amount Stepper */
-.amount-stepper {
-  height: 38px;
-  border-radius: 999px;
-  color: var(--text-primary);
-  font-size: 18px;
-  font-weight: 600;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.18s ease;
-}
-
-.amount-stepper:hover {
-  background: var(--bg-hover);
-  border-color: var(--accent);
+  padding-bottom: calc(84px + env(safe-area-inset-bottom));
 }
 
 /* Status Messages */
 #status {
-  padding: 10px 12px;
-  border-radius: 8px;
+  padding: 12px 14px;
+  border-radius: 10px;
   font-weight: 600;
   text-align: center;
   margin-bottom: 16px;
   display: none;
-  font-size: 13px;
+  font-size: 14px;
+  line-height: 1.4;
 }
 
-#status.show { display: block; }
+#status.show {
+  display: block;
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 
 #status.success {
   background: var(--success-bg);
@@ -288,31 +423,36 @@ body {
 
 /* Wallet Info */
 .wallet-status {
-  padding: 12px;
-  border-radius: 10px;
+  padding: 14px;
+  border-radius: 12px;
   margin-bottom: 18px;
+  display: none;
 }
 
-.wallet-status.show { display: block; }
+.wallet-status.show {
+  display: block;
+}
 
 #walletInfo p {
-  margin: 0 0 6px 0;
+  margin: 0 0 8px 0;
   color: var(--text-primary);
-  font-size: 13px;
+  font-size: 14px;
+  line-height: 1.5;
 }
 
 #address {
-  font-family: 'Courier New', monospace;
+  font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
   color: var(--accent);
   font-weight: 600;
   font-size: 12px;
+  word-break: break-all;
 }
 
 /* Support Layout */
 .support-layout {
   display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(0, 1.3fr);
-  gap: 18px;
+  grid-template-columns: 1fr;
+  gap: 16px;
   margin-top: 12px;
 }
 
@@ -325,35 +465,42 @@ body {
 .support-side {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
 }
 
 .support-info h3,
 .support-info h4 {
-  margin-bottom: 8px;
-  font-size: 14px;
-  font-weight: 600;
+  margin-bottom: 10px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
 }
 
 .support-info ul {
-  margin: 8px 0 0 18px;
+  margin: 10px 0 0 20px;
   padding: 0;
 }
 
 .support-info li {
-  margin: 4px 0;
+  margin: 6px 0;
   color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1.5;
 }
 
 .support-info.secondary {
   border-left: 3px solid var(--accent);
+  padding-left: 14px;
 }
 
 .back-link {
   color: var(--accent);
   text-decoration: none;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .back-link:hover {
@@ -362,86 +509,128 @@ body {
 
 /* Message Section */
 .message-section h3 {
-  font-size: 14px;
+  font-size: 16px;
   color: var(--text-primary);
-  margin-bottom: 8px;
-  font-weight: 600;
+  margin-bottom: 10px;
+  font-weight: 700;
 }
 
 #messageField {
   width: 100%;
-  min-height: 90px;
-  line-height: 1.5;
+  min-height: 100px;
+  line-height: 1.6;
   resize: vertical;
-  border-radius: 8px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
 }
 
 #sendMessageBtn {
   width: 100%;
-  margin-top: 10px;
-  padding: 12px;
-  font-size: 14px;
-  font-weight: 600;
-  border-radius: 10px;
+  margin-top: 12px;
+  padding: 14px;
+  font-size: 16px;
+  font-weight: 700;
+  border-radius: 12px;
+  min-height: 52px;
+  background: linear-gradient(135deg, var(--accent) 0%, color-mix(in srgb, var(--accent) 85%, #1d4ed8) 100%);
+  border: 2px solid transparent;
+  color: white;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3);
+}
+
+#sendMessageBtn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.4);
 }
 
 #sendMessageBtn:disabled {
   background: var(--bg-card);
+  color: var(--text-secondary);
   cursor: not-allowed;
-  opacity: 0.7;
+  opacity: 0.5;
+  box-shadow: none;
 }
 
-/* Custom Actions Row */
-.custom-actions-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr 2fr;
-  gap: 8px;
+/* LABEL STYLING */
+label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+  display: block;
 }
 
-.custom-actions-row .btn-primary.full {
-  width: 100%;
-  height: 38px;
-  border-radius: 999px;
-  padding: 0 14px;
-}
-
-/* RESPONSIVE */
+/* RESPONSIVE - Mobile Optimalizace */
 @media (max-width: 768px) {
   .support-layout {
     grid-template-columns: 1fr;
-  }
-
-  .preset-donations {
-    flex-direction: column;
-  }
-
-  .custom-input-row,
-  .custom-actions-row {
-    gap: 6px;
-  }
-
-  .amount-stepper,
-  .custom-actions-row .btn-primary.full {
-    height: 36px;
-  }
-
-  .donation-grid {
-    gap: 8px;
-  }
-
-  .donation-btn {
-    padding: 10px 6px;
-    font-size: 13px;
   }
 }
 
 @media (max-width: 480px) {
   .container {
-    padding: 18px 14px 24px 14px;
+    padding: 14px;
   }
 
-  .hero h1 { font-size: 22px; }
-  .hero .subtitle { font-size: 13px; }
+  .hero {
+    padding: 8px 0 20px 0;
+  }
+
+  .hero h1 {
+    font-size: 24px;
+  }
+
+  .hero .subtitle {
+    font-size: 14px;
+  }
+
+  .donation-grid {
+    gap: 10px;
+  }
+
+  .donation-btn, .donate-btn {
+    padding: 16px 10px;
+    font-size: 16px;
+    min-height: 60px;
+  }
+
+  .custom-actions-row {
+    gap: 8px;
+  }
+
+  .amount-stepper {
+    min-height: 50px;
+    font-size: 20px;
+  }
+
+  .btn-primary.full {
+    font-size: 15px;
+    min-height: 50px;
+  }
+}
+
+@media (max-width: 360px) {
+  .donation-btn, .donate-btn {
+    padding: 14px 8px;
+    font-size: 15px;
+    min-height: 56px;
+  }
+}
+
+/* Landscape Mobile */
+@media (max-height: 500px) and (orientation: landscape) {
+  .hero {
+    padding: 8px 0 12px 0;
+  }
+
+  .hero h1 {
+    font-size: 20px;
+  }
+
+  .bottom-nav {
+    height: 56px;
+  }
 }
 
 /* Remove native number input arrows */
@@ -453,4 +642,19 @@ body {
 #customAmount::-webkit-inner-spin-button {
   -webkit-appearance: none;
   margin: 0;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Better touch targets for iOS */
+@supports (-webkit-touch-callout: none) {
+  .donation-btn,
+  .btn-primary,
+  .amount-stepper,
+  button {
+    min-height: 44px;
+  }
 }
