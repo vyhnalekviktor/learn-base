@@ -1,18 +1,4 @@
 /* NO FLASH - PŘED :root */
-
-html[data-theme="light"] body,
-body.light {
-background: #f3f4f6 !important;
-color: #111827 !important;
-}
-
-html[data-theme="dark"] body,
-body.dark {
-background: #0f172a !important;
-color: #e5e7eb !important;
-}
-
-/* NO FLASH - PŘED :root */
 html[data-theme="light"] body,
 body.light {
   background: #f3f4f6 !important;
@@ -25,46 +11,52 @@ body.dark {
   color: #e5e7eb !important;
 }
 
-/* style.css (support.css) - PROFESIONÁLNÍ DARK/LIGHT READY */
+/* style.css (support.css) - PROFESIONÁLNÍ DARK/LIGHT READY + CENTERED */
 
 /* CSS VARIABLES - DARK THEME */
 :root[data-theme="dark"] {
---bg-primary: #0f172a;
---bg-secondary: #020617;
---bg-card: #0b1120;
---bg-hover: #111827;
---text-primary: #e5e7eb;
---text-secondary: #9ca3af;
---text-muted: #94a3b8;
---border: #1e293b;
---toggle-bg: #111827;
---toggle-on: #0f172a;
---toggle-knob: #f9fafb;
---success-bg: #022c22;
---success-border: #14532d;
---success-text: #bbf7d0;
---bg-primary-rgb: 15, 23, 42;
+  --bg-primary: #0f172a;
+  --bg-secondary: #020617;
+  --bg-card: #0b1120;
+  --bg-hover: #111827;
+  --text-primary: #e5e7eb;
+  --text-secondary: #9ca3af;
+  --text-muted: #94a3b8;
+  --border: #1e293b;
+  --input-bg: #020617;
+  --input-border: #334155;
+  --toggle-bg: #111827;
+  --toggle-on: #0f172a;
+  --toggle-knob: #f9fafb;
+  --success-bg: #022c22;
+  --success-border: #22c55e;
+  --success-text: #bbf7d0;
+  --accent: #60a5fa;
+  --accent-hover: #3b82f6;
+  --bg-primary-rgb: 15, 23, 42;
 }
 
 :root[data-theme="light"] {
---bg-primary: #f3f4f6;
---bg-secondary: #ffffff;
---bg-card: #f9fafb;
---bg-hover: #e5e7eb;
---text-primary: #111827;
---text-secondary: #6b7280;
---text-muted: #6b7280;
---border: #e5e7eb;
---toggle-bg: #e5e7eb;
---toggle-on: #f3f4f6;
---toggle-knob: #f9fafb;
---success-bg: #d5f1cc;
---success-border: #b8e3b0;
---success-text: #166534;
---bg-primary-rgb: 243, 244, 246;
+  --bg-primary: #f3f4f6;
+  --bg-secondary: #ffffff;
+  --bg-card: #f9fafb;
+  --bg-hover: #e5e7eb;
+  --text-primary: #111827;
+  --text-secondary: #6b7280;
+  --text-muted: #6b7280;
+  --border: #e5e7eb;
+  --input-bg: #ffffff;
+  --input-border: #d1d5db;
+  --toggle-bg: #e5e7eb;
+  --toggle-on: #f3f4f6;
+  --toggle-knob: #f9fafb;
+  --success-bg: #ecfdf5;
+  --success-border: #22c55e;
+  --success-text: #166534;
+  --accent: #2563eb;
+  --accent-hover: #1d4ed8;
+  --bg-primary-rgb: 243, 244, 246;
 }
-
-
 
 /* APLIKUJ NA HLAVNÍ ELEMENTS */
 * {
@@ -74,7 +66,7 @@ body.dark {
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Inter', Roboto, Inter;
+  font-family: -apple-system, BlinkMacSystemFont, 'Inter', Roboto, sans-serif;
   background: var(--bg-primary);
   color: var(--text-primary);
   min-height: 100vh;
@@ -85,28 +77,30 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* CENTERED CONTAINER */
 .container {
   width: 100%;
+  max-width: 768px;
   min-height: 100vh;
   background: var(--bg-secondary);
   padding: 16px;
-  max-width: 100%;
-  overflow-x: hidden;
+  padding-bottom: 88px;
+  margin: 0 auto;
 }
 
 /* Hero header */
 .hero {
   text-align: left;
-  padding: 12px 0 24px 0;
+  padding: 24px 0 24px 0;
   background: transparent;
 }
 
 .hero h1 {
-  font-size: 26px;
+  font-size: 28px;
   line-height: 1.2;
   color: var(--text-primary);
-  margin-bottom: 8px;
-  font-weight: 700;
+  margin-bottom: 10px;
+  font-weight: 800;
   letter-spacing: -0.02em;
 }
 
@@ -115,6 +109,7 @@ body {
   color: var(--text-secondary);
   line-height: 1.5;
   font-weight: 400;
+  margin-bottom: 8px;
 }
 
 /* DONATION BUTTONS - MODERNÍ DESIGN */
@@ -165,9 +160,9 @@ body {
 .donation-btn:hover,
 .donate-btn:hover {
   border-color: var(--accent);
-    background: var(--bg-hover);
+  background: var(--bg-hover);
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.25);
+  box-shadow: 0 8px 20px rgba(96, 165, 250, 0.25);
 }
 
 .donation-btn span,
@@ -179,7 +174,7 @@ body {
 .donation-btn:active,
 .donate-btn:active {
   transform: translateY(0);
-  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.15);
+  box-shadow: 0 4px 10px rgba(96, 165, 250, 0.15);
 }
 
 /* CUSTOM AMOUNT CARD */
@@ -188,6 +183,7 @@ body {
   border-radius: 16px;
   border: 2px solid var(--border);
   padding: 18px 16px 20px;
+  margin-bottom: 20px;
 }
 
 .custom-card h3,
@@ -214,7 +210,7 @@ body {
 .custom-input-block input:focus {
   outline: none;
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.1);
 }
 
 .custom-input-block input::placeholder {
@@ -267,17 +263,17 @@ body {
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
   min-height: 52px;
-  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3);
+  box-shadow: 0 4px 14px rgba(96, 165, 250, 0.3);
 }
 
 .btn-primary.full:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.4);
+  box-shadow: 0 8px 24px rgba(96, 165, 250, 0.4);
 }
 
 .btn-primary.full:active {
   transform: translateY(0);
-  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3);
+  box-shadow: 0 4px 14px rgba(96, 165, 250, 0.3);
 }
 
 /* CUSTOM ACTIONS ROW */
@@ -346,6 +342,7 @@ body {
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   padding-bottom: env(safe-area-inset-bottom);
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
 }
 
 .bottom-nav a {
@@ -360,6 +357,7 @@ body {
   gap: 4px;
   padding: 8px;
   transition: all 0.2s ease;
+  font-weight: 500;
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -374,7 +372,6 @@ body {
 
 .bottom-nav a span {
   line-height: 1;
-  font-weight: 500;
 }
 
 .bottom-nav a.active {
@@ -551,12 +548,12 @@ body {
   color: white;
   cursor: pointer;
   transition: all 0.25s ease;
-  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3);
+  box-shadow: 0 4px 14px rgba(96, 165, 250, 0.3);
 }
 
 #sendMessageBtn:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.4);
+  box-shadow: 0 8px 24px rgba(96, 165, 250, 0.4);
 }
 
 #sendMessageBtn:disabled {
@@ -578,6 +575,10 @@ label {
 
 /* RESPONSIVE - Mobile Optimalizace */
 @media (max-width: 768px) {
+  .container {
+    padding: 14px;
+  }
+
   .support-layout {
     grid-template-columns: 1fr;
   }
@@ -589,7 +590,7 @@ label {
   }
 
   .hero {
-    padding: 8px 0 20px 0;
+    padding: 20px 0;
   }
 
   .hero h1 {
@@ -636,7 +637,7 @@ label {
 /* Landscape Mobile */
 @media (max-height: 500px) and (orientation: landscape) {
   .hero {
-    padding: 8px 0 12px 0;
+    padding: 12px 0;
   }
 
   .hero h1 {
@@ -673,3 +674,20 @@ html {
     min-height: 44px;
   }
 }
+
+/* VRAŤ DONATION GRID DO BLOKU, NE FLEX */
+.donation-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  margin: 24px 0;
+}
+
+/* BUTTONY NEŠIROKÉ PŘES CELÝ TEXT, ALE UPROSTŘED BLOKU */
+.donation-btn,
+.donate-btn {
+  width: 260px;
+  max-width: 100%;
+  margin: 0 auto;     /* centrování v rámci gridu */
+}
+

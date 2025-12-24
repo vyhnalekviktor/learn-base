@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script src="../../src/theme.js"></script>
   <meta charset="UTF-8" />
   <meta
     name="viewport"
@@ -168,19 +169,4 @@
   </script>
   <script type="module" src="../../src/practice_lab/practiceMint.js"></script>
 </body>
-<script>
-  // Global theme init – běží hned při načtení
-  (function () {
-    try {
-      const saved = localStorage.getItem('theme'); // 'light' nebo 'dark'
-      if (saved === 'light') {
-        document.documentElement.classList.add('light-mode');
-        document.body.classList.add('light-mode');
-      }
-    } catch (e) {
-      // ignore
-    }
-  })();
-</script>
-
 </html>
