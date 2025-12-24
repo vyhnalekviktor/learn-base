@@ -332,7 +332,7 @@ body {
   bottom: 0;
   left: 0;
   right: 0;
-  height: 68px;
+  height: 60px;
   background: rgba(var(--bg-primary-rgb), 0.95);
   border-top: 1px solid var(--border);
   display: flex;
