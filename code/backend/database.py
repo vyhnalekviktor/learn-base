@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 url: str = os.getenv("SUPABASE_URL")
-key: str = os.getenv("SUPABASE_PUBLISHABLE_KEY")
+key: str = os.getenv("SUPABASE_SECRET_KEY")
 supabase: Client = create_client(url, key)
 
 # BASIC DB FUNCTIONS
@@ -86,7 +86,7 @@ def add_user(wallet: str) :
         return row_info, row_progress
 
     except Exception as e :
-        return None
+        return e
 
 #returns: ({'wallet': 'test_user', 'id': 18, 'created_at': '2025-12-20T20:16:41.898289+00:00', 'practice_sent': 0, 'practice_received': 0, 'completed_all': False, 'completed_theory': False, 'completed_practice': False}, {'id': 11, 'wallet': 'test_user', 'created_at': '2025-12-20T20:16:41.997225+00:00', 'theory': False, 'faucet': False, 'send': False, 'receive': False, 'mint': False, 'launch': False})
 def get_user(wallet: str):
@@ -141,3 +141,5 @@ def check_completion(wallet: str):
 
     except Exception as e:
         return None
+
+print(init_user_info("test"))
