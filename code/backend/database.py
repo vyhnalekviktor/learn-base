@@ -141,5 +141,3 @@ def check_completion(wallet: str):
 
     except Exception as e:
         return None
-
-print(init_user_info("test"))
