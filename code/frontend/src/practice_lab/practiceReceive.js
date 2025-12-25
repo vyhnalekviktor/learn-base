@@ -109,10 +109,6 @@ window.requestTestUSDC = async function() {
         <strong>Payment Received!</strong><br><br>
             Your friend sent you <strong>1 USDC</strong> on Base Sepolia!<br><br>
         <strong>To:</strong> ${address.substring(0, 6)}...${address.substring(38)}<br><br>
-        <button onclick="openSepoliaScanAddress('${address}')"
-          style="padding: 8px 16px; background: #0052FF; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600;">
-            View on BaseScan
-        </button><br><br>
         <small style="color: #666;">Transaction should appear in your wallet within 10–30 seconds</small>
     `;
 

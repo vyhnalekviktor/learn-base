@@ -109,7 +109,7 @@ window.sendTransaction = async function() {
       <strong>Payment Sent!</strong><br>
       Amount: ${AMOUNT_USDC} USDC<br>
       To: ${RECIPIENT_ADDRESS.substring(0, 6)}...${RECIPIENT_ADDRESS.substring(38)}<br><br>
-      <small>Payment successfully processed on Base Sepolia testnet</small>
+      <small>Payment successfully processed on Base Sepolia testnet</small><br>
       <small>Check it in your wallet</small>
     `;
   } catch (error) {

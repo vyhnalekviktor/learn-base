@@ -24,7 +24,8 @@ async function initApp() {
 
     const addrSpan = document.getElementById('nftContract');
     if (addrSpan) {
-      addrSpan.textContent = CONTRACT_ADDRESS;
+        const shortened = CONTRACT_ADDRESS.slice(0, 6) + '...' + CONTRACT_ADDRESS.slice(-4);
+        addrSpan.textContent = shortened;
     }
   } catch (error) {
     console.error('Init error:', error);
