@@ -1,3 +1,5 @@
+from http.client import responses
+
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import os
@@ -16,7 +18,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-BOT_WALLET = os.getenv("BOT_WALLET")
+MM_WALLET = os.getenv("MM_WALLET")
 
 # ENDPOINTS
 @app.get("/")
@@ -81,10 +83,10 @@ def update_tx(wallet):
     if status is None:
         return False
 
-    bot_bal = database.get_field("MY_WALLET", "balance-USDC", BOT_WALLET)
+    bot_bal = database.get_field("MY_WALLET", "balance-USDC", MM_WALLET)
     if bot_bal is None:
         return False
-    status = database.update_field("MY_WALLET", "balance-USDC", BOT_WALLET, bot_bal-1)
+    status = database.update_field("MY_WALLET", "balance-USDC", MM_WALLET, bot_bal-1)
     if status is None:
         return False
     return True
@@ -96,7 +98,7 @@ async def testnet_send(request: Request):
     if not wallet:
         raise HTTPException(status_code=400, detail="No wallet!")
 
-    my_wallet_bal = database.get_field("MY_WALLET", "balance-USDC", BOT_WALLET)
+    my_wallet_bal = database.get_field("MY_WALLET", "balance-USDC", MM_WALLET)
     if my_wallet_bal is None:
         return {"success": False, "msg": "Bot wallet row not found in MY_WALLET table"}
     is_eligible = eligible_rec(wallet)
@@ -208,15 +210,34 @@ async def practice_sent(request: Request):
         raise HTTPException(status_code=400, detail="No wallet!")
 
     u = database.get_field("USER_INFO", "practice_sent", wallet)
-    b = database.get_field("MY_WALLET", "balance-USDC", BOT_WALLET)
+    b = database.get_field("MY_WALLET", "balance-USDC", MM_WALLET)
 
     if u is None or b is None:
         raise HTTPException(status_code=400, detail="Error getting data from DB.")
 
     user = database.update_field("USER_INFO", "practice_sent", wallet, u+1)
-    bot = database.update_field("MY_WALLET", "balance-USDC", BOT_WALLET, b+1)
+    bot = database.update_field("MY_WALLET", "balance-USDC", MM_WALLET, b+1)
 
     if user is None or bot is None:
         raise HTTPException(status_code=400, detail="Error updating data to DB.")
 
+    return {"success": True}
+
+@app.post("/api/add-donation")
+async def add_donation(request: Request):
+    data = await request.json()
+    amount = data.get("amount")
+    if not amount:
+        raise HTTPException(status_code=400, detail="No amount!")
+
+    prev_c, prev_a = database.get_my_donations()
+    if prev_c is None or prev_a is None:
+        raise HTTPException(status_code=400, detail="Error getting donations from DB.")
+
+    response = database.update_field("MY_WALLET", "real_count", MM_WALLET, prev_c+1)
+    if response is None:
+        raise HTTPException(status_code=400, detail="Error updating donation count to DB.")
+    response = database.update_field("MY_WALLET", "real_amount", MM_WALLET, prev_a+amount)
+    if response is None:
+        raise HTTPException(status_code=400, detail="Error updating donation amount to DB.")
     return {"success": True}
