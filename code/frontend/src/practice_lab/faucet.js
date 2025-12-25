@@ -1,6 +1,39 @@
 import { sdk } from "https://esm.sh/@farcaster/miniapp-sdk";
 const API_BASE = "https://learn-base-backend.vercel.app";
 let currentWallet = null;
+let added_progress = false;
+
+async function addProgress() {
+  wallet = currentWallet;
+  if (added_progress) return;
+  try {
+    const res = await fetch(`${API_BASE}/api/database/update_field`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        wallet,
+        table_name: "USER_PROGRESS",
+        field_name: "faucet",
+        value: true,
+      }),
+    })
+
+    if (!res.ok) {
+      let msg = "Unknown backend error"
+      try {
+        const err = await res.json()
+        msg = err.detail || JSON.stringify(err)
+      } catch (_) {}
+      console.error("update_field error:", msg)
+      return false
+    }
+    added_progress = true;
+    return true
+  } catch (error) {
+    console.error("addProgress() error:", error)
+    return false
+  }
+}
 
 function toggleAccordion(id) {
     const content = document.getElementById('content-' + id);
@@ -45,41 +78,6 @@ async function initWallet() {
   }
 }
 
-async function updateFaucetProgress(wallet) {
-  const res = await fetch(`${API_BASE}/api/database/update_field`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      wallet,
-      table_name: "USER_PROGRESS",
-      field_name: "faucet",
-      value: true,
-    }),
-  });
-
-  if (!res.ok) {
-    let msg = "Unknown backend error";
-    try {
-      const err = await res.json();
-      msg = err.detail || JSON.stringify(err);
-    } catch (_) {}
-    console.error("update_field error:", msg);
-    return false;
-  }
-
-  return true;
-}
-
-async function handleNextClick(event) {
-  event.preventDefault();
-  if (!currentWallet) {
-    console.error("Wallet not available yet");
-    return;
-  }
-  await updateFaucetProgress(currentWallet);
-  window.location.href = "send.html";
-}
-
 window.addEventListener("load", initWallet);
 
 function openEthFaucet() {
@@ -90,11 +88,5 @@ function openUsdcFaucet() {
   sdk.actions.openUrl("https://faucet.circle.com/");
 }
 
-// aby byly dostupné z HTML:
 window.openEthFaucet = openEthFaucet;
 window.openUsdcFaucet = openUsdcFaucet;
-
-const nextLink = document.querySelector("a.nav-btn.next-btn[href='send.html']");
-if (nextLink) {
-  nextLink.addEventListener("click", handleNextClick);
-}
