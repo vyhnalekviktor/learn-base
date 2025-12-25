@@ -27,14 +27,28 @@ function showWelcomeModal() {
   modal.style.color = "white";
   modal.style.boxShadow = "0 20px 45px rgba(15,23,42,0.8)";
   modal.style.fontFamily =
-    "system-ui, -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif";
+    "system-ui, -apple-system, BlinkMacSystemFont, 'Inter', Inter";
 
   modal.innerHTML = `
 BaseCamp is an interactive MiniApp for learning blockchain on Base (Ethereum L2).
 
 Complete hands-on labs to earn an NFT completion badge! Read theory, try your first test operations and then test yourself for scam recognition.
 
-You can complete all the steps for free!!`;
+You can complete all the steps for free!!
+<button id="welcome-close-btn" style="
+    width: 100%;
+    padding: 12px 18px;
+    border-radius: 999px;
+    border: none;
+    background: linear-gradient(135deg,#60a5fa,#3b82f6);
+    color: #fff;
+    font-weight: 700;
+    font-size: 15px;
+    cursor: pointer;
+  ">
+    Start learning
+  </button>
+`;
 
   overlay.appendChild(modal);
   document.body.appendChild(overlay);
