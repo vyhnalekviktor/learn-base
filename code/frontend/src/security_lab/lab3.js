@@ -206,7 +206,7 @@ function showTransactionUI(runButton) {
         </div>
 
         <button class="connect-btn tx-pay-btn" id="payButton">
-          ⚡ Pay 1.00 USDC
+          ⚡ Pay 1 USDC
         </button>
 
       </div>

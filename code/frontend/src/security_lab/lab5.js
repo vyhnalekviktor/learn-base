@@ -89,7 +89,7 @@ function showModal(type, message) {
     modal.innerHTML = `
         <div class="modal-content">
             <div class="${headerClass}">
-                <h3>${type === "success" ? "SUCCESS" : type === "danger" ? "DANGER WARNING" : "WARNING"}</h3>
+                <h3>${type === "success" ? "SUCCESS" : type === "danger" ? "DANGER" : "WARNING"}</h3>
             </div>
             <div class="modal-body" style="color: black;">
                 <p>${message.replace(/\n/g, "<br>")}</p>
@@ -154,7 +154,7 @@ function showFakeDEXDemo(runButton) {
                         <div class="order-form-row">
                             <label>From</label>
                             <div class="order-input-wrap">
-                                <input type="number" value="1" class="order-input" />
+                                <input type="number" value="1" class="order-input" readonly/>
                                 <span class="order-input-suffix">ETH</span>
                             </div>
                         </div>
@@ -228,7 +228,7 @@ function showFakeDEXDemo(runButton) {
                         <div class="order-form-row">
                             <label>From</label>
                             <div class="order-input-wrap">
-                                <input type="number" value="1" class="order-input" />
+                                <input type="number" value="1" class="order-input" readonly/>
                                 <span class="order-input-suffix">ETH</span>
                             </div>
                         </div>
@@ -280,12 +280,11 @@ function showFakeDEXDemo(runButton) {
         scamSwapBtn.addEventListener("click", () => {
             showModal(
                 "danger",
-                "SCAM DETECTED!\n\n" +
+                "SCAM DETECTED!\n" +
                     "SuperSwap UI tries to look like a real exchange, but:\n" +
                     "- ETH is 33% cheaper (2,000 vs 3,000 USDC).\n" +
-                    "- USDC contract is fake / unverified and does not match official USDC.\n" +
-                    "- Brand has no reputation.\n\n" +
-                    "Lesson: When the rate is too good, always verify the token contract in a block explorer and the exchange reputation before trading."
+                    "- USDC contract does not match official USDC.\n" +
+                    "- Brand has no reputation.\n"
             );
         });
     }

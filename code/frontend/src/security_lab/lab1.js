@@ -139,7 +139,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         const seedInput = document.getElementById('seedInput');
         seedInput.addEventListener('input', function() {
             if (this.value.trim().length > 0) {
-                showModal('danger', 'DANGEROUS!\nNEVER enter your seed phrase anywhere!\nLegitimate dApps use WalletConnect/MetaMask popup ONLY!\nYour wallet would be DRAINED instantly!');
+                showModal('danger', 'NEVER enter your seed phrase anywhere!\nYour wallet could be DRAINED instantly!');
                 this.value = ''; // Vymaže input
             }
         });

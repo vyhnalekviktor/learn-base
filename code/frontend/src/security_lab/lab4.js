@@ -526,13 +526,5 @@ window.evaluateAnswers = async function () {
     return;
   }
 
-  const ok = await updateLabProgress(currentWallet);
-  if (!ok) {
-    showModal(
-      "danger",
-      "Quiz finished, but saving your Lab 4 progress failed.\nCheck the console for API details."
-    );
-  } else {
-    showModal("success", "Lab 4 completed.\nYour progress was saved.");
-  }
+  await updateLabProgress(currentWallet);
 };
