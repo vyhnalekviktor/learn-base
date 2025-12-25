@@ -11,30 +11,26 @@ window.addEventListener("load", async () => {
     await sdk.actions.ready();
     console.log("BaseCamp mini app is ready!");
 
-    // === START: zobraz loading hned na začátku init flow ===
+    // START: loading overlay
     loadingOverlay = showLoadingOverlay();
 
-    const walletErrorSeen =
-      localStorage.getItem("wallet_error_seen") === "true";
+    const walletErrorSeen = localStorage.getItem("wallet_error_seen") === "true";
     let sepoliaStatus = localStorage.getItem("sepolia_status");
 
-    // Pokud už víme, že je error a banner už byl ukázaný, tiše skonči
+    // Skip silently if already known incompatible
     if (sepoliaStatus === "error" && walletErrorSeen) {
-      console.log(
-        "Sepolia status is error and wallet error already seen, skipping init silently"
-      );
+      console.log("Sepolia error already seen, skipping silently");
       hideLoadingOverlay(loadingOverlay);
       return;
     }
 
-    // 2) Wallet z cache
+    // 1. Get wallet (cache or SDK)
     let wallet = localStorage.getItem("cached_wallet");
 
-    // 3) Pokud není wallet v cache, zkus ji získat z SDK
     if (!wallet) {
       console.log("No cached wallet, fetching from SDK...");
-
       const ethProvider = await sdk.wallet.ethProvider;
+
       if (!ethProvider) {
         hideLoadingOverlay(loadingOverlay);
         localStorage.setItem("sepolia_status", "error");
@@ -61,7 +57,7 @@ window.addEventListener("load", async () => {
 
       wallet = accounts && accounts.length > 0 ? accounts[0] : null;
       if (!wallet) {
-        console.warn("Wallet address not found from ethProvider.request()");
+        console.warn("Wallet address not found");
         hideLoadingOverlay(loadingOverlay);
         localStorage.setItem("sepolia_status", "error");
         if (!walletErrorSeen) {
@@ -74,15 +70,13 @@ window.addEventListener("load", async () => {
       localStorage.setItem("cached_wallet", wallet);
       console.log("Wallet cached:", wallet);
     } else {
-      console.log("Using cached wallet from theme.js:", wallet);
+      console.log("Using cached wallet:", wallet);
     }
-
-    console.log("Connected wallet from SDK/cache:", wallet);
 
     const span = document.getElementById("wallet-address");
     if (span) span.textContent = wallet;
 
-    // 4) Network check – jen pokud ještě neproběhl (sepolia_status není v cache)
+    // 2. Network check - ONLY if not done before
     sepoliaStatus = localStorage.getItem("sepolia_status");
     if (!sepoliaStatus) {
       const ethProvider = await sdk.wallet.ethProvider;
@@ -97,18 +91,18 @@ window.addEventListener("load", async () => {
       }
 
       const supportsSepolia = await detectBaseSepoliaSupport(ethProvider);
-      console.log("Base Sepolia support (lab menu):", supportsSepolia);
+      console.log("Base Sepolia support:", supportsSepolia);
 
       if (supportsSepolia) {
         localStorage.setItem("sepolia_status", "ok");
       } else {
+        // ✅ Grant progress ONLY first time
         await grantFullPracticeProgress(wallet);
         localStorage.setItem("sepolia_status", "warning");
         showCompatibilityWarning("chain");
       }
     } else {
       console.log("Sepolia status from cache:", sepoliaStatus);
-
       if (sepoliaStatus === "warning") {
         showCompatibilityWarning("chain");
       } else if (sepoliaStatus === "error" && !walletErrorSeen) {
@@ -117,12 +111,12 @@ window.addEventListener("load", async () => {
       }
     }
 
-    // === Wallet + Sepolia hotové → skryj loading ===
+    // Hide loading & load progress
     if (loadingOverlay) hideLoadingOverlay(loadingOverlay);
-
     await getProgress(wallet);
+
   } catch (error) {
-    console.error("Error during MiniApp wallet init (labMenu):", error);
+    console.error("Wallet init error:", error);
     if (loadingOverlay) hideLoadingOverlay(loadingOverlay);
     localStorage.setItem("sepolia_status", "error");
     if (!localStorage.getItem("wallet_error_seen")) {
@@ -132,92 +126,37 @@ window.addEventListener("load", async () => {
   }
 });
 
-function showLoadingOverlay() {
-  const overlay = document.createElement("div");
-  overlay.style.cssText = `
-    position: fixed;
-    inset: 0;
-    background: rgba(2, 6, 23, 0.95);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    z-index: 9999;
-    backdrop-filter: blur(8px);
-  `;
-
-  const spinner = document.createElement("div");
-  spinner.style.cssText = `
-    width: 48px;
-    height: 48px;
-    border: 4px solid rgba(96, 165, 250, 0.2);
-    border-top-color: #60a5fa;
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-  `;
-
-  const text = document.createElement("div");
-  text.style.cssText = `
-    margin-top: 20px;
-    color: #e5e7eb;
-    font-size: 15px;
-    font-weight: 600;
-    font-family: system-ui, -apple-system, Inter;
-  `;
-  text.textContent = "Checking wallet and network compatibility...";
-
-  overlay.appendChild(spinner);
-  overlay.appendChild(text);
-
-  const style = document.createElement("style");
-  style.textContent = `
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-  `;
-  document.head.appendChild(style);
-
-  document.body.appendChild(overlay);
-  return overlay;
-}
-
-function hideLoadingOverlay(overlay) {
-  if (overlay && overlay.parentNode) {
-    overlay.style.opacity = "0";
-    overlay.style.transition = "opacity 0.3s ease";
-    setTimeout(() => {
-      if (overlay.parentNode) {
-        overlay.parentNode.removeChild(overlay);
-      }
-    }, 300);
-  }
-}
-
 async function detectBaseSepoliaSupport(ethProvider) {
   try {
-    const { JsonRpcProvider } = await import(
-      "https://esm.sh/ethers@6.9.0"
-    );
+    const { JsonRpcProvider } = await import("https://esm.sh/ethers@6.9.0");
 
-    let chainIdDec = null;
-    try {
-      const chainIdHex = await ethProvider.request({
-        method: "eth_chainId",
-      });
-      chainIdDec = parseInt(chainIdHex, 16);
-      console.log("Current chain from ethProvider:", chainIdDec);
-    } catch (e) {
-      console.log("eth_chainId failed:", e);
-    }
-
+    // Test 1: Direct RPC access
     try {
       const readProvider = new JsonRpcProvider("https://sepolia.base.org");
       await readProvider.getBlockNumber();
-      return chainIdDec === BASE_SEPOLIA_CHAIN_ID_DEC;
-    } catch (e) {
-      console.log("Base Sepolia RPC check failed:", e);
-      return false;
+      console.log("Base Sepolia RPC accessible");
+      return true;
+    } catch (rpcError) {
+      console.log("Base Sepolia RPC failed, testing chain switch...");
     }
+
+    // Test 2: Try chain switch
+    try {
+      await ethProvider.request({
+        method: "wallet_switchEthereumChain",
+        params: [{ chainId: "0x14a34" }]
+      });
+      console.log("Wallet supports Base Sepolia chain switch");
+      return true;
+    } catch (switchError) {
+      if (switchError.code === 4902) {
+        console.log("ℹBase Sepolia not added but switch supported");
+        return true;
+      }
+    }
+
+    console.log("Wallet incompatible with Base Sepolia");
+    return false;
   } catch (e) {
     console.log("detectBaseSepoliaSupport fatal:", e);
     return false;
@@ -227,16 +166,12 @@ async function detectBaseSepoliaSupport(ethProvider) {
 async function grantFullPracticeProgress(wallet) {
   if (!wallet) return;
 
-  console.log(
-    "Granting full practice progress for wallet without Base Sepolia support (lab menu):",
-    wallet
-  );
-
+  console.log("Granting full practice progress:", wallet);
   const practiceFields = ["send", "receive", "mint", "launch"];
 
-  try {
-    for (const field of practiceFields) {
-      await fetch(`${API_BASE}/api/database/update_field`, {
+  for (const field of practiceFields) {
+    try {
+      const res = await fetch(`${API_BASE}/api/database/update_field`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -246,183 +181,146 @@ async function grantFullPracticeProgress(wallet) {
           value: true,
         }),
       });
+      console.log(`${field}: ${res.ok} (${res.status})`);
+    } catch (error) {
+      console.error(`${field}:`, error);
     }
+  }
+  console.log("🎉 Full practice progress granted");
+}
 
-    console.log("Full practice progress granted successfully (lab menu)");
-  } catch (error) {
-    console.error("Error granting practice progress (lab menu):", error);
+function showLoadingOverlay() {
+  const overlay = document.createElement("div");
+  overlay.style.cssText = `
+    position: fixed; inset: 0;
+    background: rgba(2, 6, 23, 0.95);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    z-index: 9999; backdrop-filter: blur(8px);
+  `;
+
+  const spinner = document.createElement("div");
+  spinner.style.cssText = `
+    width: 48px; height: 48px;
+    border: 4px solid rgba(96, 165, 250, 0.2);
+    border-top-color: #60a5fa; border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  `;
+
+  const text = document.createElement("div");
+  text.style.cssText = `
+    margin-top: 20px; color: #e5e7eb;
+    font-size: 15px; font-weight: 600;
+    font-family: system-ui, -apple-system, Inter;
+  `;
+  text.textContent = "Checking wallet and network compatibility...";
+
+  overlay.appendChild(spinner);
+  overlay.appendChild(text);
+
+  const style = document.createElement("style");
+  style.textContent = `@keyframes spin { to { transform: rotate(360deg); } }`;
+  document.head.appendChild(style);
+  document.body.appendChild(overlay);
+
+  return overlay;
+}
+
+function hideLoadingOverlay(overlay) {
+  if (overlay && overlay.parentNode) {
+    overlay.style.opacity = "0";
+    overlay.style.transition = "opacity 0.3s ease";
+    setTimeout(() => {
+      if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+    }, 300);
   }
 }
 
 function showCompatibilityWarning(type) {
-  let title = "Compatibility Issue";
-  let message = "";
-  let suggestion = "";
+  let title, message, suggestion, color;
 
   if (type === "wallet") {
     title = "Wallet Required";
-    message =
-      "This practice lab requires wallet access for Base transactions.";
-    suggestion =
-      "Open BaseCamp in Coinbase Wallet or Base App for full functionality.";
+    message = "This practice lab requires wallet access for Base transactions.";
+    suggestion = "Open BaseCamp in Coinbase Wallet or Base App.";
+    color = "linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%)";
   } else if (type === "chain") {
     title = "Limited Network Support";
-    message =
-      "Your environment does not support Base Sepolia testnet.";
-    suggestion =
-      "Practice transactions may fail. You have been automatically granted practice progress and can still mint your completion badge.";
+    message = "Your wallet doesn't support Base Sepolia testnet.";
+    suggestion = "Practice progress automatically granted!";
+    color = "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)";
   } else {
     title = "Initialization Error";
     message = "Failed to initialize the practice lab.";
-    suggestion =
-      "Try opening in Coinbase Wallet or refresh the page.";
+    suggestion = "Try Coinbase Wallet or refresh the page.";
+    color = "linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%)";
   }
 
   const banner = document.createElement("div");
   banner.style.cssText = `
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    background: ${
-      type === "chain"
-        ? "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)"
-        : "linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%)"
-    };
-    color: white;
-    padding: 14px 18px;
-    text-align: center;
-    z-index: 10000;
+    position: fixed; top: 0; left: 0; right: 0;
+    background: ${color};
+    color: white; padding: 14px 18px; text-align: center; z-index: 10000;
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    font-family: system-ui, -apple-system, sans-serif;
-    font-size: 14px;
+    font-family: system-ui, -apple-system, sans-serif; font-size: 14px;
   `;
 
   banner.innerHTML = `
     <div style="max-width: 680px; margin: 0 auto; position: relative;">
       <button id="dismiss-warning" style="
-        position: absolute;
-        top: -6px;
-        right: 0;
-        width: 28px;
-        height: 28px;
-        background: rgba(255,255,255,0.25);
-        border: none;
-        border-radius: 50%;
-        font-size: 18px;
-        font-weight: 700;
-        color: white;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.2s ease;
-      " onmouseover="this.style.background='rgba(255,255,255,0.35)'" onmouseout="this.style.background='rgba(255,255,255,0.25)'">
-        ×
-      </button>
-      <div style="font-weight: 700; margin-bottom: 4px;">
-        ${title}
-      </div>
-      <div style="opacity: 0.95; margin-bottom: 4px;">
-        ${message}
-      </div>
-      <div style="opacity: 0.9; font-size: 13px;">
-        ${suggestion}
-      </div>
+        position: absolute; top: -6px; right: 0; width: 28px; height: 28px;
+        background: rgba(255,255,255,0.25); border: none; border-radius: 50%;
+        font-size: 18px; font-weight: 700; color: white; cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+      " onclick="this.parentNode.parentNode.style.opacity=0;this.parentNode.parentNode.style.transition='opacity 0.3s ease';setTimeout(()=>{if(this.parentNode.parentNode.parentNode)this.parentNode.parentNode.parentNode.removeChild(this.parentNode.parentNode)},300)">×</button>
+      <div style="font-weight: 700; margin-bottom: 4px;">${title}</div>
+      <div style="opacity: 0.95; margin-bottom: 4px;">${message}</div>
+      <div style="opacity: 0.9; font-size: 13px;">${suggestion}</div>
     </div>
   `;
 
   document.body.insertBefore(banner, document.body.firstChild);
-
-  const dismissBtn = banner.querySelector("#dismiss-warning");
-  if (dismissBtn) {
-    dismissBtn.addEventListener("click", () => {
-      banner.style.opacity = "0";
-      banner.style.transition = "opacity 0.3s ease";
-      setTimeout(() => {
-        if (banner.parentNode) {
-          banner.parentNode.removeChild(banner);
-        }
-      }, 300);
-    });
-  }
 }
 
 async function getProgress(wallet) {
+  if (!wallet) return;
+
   try {
     const res = await fetch(`${API_BASE}/api/database/get-user`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ wallet }),
+      body: JSON.stringify({ wallet })
     });
 
-    if (!res.ok) {
-      let msg = "Unknown backend error";
-      try {
-        const err = await res.json();
-        msg = err.detail || JSON.stringify(err);
-      } catch (_) {}
-      console.error("get-user error:", msg);
-      return;
-    }
+    if (!res.ok) throw new Error("Backend error");
 
     const data = await res.json();
     const progress = data.progress;
-    if (!progress) {
-      console.error("No progress object in response");
-      return;
-    }
 
-    const parts = [
-      progress.faucet,
-      progress.send,
-      progress.receive,
-      progress.mint,
-      progress.launch,
-    ];
+    if (!progress) return;
 
+    const parts = [progress.faucet, progress.send, progress.receive, progress.mint, progress.launch];
     let completed = 0;
+
     for (const part of parts) {
-      if (part === true) completed += 1;
+      if (part === true) completed++;
     }
 
-    const percent = (completed / parts.length) * 100;
-    console.log("Progress percent:", percent);
+    const percent = Math.round((completed / parts.length) * 100);
 
     const label = document.getElementById("progress-percent");
-    if (label) {
-      label.textContent = `${percent}%`;
-    }
+    if (label) label.textContent = `${percent}%`;
 
     const bar = document.getElementById("progress-bar-fill");
-    if (bar) {
-      bar.style.width = `${percent}%`;
-    }
+    if (bar) bar.style.width = `${percent}%`;
 
-    if (progress.faucet === true) {
-      const el = document.getElementById("item-faucet");
-      if (el) el.classList.add("completed");
-    }
+    // Update menu item states
+    if (progress.faucet === true) document.getElementById("item-faucet")?.classList.add("completed");
+    if (progress.send === true) document.getElementById("item-send")?.classList.add("completed");
+    if (progress.receive === true) document.getElementById("item-receive")?.classList.add("completed");
+    if (progress.mint === true) document.getElementById("item-mint")?.classList.add("completed");
+    if (progress.launch === true) document.getElementById("item-launch")?.classList.add("completed");
 
-    if (progress.send === true) {
-      const el = document.getElementById("item-send");
-      if (el) el.classList.add("completed");
-    }
-
-    if (progress.receive === true) {
-      const el = document.getElementById("item-receive");
-      if (el) el.classList.add("completed");
-    }
-
-    if (progress.mint === true) {
-      const el = document.getElementById("item-mint");
-      if (el) el.classList.add("completed");
-    }
-
-    if (progress.launch === true) {
-      const el = document.getElementById("item-launch");
-      if (el) el.classList.add("completed");
-    }
   } catch (err) {
     console.error("getProgress error:", err);
   }
