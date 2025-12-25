@@ -123,7 +123,7 @@ async function buildNftImageHtml(tokenId) {
 
 window.mintNFT = async function () {
   const statusDiv = document.getElementById('mintStatus');
-  const mintBtn = document.getElementById('mintBtn');
+  const mintBtn = document.getElementById('mintNftBtn');
 
   if (!statusDiv) return;
 
@@ -247,19 +247,20 @@ window.mintNFT = async function () {
       ? `https://sepolia.basescan.org/nft/${CONTRACT_ADDRESS}/${newTokenId}`
       : `https://sepolia.basescan.org/address/${CONTRACT_ADDRESS}`;
 
-    statusDiv.className = 'info-box';
-    statusDiv.innerHTML = `
-      <strong>Mint successful!</strong><br><br>
-      <strong>Total NFTs minted:</strong> ${totalMinted}<br>
-      ${newTokenId ? `<strong>Your new token ID:</strong> #${newTokenId}<br>` : ''}
-      ${nftImageHtml}
-      <br>
-      <button onclick="openSepoliaScanAddress('${address}')"
-              style="margin-top: 12px; padding: 8px 16px; background: #0052FF; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600;">
-        View on BaseScan
-      </button><br><br>
-      <small style="color: #666;">Your NFT has been minted on Base Sepolia testnet</small>
-    `;
+statusDiv.className = 'info-box';
+statusDiv.innerHTML = `
+  <strong>Mint successful!</strong><br><br>
+  <strong>Total NFTs minted:</strong> ${totalMinted}<br>
+  ${newTokenId ? `<strong>Your new token ID:</strong> #${newTokenId}<br>` : ''}
+  ${nftImageHtml}
+  <br>
+  <button onclick="openSepoliaScanAddress('${scannerUrl}')"
+          style="margin-top: 12px; padding: 8px 16px; background: #0052FF; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600;">
+    View on BaseScan
+  </button><br><br>
+  <small style="color: #666;">Your NFT has been minted on Base Sepolia testnet</small>
+`;
+
 
     if (originalChainId === BASE_MAINNET_CHAIN_ID) {
       await switchToMainnet();
@@ -298,4 +299,4 @@ window.openSepoliaScanAddress = function(addr) {
   sdk.actions.openUrl(`${addr}`);
 };
 
-initApp();
+window.addEventListener("load", initApp);
