@@ -157,7 +157,7 @@ async function grantFullPracticeProgress(wallet) {
     wallet
   );
 
-  const practiceFields = ["faucet", "send", "receive", "mint", "launch"];
+  const practiceFields = ["send", "receive", "mint", "launch"];
 
   try {
     for (const field of practiceFields) {
@@ -224,7 +224,29 @@ function showCompatibilityWarning(type) {
   `;
 
   banner.innerHTML = `
-    <div style="max-width: 680px; margin: 0 auto;">
+    <div style="max-width: 680px; margin: 0 auto; position: relative;">
+      <button id="dismiss-warning" style="
+        position: absolute;
+        top: -6px;
+        right: 0;
+         width: 44px;
+        height: 44px;
+        background: rgba(255,255,255,0.25);
+        border: none;
+        border-radius: 50%;
+        width: 28px;
+        height: 28px;
+        font-size: 18px;
+        font-weight: 700;
+        color: white;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+      " onmouseover="this.style.background='rgba(255,255,255,0.35)'" onmouseout="this.style.background='rgba(255,255,255,0.25)'">
+        ×
+      </button>
       <div style="font-weight: 700; margin-bottom: 4px;">
         ${title}
       </div>
@@ -238,7 +260,22 @@ function showCompatibilityWarning(type) {
   `;
 
   document.body.insertBefore(banner, document.body.firstChild);
+
+  // Event listener pro zavření banneru
+  const dismissBtn = banner.querySelector("#dismiss-warning");
+  if (dismissBtn) {
+    dismissBtn.addEventListener("click", () => {
+      banner.style.opacity = "0";
+      banner.style.transition = "opacity 0.3s ease";
+      setTimeout(() => {
+        if (banner.parentNode) {
+          banner.parentNode.removeChild(banner);
+        }
+      }, 300);
+    });
+  }
 }
+
 
 async function getProgress(wallet) {
   try {
