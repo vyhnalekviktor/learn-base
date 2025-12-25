@@ -11,12 +11,19 @@ window.addEventListener("load", async () => {
     await sdk.actions.ready();
     console.log("BaseCamp mini app is ready!");
 
-    const walletErrorSeen = localStorage.getItem("wallet_error_seen") === "true";
+    // === START: zobraz loading hned na začátku init flow ===
+    loadingOverlay = showLoadingOverlay();
+
+    const walletErrorSeen =
+      localStorage.getItem("wallet_error_seen") === "true";
     let sepoliaStatus = localStorage.getItem("sepolia_status");
 
     // Pokud už víme, že je error a banner už byl ukázaný, tiše skonči
     if (sepoliaStatus === "error" && walletErrorSeen) {
-      console.log("Sepolia status is error and wallet error already seen, skipping init silently");
+      console.log(
+        "Sepolia status is error and wallet error already seen, skipping init silently"
+      );
+      hideLoadingOverlay(loadingOverlay);
       return;
     }
 
@@ -26,7 +33,6 @@ window.addEventListener("load", async () => {
     // 3) Pokud není wallet v cache, zkus ji získat z SDK
     if (!wallet) {
       console.log("No cached wallet, fetching from SDK...");
-      loadingOverlay = showLoadingOverlay();
 
       const ethProvider = await sdk.wallet.ethProvider;
       if (!ethProvider) {
@@ -79,10 +85,6 @@ window.addEventListener("load", async () => {
     // 4) Network check – jen pokud ještě neproběhl (sepolia_status není v cache)
     sepoliaStatus = localStorage.getItem("sepolia_status");
     if (!sepoliaStatus) {
-      if (!loadingOverlay) {
-        loadingOverlay = showLoadingOverlay();
-      }
-
       const ethProvider = await sdk.wallet.ethProvider;
       if (!ethProvider) {
         hideLoadingOverlay(loadingOverlay);
@@ -99,11 +101,9 @@ window.addEventListener("load", async () => {
 
       if (supportsSepolia) {
         localStorage.setItem("sepolia_status", "ok");
-        hideLoadingOverlay(loadingOverlay);
       } else {
         await grantFullPracticeProgress(wallet);
         localStorage.setItem("sepolia_status", "warning");
-        hideLoadingOverlay(loadingOverlay);
         showCompatibilityWarning("chain");
       }
     } else {
@@ -112,13 +112,13 @@ window.addEventListener("load", async () => {
       if (sepoliaStatus === "warning") {
         showCompatibilityWarning("chain");
       } else if (sepoliaStatus === "error" && !walletErrorSeen) {
-        // error je v cache, ale banner ještě nikdy neproběhl (např. po vyčištění wallet_error_seen)
         showCompatibilityWarning("error");
         localStorage.setItem("wallet_error_seen", "true");
       }
-
-      if (loadingOverlay) hideLoadingOverlay(loadingOverlay);
     }
+
+    // === Wallet + Sepolia hotové → skryj loading ===
+    if (loadingOverlay) hideLoadingOverlay(loadingOverlay);
 
     await getProgress(wallet);
   } catch (error) {
@@ -164,7 +164,7 @@ function showLoadingOverlay() {
     font-weight: 600;
     font-family: system-ui, -apple-system, Inter;
   `;
-  text.textContent = "Checking network compatibility...";
+  text.textContent = "Checking wallet and network compatibility...";
 
   overlay.appendChild(spinner);
   overlay.appendChild(text);
