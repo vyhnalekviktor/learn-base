@@ -801,3 +801,16 @@ footer strong {
 .sources a:hover {
   text-decoration: underline;
 }
+
+/* COMPLETED STATES - THEORY ACCORDION HEADERS */
+.accordion-header.completed {
+  background: var(--success-bg) !important;
+  border-color: var(--success-border) !important;
+  color: var(--success-text) !important;
+}
+
+.accordion-header.completed span,
+.accordion-header.completed h3,
+.accordion-header.completed p {
+  color: var(--success-text) !important;
+}
