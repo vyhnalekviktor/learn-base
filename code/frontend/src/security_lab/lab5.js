@@ -91,7 +91,7 @@ function showModal(type, message) {
             <div class="${headerClass}">
                 <h3>${type === "success" ? "SUCCESS" : type === "danger" ? "DANGER WARNING" : "WARNING"}</h3>
             </div>
-            <div class="modal-body">
+            <div class="modal-body" style="color: black;">
                 <p>${message.replace(/\n/g, "<br>")}</p>
             </div>
             <div class="modal-footer">

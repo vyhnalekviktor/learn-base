@@ -61,7 +61,7 @@ body.dark {
 
 /* APLIKUJ NA HLAVNÍ ELEMENTS */
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Inter', Roboto, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Inter', Roboto, Inter;
   background: var(--bg-primary) !important;
   color: var(--text-primary) !important;
   min-height: 100vh;

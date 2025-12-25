@@ -91,7 +91,7 @@ function showModal(type, message) {
       <div class="modal-${type}-header">
         <h3>${type === "success" ? "SUCCESS" : type === "danger" ? "DANGER" : "WARNING"}</h3>
       </div>
-      <div class="modal-body">
+      <div class="modal-body" style="color: black;">
         <p>${message.replace(/\n/g, "<br>")}</p>
       </div>
       <div class="modal-footer">
@@ -182,8 +182,7 @@ function showTransactionUI(runButton) {
           <div class="tx-row-left">
             <div class="tx-row-icon">🎨</div>
             <div class="tx-row-text">
-              <div class="tx-row-title">BaseCamp Artist</div>
-              <div class="tx-row-sub">Payment for digital artwork</div>
+              <div class="tx-row-title">The Artist</div>
             </div>
           </div>
           <div class="tx-pill tx-pill-success">Verified</div>
