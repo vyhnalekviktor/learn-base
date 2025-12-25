@@ -8,12 +8,26 @@ window.addEventListener("load", async () => {
     await sdk.actions.ready();
     console.log("BaseCamp mini app is ready!");
 
-    const ethProvider = await sdk.wallet.ethProvider;
-    const accounts = await ethProvider.request({
-      method: "eth_requestAccounts",
-    });
+    // Zkus načíst wallet z cache (z theme.js)
+    let wallet = localStorage.getItem('cached_wallet');
 
-    const wallet = accounts && accounts.length > 0 ? accounts[0] : null;
+    // Pokud není v cache, získej ho (fallback)
+    if (!wallet) {
+      console.log('No cached wallet, fetching from SDK...');
+      const ethProvider = await sdk.wallet.ethProvider;
+      const accounts = await ethProvider.request({
+        method: "eth_requestAccounts",
+      });
+      wallet = accounts && accounts.length > 0 ? accounts[0] : null;
+
+      if (wallet) {
+        // Ulož do cache pro budoucí použití
+        localStorage.setItem('cached_wallet', wallet);
+        console.log('Wallet cached:', wallet);
+      }
+    } else {
+      console.log('Using cached wallet from theme.js:', wallet);
+    }
 
     if (!wallet) {
       console.warn("Wallet address not found from ethProvider.request()");

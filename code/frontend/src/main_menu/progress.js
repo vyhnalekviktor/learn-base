@@ -10,19 +10,36 @@ window.addEventListener('load', async () => {
   try {
     await sdk.actions.ready();
 
-    const ethProvider = sdk.wallet.ethProvider;
-    const accounts = await ethProvider.request({ method: 'eth_requestAccounts' });
-    const wallet = accounts && accounts.length > 0 ? accounts[0] : null;
+    // Zkus načíst wallet z cache (z theme.js)
+    let wallet = localStorage.getItem('cached_wallet');
+
+    // Pokud není v cache, získej ho (fallback)
+    if (!wallet) {
+      console.log('No cached wallet, fetching from SDK...');
+      const ethProvider = sdk.wallet.ethProvider;
+      const accounts = await ethProvider.request({ method: 'eth_requestAccounts' });
+      wallet = accounts && accounts.length > 0 ? accounts[0] : null;
+
+      if (wallet) {
+        // Ulož do cache pro budoucí použití
+        localStorage.setItem('cached_wallet', wallet);
+        console.log('Wallet cached:', wallet);
+      }
+    } else {
+      console.log('Using cached wallet from theme.js:', wallet);
+    }
 
     if (!wallet) {
+      console.warn('No wallet available');
       return;
     }
 
     const span = document.getElementById('wallet-address');
     if (span) span.textContent = wallet;
 
-    await getProgressAndSetupMint(wallet, ethProvider);
-  } catch (_) {
+    await getProgressAndSetupMint(wallet, sdk.wallet.ethProvider);
+  } catch (error) {
+    console.error('Load error:', error);
   }
 });
 
@@ -45,7 +62,6 @@ async function getProgressAndSetupMint(wallet, ethProvider) {
     if (!progress || !info) {
       return;
     }
-
 
     const theoryParts = [progress.theory1, progress.theory2, progress.theory3, progress.theory4, progress.theory5];
     let theoryCompleted = 0;
@@ -101,7 +117,8 @@ async function getProgressAndSetupMint(wallet, ethProvider) {
         await handlePaidClaim(ethProvider, wallet);
       };
     }
-  } catch (_) {
+  } catch (error) {
+    console.error('getProgressAndSetupMint error:', error);
   }
 }
 
@@ -225,7 +242,49 @@ async function handlePaidClaim(ethProvider, wallet) {
       console.error('Update claimed_nft error:', error);
     }
 
-    alert(`NFT claimed successfully!\nTx hash: ${mintTx}\nView on: https://basescan.org/tx/${mintTx}`);
+   // Nahraď alert() tímto:
+function showSuccessModal(txHash) {
+  const modal = document.createElement('div');
+  modal.innerHTML = `
+    <div style="
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.8);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 10000; backdrop-filter: blur(10px);
+    ">
+      <div style="
+        background: linear-gradient(135deg, #00FF88, #00D46A);
+        padding: 30px; border-radius: 20px; max-width: 400px;
+        text-align: center; color: black;
+      ">
+        <h3 style="margin: 0 0 15px; font-size: 24px;">NFT Minted!</h3>
+        <p style="margin: 0 0 20px; font-size: 16px;">
+          Tx: ${txHash.slice(0,10)}...
+        </p>
+        <a href="https://basescan.org/tx/${txHash}"
+           target="_blank"
+           style="display: inline-block; padding: 12px 24px;
+                  background: rgba(0,0,0,0.2); color: black;
+                  text-decoration: none; border-radius: 10px;
+                  font-weight: 600;">
+          View on Basescan
+        </a>
+        <button onclick="this.parentElement.parentElement.remove()"
+                style="margin-top: 15px; padding: 12px 24px;
+                       background: rgba(0,0,0,0.3); border: none;
+                       border-radius: 10px; color: black; font-weight: 600;
+                       cursor: pointer;">
+          Close
+        </button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+}
+
+// Použití:
+showSuccessModal(mintTx);
+
 
   } catch (e) {
     if (!(e && e.code === 4001)) {

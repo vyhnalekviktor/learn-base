@@ -1,13 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<script>
-(function() {
-  const theme = localStorage.getItem('theme') ||
-               (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
-  document.documentElement.setAttribute('data-theme', theme);
-})();
-</script>
+<script type="module" src="src/theme.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="base:app_id" content="69419e4bd77c069a945bdf69" />

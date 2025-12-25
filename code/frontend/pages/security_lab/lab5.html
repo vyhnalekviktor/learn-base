@@ -1,7 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <script src="../../src/theme.js"></script>
+<head>    <script>
+    (function() {
+      const savedTheme = localStorage.getItem('theme');
+      const prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
+      const theme = savedTheme || (prefersLight ? 'light' : 'dark');
+      document.documentElement.setAttribute('data-theme', theme);
+    })();
+  </script>
+    <script type="module" src="../../src/theme.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BaseCamp Security - Lab 5</title> <!-- tady -->

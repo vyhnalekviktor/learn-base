@@ -1,7 +1,6 @@
 import { sdk } from "https://esm.sh/@farcaster/miniapp-sdk";
 
 const API_BASE = "https://learn-base-backend.vercel.app";
-const BASE_SEPOLIA_CHAIN_ID_DEC = 84532;
 
 function showCompatibilityWarning(reason) {
   console.warn(`MiniApp potřebuje ${reason}: wallet pro plné funkce`);
@@ -26,28 +25,23 @@ function showWelcomeModal() {
   modal.style.padding = "20px 22px";
   modal.style.color = "white";
   modal.style.boxShadow = "0 20px 45px rgba(15,23,42,0.8)";
-  modal.style.fontFamily =
-    "system-ui, -apple-system, BlinkMacSystemFont, 'Inter', Inter";
+  modal.style.fontFamily = "system-ui, -apple-system, BlinkMacSystemFont, 'Inter', Inter";
 
   modal.innerHTML = `
-BaseCamp is an interactive MiniApp for learning blockchain on Base (Ethereum L2).<br>
-Complete hands-on labs to earn an NFT completion badge! Read theory, try your first test operations and then test yourself for scam recognition.
-<br>
-You can complete all the steps for free!!
-<button id="welcome-close-btn" style="
-    width: 100%;
-    padding: 12px 18px;
-    border-radius: 999px;
-    border: none;
-    background: linear-gradient(135deg,#60a5fa,#3b82f6);
-    color: #fff;
-    font-weight: 700;
-    font-size: 15px;
-    cursor: pointer;
-  ">
-    Start learning
-  </button>
-`;
+    <h2 style="margin:0 0 14px;font-size:22px;font-weight:700;">Welcome to BaseCamp!</h2>
+    <p style="margin:0 0 12px;font-size:14.5px;line-height:1.6;color:#cbd5e1;">
+      BaseCamp is an interactive MiniApp for learning blockchain on Base (Ethereum L2).
+    </p>
+    <p style="margin:0 0 16px;font-size:14.5px;line-height:1.6;color:#cbd5e1;">
+      Complete hands-on labs to earn an NFT completion badge! Read theory, try your first test operations and then test yourself for scam recognition.
+    </p>
+    <p style="margin:0 0 20px;font-size:14.5px;font-weight:600;color:#60a5fa;">
+      You can complete all the steps for free!!
+    </p>
+    <button id="welcome-close-btn" style="width:100%;padding:12px;background:linear-gradient(135deg,#3b82f6,#2563eb);border:none;border-radius:10px;color:white;font-size:15px;font-weight:600;cursor:pointer;">
+      Start learning
+    </button>
+  `;
 
   overlay.appendChild(modal);
   document.body.appendChild(overlay);
@@ -67,9 +61,7 @@ async function initUserOnBackend(wallet) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ wallet }),
     });
-
     if (!res.ok) return;
-
     const data = await res.json();
     if (data.success === true && data.created === true) {
       showWelcomeModal();
@@ -78,43 +70,6 @@ async function initUserOnBackend(wallet) {
     console.error("initUserOnBackend error:", err);
   }
 }
-
-document.addEventListener('DOMContentLoaded', () => {
-  const toggle = document.getElementById('themeToggle');
-  if (!toggle) return;
-
-  const icon = toggle.querySelector('.theme-toggle-icon');
-
-  // Inicializace stavu podle uloženého / systémového theme
-  const savedTheme = localStorage.getItem('theme');
-  const prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
-  const initialTheme = savedTheme || (prefersLight ? 'light' : 'dark');
-
-  document.documentElement.setAttribute('data-theme', initialTheme);
-  const isDarkInit = initialTheme === 'dark';
-  toggle.classList.toggle('on', isDarkInit);
-
-  // Klikací logika
-  toggle.addEventListener('click', () => {
-    const current = document.documentElement.getAttribute('data-theme') || initialTheme;
-    const next = current === 'light' ? 'dark' : 'light';
-
-    document.documentElement.setAttribute('data-theme', next);
-    localStorage.setItem('theme', next);
-
-    const isDark = next === 'dark';
-    toggle.classList.toggle('on', isDark);
-  });
-
-  // Klávesnice (Enter/Space)
-  toggle.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      toggle.click();
-    }
-  });
-});
-
 
 window.addEventListener("load", async () => {
   try {
@@ -142,22 +97,12 @@ window.addEventListener("load", async () => {
 
     let displayName = "satoshi, is it you? (unknown)";
     let fidDisplay = "";
-
     if (user) {
-      displayName =
-        user.displayName ||
-        user.username ||
-        (user.fid ? `FID ${user.fid}` : "");
-
-      fidDisplay = user.username
-        ? `@${user.username}`
-        : user.fid
-        ? `FID ${user.fid}`
-        : "satoshi, is it you? (unknown)";
+      displayName = user.displayName || user.username || (user.fid ? `FID ${user.fid}` : "");
+      fidDisplay = user.username ? `@${user.username}` : user.fid ? `FID ${user.fid}` : "satoshi, is it you? (unknown)";
     }
 
     const avatarUrl = user?.pfpUrl || null;
-
     if (avatarUrl && placeholder) {
       placeholder.style.backgroundImage = `url(${avatarUrl})`;
       placeholder.style.backgroundSize = "cover";
@@ -170,33 +115,16 @@ window.addEventListener("load", async () => {
 
     if (nameEl) nameEl.textContent = displayName;
     if (fidEl) fidEl.textContent = fidDisplay;
+    console.log("User display:", { displayName, fidDisplay, avatarUrl, user });
 
-    console.log("User display:", {
-      displayName,
-      fidDisplay,
-      avatarUrl,
-      user,
-    });
-
-    // ====== WALLET (může selhat, ale theme už funguje) ======
-    try {
-      const ethProvider = await sdk.wallet.ethProvider;
-      if (!ethProvider) {
-        showCompatibilityWarning("wallet");
-      } else {
-        const accounts = await ethProvider.request({ method: "eth_requestAccounts" });
-        const wallet = accounts && accounts.length > 0 ? accounts[0] : null;
-        if (wallet) {
-          const span = document.getElementById("wallet-address");
-          if (span) span.textContent = wallet;
-          await initUserOnBackend(wallet);
-        } else {
-          showCompatibilityWarning("wallet");
-        }
-      }
-    } catch (walletError) {
-      console.warn("Wallet failed:", walletError);
-      showCompatibilityWarning("wallet");
+    // ====== POUŽIJ CACHED WALLET ======
+    const cachedWallet = localStorage.getItem('cached_wallet');
+    if (cachedWallet) {
+      const span = document.getElementById("wallet-address");
+      if (span) span.textContent = cachedWallet;
+      await initUserOnBackend(cachedWallet);
+    } else {
+      console.log("No cached wallet available yet");
     }
 
   } catch (error) {
