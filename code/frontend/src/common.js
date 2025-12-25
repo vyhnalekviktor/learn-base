@@ -97,20 +97,16 @@ async function initWalletCache() {
     }
 
     const toggle = document.getElementById('themeToggle');
-    const icon = toggle ? toggle.querySelector('.theme-toggle-icon') : null;
 
     if (toggle) {
       const isDark = defaultTheme === 'dark';
       toggle.classList.toggle('on', isDark);
-      if (icon) icon.textContent = isDark ? '🌙' : '☀️';
     }
   }
 
   function setupToggle() {
     const toggle = document.getElementById('themeToggle');
     if (!toggle) return;
-
-    const icon = toggle.querySelector('.theme-toggle-icon');
 
     toggle.addEventListener('click', () => {
       const current = document.documentElement.getAttribute('data-theme');
@@ -125,7 +121,6 @@ async function initWalletCache() {
 
       const isDark = next === 'dark';
       toggle.classList.toggle('on', isDark);
-      if (icon) icon.textContent = isDark ? '🌙' : '☀️';
 
       document.dispatchEvent(new CustomEvent('themeChanged', {
         detail: { theme: next }
