@@ -20,11 +20,11 @@
     "tagline": "Learn Base the easy way!",
     "ogTitle": "BaseCamp Learning",
     "ogDescription": "Learn Base blockchain hands-on! Practice testnet operations, study theory, and avoid common scams.",
-    "ogImageUrl": "https://learn-base-mu.vercel.app/images/og.png",
+    "ogImageUrl": "https://learn-base-mu.vercel.app/images/new.png",
     "author.display_name": "vikiase.base.eth",
     "buttonTitle": "Start learning",
     "noindex": true,
-    "imageUrl": "https://learn-base-mu.vercel.app/images/og.png"
+    "imageUrl": "https://learn-base-mu.vercel.app/images/new.png"
   }
 }
 
