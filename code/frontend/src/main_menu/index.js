@@ -31,10 +31,9 @@ function showWelcomeModal() {
 
   modal.innerHTML = `
 BaseCamp is an interactive MiniApp for learning blockchain on Base (Ethereum L2).
-
 Complete hands-on labs to earn an NFT completion badge! Read theory, try your first test operations and then test yourself for scam recognition.
-
-You can complete all the steps for free!!
+<br>
+You can complete all the steps for free!!<br>
 <button id="welcome-close-btn" style="
     width: 100%;
     padding: 12px 18px;
