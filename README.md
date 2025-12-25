@@ -32,9 +32,10 @@ Users can progress through the app and view their progress in "My Experience" ta
 User can send USDC on mainnet to the creator as a "Thank You" in the section 'Support the creator'
 
 ## How to run?
-#### 1. Use the Base app for interacting with miniApps as it is designed
+#### 1. Use the Base app for interacting with miniApps as it is designed (recommended)
 #### 2. Visit https://learn-base-mu.vercel.app/
- - frontend is hosted here, but the functionality is worse, because you cannot connect your Base wallet.
+ - design might be bad (like really bad), it is optimalized for mobile phone as an app.
+ - frontend is hosted here, but the functionality is worse, because you cannot connect your wallet.
  - no progress bars --> no NFT reward
  - theory is the same
  - practice lab is read only
