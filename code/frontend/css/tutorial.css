@@ -166,6 +166,7 @@ body {
 
 .accordion-content {
   max-height: 0;
+  padding-bottom: 120px;
   overflow: hidden;
   transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   background: var(--bg-card) !important;
@@ -792,6 +793,8 @@ footer strong {
   color: var(--text-muted);
   text-align: center;
   scroll-margin-top: 80px;
+  padding-bottom: 100px;
+  margin-bottom: 20px;
 }
 
 .sources a {
@@ -815,4 +818,10 @@ footer strong {
 .accordion-header.completed h3,
 .accordion-header.completed p {
   color: var(--success-text) !important;
+}
+
+
+.accordion-content:last-child,
+#content-bonus {
+  padding-bottom: 140px;
 }
