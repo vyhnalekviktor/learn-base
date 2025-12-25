@@ -75,6 +75,16 @@ window.addEventListener("load", async () => {
   try {
     await sdk.actions.ready();
 
+        // ====== POUŽIJ CACHED WALLET ======
+    const cachedWallet = localStorage.getItem('cached_wallet');
+    if (cachedWallet) {
+      const span = document.getElementById("wallet-address");
+      if (span) span.textContent = cachedWallet;
+      await initUserOnBackend(cachedWallet);
+    } else {
+      console.log("No cached wallet available yet");
+    }
+
     // ====== CONTEXT: USER / AVATAR ======
     let ctx = null;
     try {
@@ -116,16 +126,6 @@ window.addEventListener("load", async () => {
     if (nameEl) nameEl.textContent = displayName;
     if (fidEl) fidEl.textContent = fidDisplay;
     console.log("User display:", { displayName, fidDisplay, avatarUrl, user });
-
-    // ====== POUŽIJ CACHED WALLET ======
-    const cachedWallet = localStorage.getItem('cached_wallet');
-    if (cachedWallet) {
-      const span = document.getElementById("wallet-address");
-      if (span) span.textContent = cachedWallet;
-      await initUserOnBackend(cachedWallet);
-    } else {
-      console.log("No cached wallet available yet");
-    }
 
   } catch (error) {
     console.error("Error during MiniApp init:", error);
