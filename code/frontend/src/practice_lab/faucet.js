@@ -4,7 +4,7 @@ let currentWallet = null;
 let added_progress = false;
 
 async function addProgress() {
-  wallet = currentWallet;
+  const wallet = currentWallet;
   if (added_progress) return;
   try {
     const res = await fetch(`${API_BASE}/api/database/update_field`, {
