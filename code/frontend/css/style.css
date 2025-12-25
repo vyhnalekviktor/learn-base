@@ -130,10 +130,9 @@ body {
   background: var(--bg-card);
   border: 2px solid var(--border);
   color: var(--text-primary);
-  padding: 18px 12px;
   font-size: 17px;
   font-weight: 700;
-  border-radius: 14px;
+  border-radius: 10px;
   cursor: pointer;
   text-align: center;
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
@@ -612,12 +611,6 @@ label {
     gap: 10px;
   }
 
-  .donation-btn, .donate-btn {
-    padding: 16px 10px;
-    font-size: 16px;
-    min-height: 60px;
-  }
-
   .custom-actions-row {
     gap: 8px;
   }
@@ -635,7 +628,7 @@ label {
 
 @media (max-width: 360px) {
   .donation-btn, .donate-btn {
-    padding: 14px 8px;
+    /*padding: 10px 8px;*/
     font-size: 15px;
     min-height: 56px;
   }
@@ -693,7 +686,7 @@ html {
 /* BUTTONY NEŠIROKÉ PŘES CELÝ TEXT, ALE UPROSTŘED BLOKU */
 .donation-btn,
 .donate-btn {
-  width: 260px;
+  width: 90%;
   max-width: 100%;
   margin: 0 auto;     /* centrování v rámci gridu */
 }
