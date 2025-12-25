@@ -16,15 +16,15 @@
     "screenshotUrls": ["https://learn-base-mu.vercel.app/images/screen1.png","https://learn-base-mu.vercel.app/images/screen2.png","https://learn-base-mu.vercel.app/images/screen3.png"],
     "primaryCategory": "education",
     "tags": ["education", "base", "learn", "productivity", "beginner"],
-    "heroImageUrl": "https://learn-base-mu.vercel.app/images/new.png",
+    "heroImageUrl": "https://learn-base-mu.vercel.app/images/basecamp-hero-og-v1.png",
     "tagline": "Learn Base the easy way!",
     "ogTitle": "BaseCamp Learning",
     "ogDescription": "Learn Base blockchain hands-on! Practice testnet operations, study theory, and avoid common scams.",
-    "ogImageUrl": "https://learn-base-mu.vercel.app/images/new.png",
+    "ogImageUrl": "https://learn-base-mu.vercel.app/images/basecamp-hero-og-v1.png",
     "author.display_name": "vikiase.base.eth",
     "buttonTitle": "Start learning",
     "noindex": true,
-    "imageUrl": "https://learn-base-mu.vercel.app/images/new.png"
+    "imageUrl": "https://learn-base-mu.vercel.app/images/basecamp-hero-og-v1.png"
   }
 }
 
