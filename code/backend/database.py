@@ -145,12 +145,11 @@ def check_completion(wallet: str):
 def get_my_donations():
     try:
         response = (
-            supabase.table("MY_WALLET").select("*").eq("name", "MetaMask")
-            .maybe_single()  # returns Dict / None
+            supabase.table("MY_WALLET").select("*")
             .execute()
         )
         prev_amount = response.data[0]["real_amount"]
         prev_count = response.data[0]["real_count"]
         return prev_count, prev_amount
-    except Exception:
+    except Exception as e:
         return None
