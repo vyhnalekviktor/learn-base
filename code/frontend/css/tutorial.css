@@ -171,6 +171,7 @@ body {
   background: var(--bg-card) !important;
   color: var(--text-primary) !important;
   border-top: 1px solid transparent;
+  text-align: left;
 }
 
 .accordion-content.open {
@@ -816,4 +817,41 @@ footer strong {
 .accordion-header.completed h3,
 .accordion-header.completed p {
   color: var(--success-text) !important;
+}
+
+
+.bonus-section {
+  background: rgba(96, 165, 250, 0.10);
+  border-radius: 12px;
+  border: 1px solid rgba(96, 165, 250, 0.35);
+  padding: 16px 18px;
+  margin: 18px 0 8px;
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+:root[data-theme="dark"] .bonus-section {
+  background: rgba(37, 99, 235, 0.12);
+  border-color: rgba(59, 130, 246, 0.6);
+}
+
+:root[data-theme="light"] .bonus-section {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+}
+
+.bonus-section h3 {
+  margin: 0 0 8px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.bonus-section p {
+  margin: 0;
+}
+
+.bonus-section strong {
+  color: var(--text-primary);
 }
