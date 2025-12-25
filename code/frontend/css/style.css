@@ -188,7 +188,7 @@ body {
   background: var(--bg-card);
   border-radius: 16px;
   border: 2px solid var(--border);
-  padding: 18px 16px 20px;
+  padding: 18px 16px 40px;
   margin-bottom: 20px;
 }
 

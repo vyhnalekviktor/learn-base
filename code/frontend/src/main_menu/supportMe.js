@@ -36,6 +36,32 @@ async function initApp() {
   }
 }
 
+async function addDonationDB(amount) {
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/database/add-donation`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        "amount": amount
+      }),
+    })
+
+    if (!res.ok) {
+      let msg = "Unknown backend error"
+      try {
+        const err = await res.json()
+        msg = err.detail || JSON.stringify(err)
+      } catch (_) {}
+      console.error("add donation error:", msg)
+      return false
+    }
+    return true
+  } catch (error) {
+    console.error("addDonationDB error:", error)
+    return false
+  }
+}
+
 async function donate(amount) {
   const statusDiv = document.getElementById('status');
   if (!statusDiv) return;
@@ -115,32 +141,12 @@ async function donate(amount) {
     });
 
     console.log('Transaction sent:', txHash);
-    statusDiv.innerHTML = 'Verifying transaction...';
-
-    const response = await fetch(`${BACKEND_URL}/api/sme/verify`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        address_from: userAddress,
-        tx_hash: txHash,
-        token: 'USDC',
-        amount: parseFloat(amount)
-      })
-    });
-
-    const verifyResult = await response.json();
-
-    if (verifyResult.success) {
+    addDonationDB(amount);
+    if (txHash) {
       statusDiv.innerHTML = `Thank you for ${amount} USDC support!`;
       const walletInfo = document.getElementById('walletInfo');
-      const addrSpan = document.getElementById('address');
-      if (walletInfo) walletInfo.style.display = 'block';
-      if (addrSpan) {
-        addrSpan.textContent =
-          userAddress.substring(0, 6) + '...' + userAddress.substring(38);
-      }
     } else {
-      statusDiv.innerHTML = `Verification failed: ${verifyResult.msg}`;
+      statusDiv.innerHTML = `Transaction failed!`;
     }
   } catch (error) {
     console.error('Payment error:', error);
