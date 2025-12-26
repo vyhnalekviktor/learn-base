@@ -1,71 +1,56 @@
 import sdk from 'https://esm.sh/@farcaster/miniapp-sdk';
-const APIBASE = 'https://learn-base-backend.vercel.app';
-
-const DEBUG = true;
-
-function debugLog(...args) {
-  if (DEBUG) console.log('%c[FAUCET]', 'color: #10b981; font-weight: bold;', ...args);
-}
-
-function debugError(...args) {
-  console.error('%c[FAUCET ERROR]', 'color: #ef4444; font-weight: bold;', ...args);
-}
+const API_BASE = 'https://learn-base-backend.vercel.app';
 
 let currentWallet = null;
 let addedProgress = false;
 let faucetVisited = false;
 
+// Nahraď getWalletFromCache() tímto:
 async function getWalletFromCache() {
-  debugLog('1. getWalletFromCache()');
-  const cachedWallet = localStorage.getItem('cachedwallet');
-
-  if (cachedWallet) {
-    debugLog('✅ CACHE HIT:', cachedWallet.slice(0,6)+'...'+cachedWallet.slice(-4));
-    return cachedWallet;
+  // ✅ POUŽIJ common.js PUBLIC API
+  if (window.BaseCampTheme?.getWalletCache) {
+    const { wallet, sepolia_status } = window.BaseCampTheme.getWalletCache();
+    if (wallet) {
+      return wallet;
+    }
+  }
+  // Fallback na přímý localStorage
+  const cached_wallet = localStorage.getItem('cached_wallet');
+  if (cached_wallet) {
+    return cached_wallet;
   }
 
-  debugLog('❌ CACHE MISS → SDK');
   await sdk.actions.ready();
   const ethProvider = await sdk.wallet.ethProvider;
-
   const accounts = await ethProvider.request({ method: 'eth_requestAccounts' });
-  const wallet = accounts?.[0];
-  debugLog('✅ SDK wallet:', wallet);
-  return wallet;
+  return accounts?.[0];
 }
 
-async function addProgress() {
-  debugLog('🔄 addProgress() - wallet:', !!currentWallet, 'added:', addedProgress);
 
+async function addProgress() {
   if (addedProgress || !currentWallet) {
-    debugLog('⏭️ SKIPPED (already done/no wallet)');
     return false;
   }
 
   try {
-    const res = await fetch(`${APIBASE}/api/database/updatefield`, {
+    const res = await fetch(`${API_BASE}/api/database/update_field`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         wallet: currentWallet,
-        tablename: 'USERPROGRESS',
-        fieldname: 'faucet',
+        tablename: 'USER_PROGRESS',
+        field_name: 'faucet',
         value: true
       })
     });
 
-    debugLog('API response:', res.status, res.ok);
-
     if (!res.ok) {
-      debugError('API failed:', await res.text());
       return false;
     }
 
     addedProgress = true;
-    debugLog('✅ FAUCET PROGRESS ADDED!');
     return true;
   } catch (e) {
-    debugError('addProgress error:', e);
     return false;
   }
 }
@@ -78,48 +63,32 @@ function toggleAccordion(id) {
 }
 
 async function initWallet() {
-  debugLog('🚀 initWallet START');
   try {
     currentWallet = await getWalletFromCache();
 
     const span = document.getElementById('wallet-address');
     if (span) {
       span.textContent = `${currentWallet.slice(0,6)}...${currentWallet.slice(-4)}`;
-      debugLog('✅ Wallet UI:', span.textContent);
     }
 
-    const sepoliaStatus = localStorage.getItem('sepoliastatus');
-    if (sepoliaStatus === 'ok') {
-      debugLog('🌐 Sepolia OK → auto progress');
+    const sepolia_status = localStorage.getItem('sepolia_status');
+    if (sepolia_status === 'ok') {
       await addProgress();
     }
 
-    debugLog('✅ initWallet COMPLETE');
-  } catch (e) {
-    debugError('initWallet FAILED:', e);
-  }
+  } catch (e) {  }
 }
 
 function openEthFaucet() {
-  debugLog('🔗 ETH faucet clicked');
-  faucetVisited = true;
+  addProgress();
   sdk.actions.openUrl('https://www.alchemy.com/faucets/base-sepolia');
 }
 
 function openUsdcFaucet() {
-  debugLog('🔗 USDC faucet clicked');
-  faucetVisited = true;
+  addProgress();
   sdk.actions.openUrl('https://faucet.circle.com');
 }
 
-// VISIBILITY TRACKING - progress po návratu
-document.addEventListener('visibilitychange', async () => {
-  if (!document.hidden && faucetVisited && currentWallet && !addedProgress) {
-    debugLog('🔄 BACK FROM FAUCET → addProgress()');
-    await addProgress();
-    faucetVisited = false;
-  }
-});
 
 // GLOBÁLNÍ FUNKCE
 window.toggleAccordion = toggleAccordion;
@@ -128,5 +97,3 @@ window.openEthFaucet = openEthFaucet;
 window.openUsdcFaucet = openUsdcFaucet;
 
 window.addEventListener('load', initWallet);
-
-debugLog('=== FAUCET.JS LOADED ===');
