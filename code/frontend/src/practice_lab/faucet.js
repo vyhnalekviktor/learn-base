@@ -143,15 +143,14 @@ async function initWallet() {
 
 function openEthFaucet() {
   console.log('Opening ETH faucet...');
-  addProgress();
   sdk.actions.openUrl('https://www.alchemy.com/faucets/base-sepolia');
-  add
+  addProgress();
 }
 
 function openUsdcFaucet() {
   console.log('Opening USDC faucet...');
-  addProgress();
   sdk.actions.openUrl('https://faucet.circle.com');
+  addProgress();
 }
 
 // GLOBÁLNÍ FUNKCE PRO HTML
