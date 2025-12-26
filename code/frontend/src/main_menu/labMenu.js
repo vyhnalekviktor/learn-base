@@ -114,7 +114,7 @@ async function grantFullPracticeProgress(wallet) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           wallet,
-          tablename: 'USER_PROGRESS',
+          table_name: 'USER_PROGRESS',
           field_name: field,
           value: true
         })
@@ -140,7 +140,12 @@ async function getProgress(wallet) {
   }
 
   try {
-    const res = await fetch(`${API_BASE}/api/database/get-user?wallet=${encodeURIComponent(wallet)}`);
+    // ✅ FIXED: Use POST with JSON body (backend expects POST, not GET)
+    const res = await fetch(`${API_BASE}/api/database/get-user`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ wallet })
+    });
 
     if (!res.ok) {
       console.error('❌ Failed to fetch progress:', res.status);
