@@ -1,4 +1,4 @@
-import sdk from 'https://esm.sh/@farcaster/miniapp-sdk'; // ← FIX: BEZ { }!
+import sdk from 'https://esm.sh/@farcaster/miniapp-sdk';
 
 const BACKEND_URL = 'https://learn-base-backend.vercel.app';
 const MY_WALLET = '0x5b9aCe009440c286E9A236f90118343fc61Ee48F';
@@ -9,7 +9,7 @@ let ethProvider = null;
 
 async function initApp() {
   try {
-    console.log('Initializing Support Me App v2.0...');
+    console.log('Initializing Support Me App v2.1...');
 
     await sdk.actions.ready();
     ethProvider = await sdk.wallet.ethProvider;
@@ -30,7 +30,7 @@ async function initApp() {
     const connectBtn = document.getElementById('connectBtn');
     if (connectBtn) connectBtn.style.display = 'none';
 
-    console.log('✅ App initialized successfully');
+    console.log('✅ App ready');
   } catch (error) {
     console.error('❌ Init error:', error);
   }
@@ -38,12 +38,12 @@ async function initApp() {
 
 async function addDonationDB(amount) {
   try {
-    console.log('💾 Saving donation to statistics:', amount, 'USDC');
+    console.log('💾 Saving donation NUMERIC:', Number(amount), 'USDC');
 
     const res = await fetch(`${BACKEND_URL}/api/add-donation`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ amount: amount }),
+      body: JSON.stringify({ amount: Number(amount) }),  // ✅ FORCE NUMBER!
     });
 
     if (!res.ok) {
@@ -60,53 +60,75 @@ async function addDonationDB(amount) {
     }
 
     const data = await res.json();
-    console.log('✅ Donation saved to DB:', data);
+    console.log('✅ Donation saved:', data);
     return true;
-
   } catch (error) {
     console.error('❌ addDonationDB error:', error);
     return false;
   }
 }
 
-// ✅ NEW: Helper funkce pro otevření Basescan
 async function openBasescan(txHash) {
   if (!txHash) {
-    console.warn('⚠️ No txHash available');
+    console.warn('⚠️ No txHash');
     return;
   }
-  console.log('🔗 Opening Basescan for tx:', txHash);
+  console.log('🔗 Opening Basescan:', txHash);
   try {
     await sdk.actions.openUrl(`https://basescan.org/tx/${txHash}`);
   } catch (err) {
-    console.error('❌ Failed to open URL:', err);
-    // Fallback: normální window.open
     window.open(`https://basescan.org/tx/${txHash}`, '_blank');
   }
 }
 
-async function donate(amount) {
-  const statusDiv = document.getElementById('status');
-  if (!statusDiv) return;
+async function donate(rawAmount) {
+  console.log('🧪 donate CALLED with:', rawAmount, 'type:', typeof rawAmount);
 
-  let txHash = null; // ← Scope pro celou funkci
+  // ✅ FIX 1: Najdi statusDiv nebo vytvoř ho
+  let statusDiv = document.getElementById('status');
+  if (!statusDiv) {
+    console.warn('⚠️ No #status → creating fallback');
+    statusDiv = document.createElement('div');
+    statusDiv.id = 'status';
+    statusDiv.style.cssText = `
+      padding: 20px;
+      text-align: center;
+      min-height: 100px;
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    `;
+    document.body.appendChild(statusDiv);
+  }
+
+  // ✅ FIX 2: Ověř a přetypuj amount
+  const amount = Number(rawAmount);
+  console.log('🧪 Parsed amount:', amount);
+
+  if (!Number.isFinite(amount) || amount < 1) {
+    statusDiv.innerHTML = `
+      <div style="color: #ef4444;">
+        ❌ Invalid amount: ${rawAmount}<br>
+        Minimum is 1 USDC
+      </div>
+    `;
+    return;
+  }
+
+  let txHash = null;
 
   try {
     if (!ethProvider) {
       throw new Error('Provider not available');
     }
 
-    statusDiv.innerHTML = 'Checking network...';
+    statusDiv.innerHTML = '🔄 Checking network...';
 
     const { BrowserProvider } = await import('https://esm.sh/ethers@6.9.0');
     const provider = new BrowserProvider(ethProvider);
     const network = await provider.getNetwork();
     const currentChainId = Number(network.chainId);
 
-    // Switch to Base if needed
     if (currentChainId !== 8453) {
-      statusDiv.innerHTML = 'Switching to Base network...';
-
+      statusDiv.innerHTML = '🔄 Switching to Base...';
       try {
         await ethProvider.request({
           method: 'wallet_switchEthereumChain',
@@ -119,11 +141,7 @@ async function donate(amount) {
             params: [{
               chainId: BASE_CHAIN_ID,
               chainName: 'Base',
-              nativeCurrency: {
-                name: 'Ethereum',
-                symbol: 'ETH',
-                decimals: 18
-              },
+              nativeCurrency: { name: 'Ethereum', symbol: 'ETH', decimals: 18 },
               rpcUrls: ['https://mainnet.base.org'],
               blockExplorerUrls: ['https://basescan.org']
             }]
@@ -132,167 +150,83 @@ async function donate(amount) {
           throw switchError;
         }
       }
-
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise(r => setTimeout(r, 2000));
     }
 
-    statusDiv.innerHTML = 'Preparing transaction...';
+    statusDiv.innerHTML = '📝 Preparing transaction...';
 
-    const accounts = await ethProvider.request({
-      method: 'eth_requestAccounts'
-    });
-
-    if (!accounts || accounts.length === 0) {
+    const accounts = await ethProvider.request({ method: 'eth_requestAccounts' });
+    if (!accounts?.[0]) {
       throw new Error('No account connected');
     }
 
     const userAddress = accounts[0];
-    console.log('💳 User wallet:', userAddress);
+    console.log('💳 User:', userAddress);
 
-    // ✅ Prepare ERC20 transfer (SPRÁVNĚ - to: USDC_ADDRESS)
-    const amountInWei = BigInt(Math.floor(parseFloat(amount) * 1_000_000));
-    const transferFunctionSelector = '0xa9059cbb'; // transfer(address,uint256)
+    // ERC20 transfer data
+    const amountInWei = BigInt(Math.floor(amount * 1_000_000));
+    const transferFunctionSelector = '0xa9059cbb';
     const recipientPadded = MY_WALLET.substring(2).padStart(64, '0');
     const amountPadded = amountInWei.toString(16).padStart(64, '0');
     const data = transferFunctionSelector + recipientPadded + amountPadded;
 
-    console.log('💸 Sending USDC transaction:');
-    console.log('  Amount:', amount, 'USDC');
-    console.log('  From:', userAddress);
-    console.log('  To Contract:', USDC_ADDRESS);
-    console.log('  Recipient (in data):', MY_WALLET);
+    console.log('💸 Transaction details:', { amount, userAddress, contract: USDC_ADDRESS });
 
-    statusDiv.innerHTML = '⏳ Confirm transaction in your wallet...';
+    statusDiv.innerHTML = '⏳ Confirm in wallet...';
 
-    // ✅ Send transaction
     const txResponse = await ethProvider.request({
       method: 'eth_sendTransaction',
-      params: [{
-        from: userAddress,
-        to: USDC_ADDRESS,  // ← SPRÁVNĚ: USDC contract address
-        data               // ← Data obsahuje recipient + amount
-      }]
+      params: [{ from: userAddress, to: USDC_ADDRESS, data }]
     });
 
-    // ✅ DEBUG: Log response
-    console.log('📦 TX Response TYPE:', typeof txResponse);
-    console.log('📦 TX Response VALUE:', txResponse);
-    console.log('📦 TX Response (stringified):', JSON.stringify(txResponse));
+    console.log('📦 TX Response:', typeof txResponse, txResponse);
 
-    // ✅ Extract txHash (podporuje různé formáty)
-    if (typeof txResponse === 'string') {
-      txHash = txResponse;
-    } else if (txResponse && typeof txResponse === 'object') {
-      txHash = txResponse.hash || txResponse.transactionHash || txResponse.tx || null;
-    }
+    txHash = typeof txResponse === 'string' ? txResponse : null;
 
-    console.log('✅ Extracted txHash:', txHash);
-
-    // ✅ Save to statistics
-    statusDiv.innerHTML = '💾 Updating statistics...';
+    statusDiv.innerHTML = '💾 Saving to statistics...';
     const saved = await addDonationDB(amount);
 
-    if (!saved) {
-      console.warn('⚠️ Statistics update failed (non-critical)');
-    }
-
-    // ✅ SUCCESS MESSAGE
-    if (txHash && txHash.startsWith('0x')) {
-      // Success S txHash
-      statusDiv.innerHTML = `
-        <div style="text-align: center; padding: 20px;">
-          <div style="font-size: 48px; margin-bottom: 16px;">✅</div>
-          <div style="font-weight: 700; font-size: 22px; margin-bottom: 12px; color: #10b981;">
-            Thank you for ${amount} USDC!
+    // ✅ THANK YOU SCREEN
+    statusDiv.innerHTML = `
+      <div style="text-align: center; padding: 30px;">
+        <div style="font-size: 48px; margin-bottom: 20px;">✅</div>
+        <div style="font-weight: 700; font-size: 24px; margin-bottom: 12px; color: #10b981;">
+          Thank you for ${amount} USDC!
+        </div>
+        <div style="font-size: 16px; opacity: 0.8; margin-bottom: 24px;">
+          Transaction confirmed on Base
+        </div>
+        ${txHash ? `
+          <div style="background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3); border-radius: 8px; padding: 12px 16px; margin-bottom: 24px; font-family: monospace; font-size: 13px; color: #10b981; word-break: break-all; max-width: 300px; margin: 0 auto 24px;">
+            ${txHash.slice(0,12)}...${txHash.slice(-10)}
           </div>
-          <div style="font-size: 14px; opacity: 0.7; margin-bottom: 20px;">
-            Transaction confirmed on Base
-          </div>
-          <div style="
-            display: inline-block;
-            background: rgba(16, 185, 129, 0.1);
-            border: 1px solid rgba(16, 185, 129, 0.3);
-            border-radius: 8px;
-            padding: 10px 16px;
-            margin-bottom: 20px;
-            font-family: 'Courier New', monospace;
-            font-size: 13px;
-            color: #10b981;
-            word-break: break-all;
-            max-width: 300px;
-          ">
-            ${txHash.slice(0, 12)}...${txHash.slice(-10)}
-          </div>
-          <br>
-          <button
-            onclick="window.openBasescan('${txHash}')"
-            style="
-              padding: 14px 28px;
-              background: linear-gradient(135deg, #0052ff 0%, #0041cc 100%);
-              border: none;
-              border-radius: 12px;
-              color: white;
-              font-size: 16px;
-              font-weight: 600;
-              cursor: pointer;
-              box-shadow: 0 4px 14px rgba(0, 82, 255, 0.4);
-              transition: all 0.3s ease;
-            "
-            onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(0, 82, 255, 0.5)'"
-            onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 14px rgba(0, 82, 255, 0.4)'"
-          >
+          <button onclick="window.openBasescan('${txHash}')" style="padding: 14px 28px; background: linear-gradient(135deg, #0052ff, #0041cc); border: none; border-radius: 12px; color: white; font-size: 16px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 14px rgba(0,82,255,0.4);">
             View on Basescan →
           </button>
-        </div>
-      `;
-    } else {
-      // Success BEZ txHash (fallback)
-      statusDiv.innerHTML = `
-        <div style="text-align: center; padding: 20px;">
-          <div style="font-size: 48px; margin-bottom: 16px;">✅</div>
-          <div style="font-weight: 700; font-size: 22px; margin-bottom: 12px; color: #10b981;">
-            Thank you for ${amount} USDC!
+        ` : `
+          <div style="font-size: 14px; opacity: 0.6; font-style: italic;">
+            Check your wallet for details
           </div>
-          <div style="font-size: 14px; opacity: 0.7; margin-bottom: 12px;">
-            Transaction confirmed on Base
-          </div>
-          <div style="font-size: 13px; opacity: 0.5; font-style: italic;">
-            Check your wallet for transaction details
-          </div>
-        </div>
-      `;
-    }
+        `}
+        ${saved ? '<div style="font-size: 12px; opacity: 0.5; margin-top: 20px;">Statistics updated ✅</div>' : ''}
+      </div>
+    `;
 
   } catch (error) {
     console.error('❌ Payment error:', error);
-    console.error('❌ Error details:', {
-      message: error.message,
-      code: error.code,
-      stack: error.stack
-    });
 
-    let errorMsg = error.message;
-
-    // Handle common errors
-    if (error.code === 4001) {
-      errorMsg = 'Transaction cancelled by user';
-    } else if (error.code === -32002) {
-      errorMsg = 'Request already pending in wallet';
-    } else if (error.code === -32603) {
-      errorMsg = 'Insufficient USDC balance';
-    } else if (error.code === 4100) {
-      errorMsg = 'Wallet not authorized - please connect first';
-    }
+    let errorMsg = error.message || 'Unknown error';
+    if (error.code === 4001) errorMsg = 'Transaction cancelled';
+    if (error.code === -32002) errorMsg = 'Request pending';
+    if (error.code === -32603) errorMsg = 'Insufficient USDC';
 
     statusDiv.innerHTML = `
-      <div style="text-align: center; padding: 20px;">
-        <div style="font-size: 48px; margin-bottom: 16px; color: #ef4444;">❌</div>
-        <div style="font-weight: 700; font-size: 20px; margin-bottom: 12px; color: #ef4444;">
+      <div style="text-align: center; padding: 30px; color: #ef4444;">
+        <div style="font-size: 48px; margin-bottom: 20px;">❌</div>
+        <div style="font-weight: 700; font-size: 20px; margin-bottom: 12px;">
           Payment Failed
         </div>
-        <div style="font-size: 15px; opacity: 0.9; color: #ef4444;">
-          ${errorMsg}
-        </div>
+        <div style="font-size: 15px; opacity: 0.9;">${errorMsg}</div>
       </div>
     `;
   }
@@ -301,32 +235,29 @@ async function donate(amount) {
 function stepAmount(delta) {
   const input = document.getElementById('customAmount');
   if (!input) return;
-
-  const current = parseFloat(input.value || '0') || 0;
-  let next = current + delta;
-
-  if (next < 1) next = 1;
-  if (next > 10000) next = 10000;
-
-  input.value = String(Math.floor(next));
+  let current = Number(input.value) || 0;
+  current = Math.max(1, Math.min(10000, current + delta));
+  input.value = Math.floor(current);
 }
 
 function donateCustom() {
   const input = document.getElementById('customAmount');
   if (!input) return;
 
-  const amount = input.value;
-  if (amount && parseFloat(amount) >= 1) {
+  const amount = input.value.trim();
+  console.log('🧪 donateCustom called with input:', amount);
+
+  if (amount && Number(amount) >= 1) {
     donate(amount);
   } else {
-    alert('Minimum amount is 1 USDC');
+    alert('Minimum 1 USDC');
   }
 }
 
-// ✅ Global exports
+// Global exports
 window.donate = donate;
 window.donateCustom = donateCustom;
 window.stepAmount = stepAmount;
-window.openBasescan = openBasescan; // ← NOVÉ!
+window.openBasescan = openBasescan;
 
 initApp();
