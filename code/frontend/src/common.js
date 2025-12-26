@@ -1,189 +1,359 @@
 // src/theme.js - FIXED NO FLASH + FULL WALLET CACHE (wallet + sepolia_status)
+
 (function() {
-  'use strict';
 
-  const BASE_SEPOLIA_CHAIN_ID_DEC = 84532;
+'use strict';
 
-  // === 1. KRITICKÉ: NASTAV THEME IHNED PŘED PRVNÍM PAINTEM ===
-  (function setThemeImmediately() {
-    const savedTheme = localStorage.getItem('theme');
-    const prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
-    const theme = savedTheme || (prefersLight ? 'light' : 'dark');
-    document.documentElement.setAttribute('data-theme', theme);
-    if (document.body) {
-      document.body.classList.add(theme);
-    }
-  })();
+const BASE_SEPOLIA_CHAIN_ID_DEC = 84532;
 
-async function initWalletCache() {
-  const { sdk } = await import("https://esm.sh/@farcaster/miniapp-sdk");
+// === 1. KRITICKÉ: NASTAV THEME IHNED PŘED PRVNÍM PAINTEM ===
 
-  const cachedWallet = localStorage.getItem('cached_wallet');
-  const sepoliaStatus = localStorage.getItem('sepolia_status');
+(function setThemeImmediately() {
 
-  if (cachedWallet && sepoliaStatus) {
-    console.log('Full cache hit (wallet + sepolia):', cachedWallet, sepoliaStatus);
-    return;
-  }
+const savedTheme = localStorage.getItem('theme');
 
-  try {
-    await sdk.actions.ready();
-    const ethProvider = await sdk.wallet.ethProvider;
+const prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
 
-    if (!ethProvider) {
-      localStorage.setItem('sepolia_status', 'error');
-      console.log('No ethProvider - cached sepolia_status: error');
-      return;
-    }
+const theme = savedTheme || (prefersLight ? 'light' : 'dark');
 
-    let accounts;
-    try {
-      accounts = await ethProvider.request({ method: "eth_requestAccounts" });
-    } catch (e) {
-      // TADY JISTÍŠ PÁD provideru
-      console.log('eth_requestAccounts failed in theme.js:', e);
-      localStorage.setItem('sepolia_status', 'error');
-      return;
-    }
+document.documentElement.setAttribute('data-theme', theme);
 
-    const wallet = accounts && accounts.length > 0 ? accounts[0] : null;
-    if (!wallet) {
-      localStorage.setItem('sepolia_status', 'error');
-      console.log('No wallet - cached sepolia_status: error');
-      return;
-    }
+if (document.body) {
 
-    localStorage.setItem('cached_wallet', wallet);
+document.body.classList.add(theme);
 
-    let supportsSepolia = false;
-    try {
-      const chainIdHex = await ethProvider.request({ method: "eth_chainId" });
-      const chainIdDec = parseInt(chainIdHex, 16);
-      supportsSepolia = chainIdDec === BASE_SEPOLIA_CHAIN_ID_DEC;
-    } catch (e) {
-      console.log('Simple Sepolia check failed:', e);
-    }
-
-    const status = supportsSepolia ? 'ok' : 'warning';
-    localStorage.setItem('sepolia_status', status);
-    console.log(`Full cache set: wallet=${wallet}, sepolia_status=${status}`);
-  } catch (error) {
-    console.log('Wallet/Sepolia caching failed:', error);
-    localStorage.setItem('sepolia_status', 'error');
-  }
 }
 
+})();
 
-  async function detectBaseSepoliaSupport(ethProvider) {
-    try {
-      const chainIdHex = await ethProvider.request({ method: "eth_chainId" });
-      const chainIdDec = parseInt(chainIdHex, 16);
-      return chainIdDec === BASE_SEPOLIA_CHAIN_ID_DEC;
-    } catch (e) {
-      console.log('Simple Sepolia check failed:', e);
-      return false;
-    }
-  }
+async function initWalletCache() {
 
-  function initTheme() {
-    const savedTheme = localStorage.getItem('theme');
-    const prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
-    const defaultTheme = savedTheme || (prefersLight ? 'light' : 'dark');
+const { sdk } = await import("https://esm.sh/@farcaster/miniapp-sdk");
 
-    document.documentElement.setAttribute('data-theme', defaultTheme);
-    if (document.body) {
-      document.body.classList.remove('light', 'dark');
-      document.body.classList.add(defaultTheme);
-    }
+const cachedWallet = localStorage.getItem('cached_wallet');
 
-    const toggle = document.getElementById('themeToggle');
+const sepoliaStatus = localStorage.getItem('sepolia_status');
 
-    if (toggle) {
-      const isDark = defaultTheme === 'dark';
-      toggle.classList.toggle('on', isDark);
-    }
-  }
+if (cachedWallet && sepoliaStatus) {
 
-  function setupToggle() {
-    const toggle = document.getElementById('themeToggle');
-    if (!toggle) return;
+console.log('Full cache hit (wallet + sepolia):', cachedWallet, sepoliaStatus);
 
-    toggle.addEventListener('click', () => {
-      const current = document.documentElement.getAttribute('data-theme');
-      const next = current === 'light' ? 'dark' : 'light';
+return;
 
-      document.documentElement.setAttribute('data-theme', next);
-      if (document.body) {
-        document.body.classList.remove('light', 'dark');
-        document.body.classList.add(next);
-      }
-      localStorage.setItem('theme', next);
+}
 
-      const isDark = next === 'dark';
-      toggle.classList.toggle('on', isDark);
+try {
 
-      document.dispatchEvent(new CustomEvent('themeChanged', {
-        detail: { theme: next }
-      }));
-    });
+await sdk.actions.ready();
 
-    toggle.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        toggle.click();
-      }
-    });
-  }
+const ethProvider = await sdk.wallet.ethProvider;
 
-  function setupSystemPreferenceListener() {
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: light)');
-    mediaQuery.addEventListener('change', (e) => {
-      const savedTheme = localStorage.getItem('theme');
-      if (!savedTheme) {
-        const newTheme = e.matches ? 'light' : 'dark';
-        document.documentElement.setAttribute('data-theme', newTheme);
-        if (document.body) {
-          document.body.classList.remove('light', 'dark');
-          document.body.classList.add(newTheme);
-        }
-        const toggle = document.getElementById('themeToggle');
-        if (toggle) {
-          toggle.classList.toggle('on', newTheme === 'dark');
-        }
-      }
-    });
-  }
+if (!ethProvider) {
 
-  // Public API
-  window.BaseCampTheme = {
-    init: () => {
-      initTheme();
-      setupToggle();
-      setupSystemPreferenceListener();
+localStorage.setItem('sepolia_status', 'error');
 
-      // Full wallet + sepolia cache v backgroundu (neblokuje UI)
-      setTimeout(() => initWalletCache().catch(console.error), 100);
-    },
-    getCurrentTheme: () => document.documentElement.getAttribute('data-theme'),
-    setTheme: (theme) => {
-      document.documentElement.setAttribute('data-theme', theme);
-      if (document.body) {
-        document.body.classList.remove('light', 'dark');
-        document.body.classList.add(theme);
-      }
-      localStorage.setItem('theme', theme);
-    },
-    // API pro ostatní JS soubory
-    getWalletCache: () => ({
-      wallet: localStorage.getItem('cached_wallet'),
-      sepolia_status: localStorage.getItem('sepolia_status')
-    })
-  };
+console.log('No ethProvider - cached sepolia_status: error');
 
-  // Automatická inicializace po načtení DOM (SYNCHRONNÍ!)
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', window.BaseCampTheme.init);
-  } else {
-    window.BaseCampTheme.init();
-  }
+return;
+
+}
+
+let accounts;
+
+try {
+
+accounts = await ethProvider.request({ method: "eth_requestAccounts" });
+
+} catch (e) {
+
+// TADY JISTÍŠ PÁD provideru
+
+console.log('eth_requestAccounts failed in common.js:', e);
+
+localStorage.setItem('sepolia_status', 'error');
+
+return;
+
+}
+
+const wallet = accounts && accounts.length > 0 ? accounts[0] : null;
+
+if (!wallet) {
+
+localStorage.setItem('sepolia_status', 'error');
+
+console.log('No wallet - cached sepolia_status: error');
+
+return;
+
+}
+
+localStorage.setItem('cached_wallet', wallet);
+
+let supportsSepolia = false;
+
+try {
+
+const chainIdHex = await ethProvider.request({ method: "eth_chainId" });
+
+const chainIdDec = parseInt(chainIdHex, 16);
+
+supportsSepolia = chainIdDec === BASE_SEPOLIA_CHAIN_ID_DEC;
+
+} catch (e) {
+
+console.log('Simple Sepolia check failed:', e);
+
+}
+
+const status = supportsSepolia ? 'ok' : 'warning';
+
+localStorage.setItem('sepolia_status', status);
+
+console.log(`Full cache set: wallet=${wallet}, sepolia_status=${status}`);
+
+} catch (error) {
+
+console.log('Wallet/Sepolia caching failed:', error);
+
+localStorage.setItem('sepolia_status', 'error');
+
+}
+
+}
+
+async function detectBaseSepoliaSupport(ethProvider) {
+
+try {
+
+const chainIdHex = await ethProvider.request({ method: "eth_chainId" });
+
+const chainIdDec = parseInt(chainIdHex, 16);
+
+return chainIdDec === BASE_SEPOLIA_CHAIN_ID_DEC;
+
+} catch (e) {
+
+console.log('Simple Sepolia check failed:', e);
+
+return false;
+
+}
+
+}
+
+function initTheme() {
+
+const savedTheme = localStorage.getItem('theme');
+
+const prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
+
+const defaultTheme = savedTheme || (prefersLight ? 'light' : 'dark');
+
+document.documentElement.setAttribute('data-theme', defaultTheme);
+
+if (document.body) {
+
+document.body.classList.remove('light', 'dark');
+
+document.body.classList.add(defaultTheme);
+
+}
+
+const toggle = document.getElementById('themeToggle');
+
+if (toggle) {
+
+const isDark = defaultTheme === 'dark';
+
+toggle.classList.toggle('on', isDark);
+
+}
+
+}
+
+function setupToggle() {
+
+const toggle = document.getElementById('themeToggle');
+
+if (!toggle) return;
+
+toggle.addEventListener('click', () => {
+
+const current = document.documentElement.getAttribute('data-theme');
+
+const next = current === 'light' ? 'dark' : 'light';
+
+document.documentElement.setAttribute('data-theme', next);
+
+if (document.body) {
+
+document.body.classList.remove('light', 'dark');
+
+document.body.classList.add(next);
+
+}
+
+localStorage.setItem('theme', next);
+
+const isDark = next === 'dark';
+
+toggle.classList.toggle('on', isDark);
+
+document.dispatchEvent(new CustomEvent('themeChanged', {
+
+detail: { theme: next }
+
+}));
+
+});
+
+toggle.addEventListener('keydown', (e) => {
+
+if (e.key === 'Enter' || e.key === ' ') {
+
+e.preventDefault();
+
+toggle.click();
+
+}
+
+});
+
+}
+
+function setupSystemPreferenceListener() {
+
+const mediaQuery = window.matchMedia('(prefers-color-scheme: light)');
+
+mediaQuery.addEventListener('change', (e) => {
+
+const savedTheme = localStorage.getItem('theme');
+
+if (!savedTheme) {
+
+const newTheme = e.matches ? 'light' : 'dark';
+
+document.documentElement.setAttribute('data-theme', newTheme);
+
+if (document.body) {
+
+document.body.classList.remove('light', 'dark');
+
+document.body.classList.add(newTheme);
+
+}
+
+const toggle = document.getElementById('themeToggle');
+
+if (toggle) {
+
+toggle.classList.toggle('on', newTheme === 'dark');
+
+}
+
+}
+
+});
+
+}
+
+// Public API
+
+window.BaseCampTheme = {
+
+init: () => {
+
+initTheme();
+
+setupToggle();
+
+setupSystemPreferenceListener();
+
+// Full wallet + sepolia cache v backgroundu (neblokuje UI)
+
+setTimeout(() => initWalletCache().catch(console.error), 100);
+
+},
+
+getCurrentTheme: () => document.documentElement.getAttribute('data-theme'),
+
+setTheme: (theme) => {
+
+document.documentElement.setAttribute('data-theme', theme);
+
+if (document.body) {
+
+document.body.classList.remove('light', 'dark');
+
+document.body.classList.add(theme);
+
+}
+
+localStorage.setItem('theme', theme);
+
+},
+
+// API pro ostatní JS soubory
+
+getWalletCache: () => ({
+
+wallet: localStorage.getItem('cached_wallet'),
+
+sepolia_status: localStorage.getItem('sepolia_status')
+
+}),
+
+// NOVÉ: Promise API pro čekání na wallet cache
+
+waitForWallet: () => {
+
+return new Promise((resolve, reject) => {
+
+const maxAttempts = 60; // 60 x 50ms = 3s timeout
+
+let attempts = 0;
+
+const check = () => {
+
+const cache = window.BaseCampTheme.getWalletCache();
+
+if (cache.wallet) {
+
+resolve(cache);
+
+} else if (attempts >= maxAttempts) {
+
+reject(new Error('Wallet cache timeout after 3s'));
+
+} else {
+
+attempts++;
+
+setTimeout(check, 50);
+
+}
+
+};
+
+check();
+
+});
+
+}
+
+};
+
+// Automatická inicializace po načtení DOM (SYNCHRONNÍ!)
+
+if (document.readyState === 'loading') {
+
+document.addEventListener('DOMContentLoaded', window.BaseCampTheme.init);
+
+} else {
+
+window.BaseCampTheme.init();
+
+}
+
 })();
