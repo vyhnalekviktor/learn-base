@@ -1,5 +1,5 @@
 import sdk from 'https://esm.sh/@farcaster/miniapp-sdk';
-const APIBASE = 'https://learn-base-backend.vercel.app';
+const API_BASE = 'https://learn-base-backend.vercel.app';
 const BASE_SEPOLIA_CHAIN_ID = '0x14a34'; // 84532 hex
 
 // DEBUG systém
@@ -123,11 +123,11 @@ async function grantFullPracticeProgress(wallet) {
 
   try {
     for (const field of fields) {
-      const res = await fetch(`${APIBASE}/api/database/updatefield`, {
+      const res = await fetch(`${API_BASE}/api/database/update_field`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          wallet, tablename: 'USERPROGRESS', fieldname: field, value: true
+          wallet, tablename: 'USER_PROGRESS', field_name: field, value: true
         })
       });
       debugLog(`${field}:`, res.ok ? '✅' : '❌', res.status);
@@ -215,7 +215,7 @@ function showCompatibilityWarning(type) {
 async function getProgress(wallet) {
   debugLog('📊 Fetching progress...');
   try {
-    const res = await fetch(`${APIBASE}/api/database/get-user`, {
+    const res = await fetch(`${API_BASE}/api/database/get-user`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ wallet })
