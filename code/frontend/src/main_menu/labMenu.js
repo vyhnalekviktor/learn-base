@@ -2,26 +2,15 @@ import sdk from 'https://esm.sh/@farcaster/miniapp-sdk';
 const API_BASE = 'https://learn-base-backend.vercel.app';
 const BASE_SEPOLIA_CHAIN_ID = '0x14a34'; // 84532 hex
 
-// DEBUG systém
-const DEBUG = true;
-function debugLog(...args) { console.log('%c[LABMENU]', 'color: #60a5fa; font-weight: bold;', ...args); }
-function debugError(...args) { console.error('%c[LABMENU ERROR]', 'color: #ef4444; font-weight: bold;', ...args); }
-function debugWarn(...args) { console.warn('%c[LABMENU WARN]', 'color: #f59e0b; font-weight: bold;', ...args); }
-
 window.addEventListener('load', async () => {
-  debugLog('🚀 Lab menu loaded');
-
   let loadingOverlay = null;
 
   try {
     await sdk.actions.ready();
-    debugLog('✅ SDK ready');
-
     loadingOverlay = showLoadingOverlay();
 
     // 1. Získej wallet
     const ethProvider = await sdk.wallet.ethProvider;
-    debugLog('ethProvider:', !!ethProvider);
 
     if (!ethProvider) {
       hideLoadingOverlay(loadingOverlay);
@@ -33,7 +22,6 @@ window.addEventListener('load', async () => {
     try {
       accounts = await ethProvider.request({ method: 'eth_requestAccounts' });
     } catch (e) {
-      debugError('eth_requestAccounts failed:', e);
       hideLoadingOverlay(loadingOverlay);
       showCompatibilityWarning('wallet');
       return;
@@ -41,13 +29,10 @@ window.addEventListener('load', async () => {
 
     const wallet = accounts?.[0];
     if (!wallet) {
-      debugWarn('No wallet address');
       hideLoadingOverlay(loadingOverlay);
       showCompatibilityWarning('wallet');
       return;
     }
-
-    debugLog('✅ Wallet:', wallet.slice(0,6)+'...'+wallet.slice(-4));
 
     // Update UI
     const span = document.getElementById('wallet-address');
@@ -57,12 +42,10 @@ window.addEventListener('load', async () => {
     const supportsSepolia = await detectSepoliaSupportSimple(ethProvider, wallet);
 
     if (supportsSepolia) {
-      debugLog('✅ Full Base Sepolia support');
-      localStorage.setItem('sepoliastatus', 'ok');
+      localStorage.setItem('sepolia_status', 'ok');
     } else {
-      debugLog('❌ Limited support → auto progress');
       await grantFullPracticeProgress(wallet);
-      localStorage.setItem('sepoliastatus', 'warning');
+      localStorage.setItem('sepolia_status', 'warning');
       showCompatibilityWarning('chain');
     }
 
@@ -70,10 +53,7 @@ window.addEventListener('load', async () => {
     hideLoadingOverlay(loadingOverlay);
     await getProgress(wallet);
 
-    debugLog('=== COMPLETE ===');
-
   } catch (error) {
-    debugError('Init failed:', error);
     hideLoadingOverlay(loadingOverlay);
     showCompatibilityWarning('error');
   }
@@ -81,44 +61,34 @@ window.addEventListener('load', async () => {
 
 // 🔍 NAJLEPŠÍ SEPOLIA CHECK - testuje wallet_switchEthereumChain
 async function detectSepoliaSupportSimple(ethProvider, wallet) {
-  debugLog('🔍 Testing wallet_switchEthereumChain → Base Sepolia...');
-
   try {
     await ethProvider.request({
       method: 'wallet_switchEthereumChain',
       params: [{ chainId: BASE_SEPOLIA_CHAIN_ID }]  // 84532 hex
     });
-    debugLog('✅ wallet_switchEthereumChain SUCCESS');
     return true;
 
   } catch (error) {
-    debugLog('❌ wallet_switchEthereumChain failed:', error.code, error.message);
-
     // 4001 = User rejected → wallet PODPORUJE
     if (error.code === 4001) {
-      debugLog('✅ Wallet supports (user rejected)');
       return true;
     }
 
     // 4902 = Chain not configured → wallet NEPODPORUJE
     if (error.code === 4902) {
-      debugLog('❌ Wallet cannot switch (chain missing)');
       return false;
     }
 
     // Ostatní chyby = neznámé
-    debugError('Unknown switch error:', error.code);
     return false;
   }
 }
 
 async function grantFullPracticeProgress(wallet) {
   if (!wallet) {
-    debugWarn('grantFullPracticeProgress: no wallet');
     return;
   }
 
-  debugLog('📝 Granting auto progress →', wallet.slice(0,6)+'...');
   const fields = ['send', 'receive', 'mint', 'launch'];
 
   try {
@@ -130,12 +100,9 @@ async function grantFullPracticeProgress(wallet) {
           wallet, tablename: 'USER_PROGRESS', field_name: field, value: true
         })
       });
-      debugLog(`${field}:`, res.ok ? '✅' : '❌', res.status);
     }
-    debugLog('✅ Auto progress granted!');
   } catch (error) {
-    debugError('grantFullPracticeProgress failed:', error);
-  }
+      }
 }
 
 function showLoadingOverlay() {
@@ -174,8 +141,6 @@ function hideLoadingOverlay(overlay) {
 }
 
 function showCompatibilityWarning(type) {
-  debugLog('⚠️ Showing warning:', type);
-
   const messages = {
     wallet: { title: 'Wallet Required', msg: 'Open in Coinbase Wallet/Base App', color: '#ff6b6b' },
     chain: { title: 'Limited Network', msg: 'Auto progress granted - you can still mint badge!', color: '#f59e0b' },
@@ -213,7 +178,6 @@ function showCompatibilityWarning(type) {
 }
 
 async function getProgress(wallet) {
-  debugLog('📊 Fetching progress...');
   try {
     const res = await fetch(`${API_BASE}/api/database/get-user`, {
       method: 'POST',
@@ -222,15 +186,12 @@ async function getProgress(wallet) {
     });
 
     if (!res.ok) {
-      debugError('get-user failed:', res.status);
       return;
     }
 
     const { progress } = await res.json();
     const parts = [progress?.faucet, progress?.send, progress?.receive, progress?.mint, progress?.launch];
     const percent = Math.round(parts.filter(Boolean).length / 5 * 100);
-
-    debugLog('Progress:', percent + '%', progress);
 
     // Update UI
     document.getElementById('progress-percent')?.setAttribute('textContent', percent + '%');
@@ -241,6 +202,5 @@ async function getProgress(wallet) {
     });
 
   } catch (err) {
-    debugError('getProgress failed:', err);
-  }
+      }
 }
