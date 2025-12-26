@@ -123,9 +123,6 @@ async function donate(amount) {
         <div style="font-size:18px;opacity:0.9;margin-bottom:40px;">
           Your support means a lot ❤️
         </div>
-        <div style="font-size:14px;opacity:0.6;padding:12px;background:rgba(255,255,255,0.1);border-radius:8px;">
-          Statistics updated successfully
-        </div>
       </div>
     `;
   }, 3000);
