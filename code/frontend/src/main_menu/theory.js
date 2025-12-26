@@ -10,15 +10,15 @@ async function initWallet() {
     await sdk.actions.ready();
     console.log('BaseCamp mini app is ready!');
 
-    // Zkus načíst wallet z cache (z theme.js)
+    // Zkus načíst wallet z cache z theme.js
     let wallet = localStorage.getItem('cached_wallet');
 
-    // Pokud není v cache, získej ho (fallback)
+    // Pokud není v cache, získej ho fallback
     if (!wallet) {
       console.log('No cached wallet, fetching from SDK...');
-      const ethProvider = await sdk.wallet.ethProvider;
+      const ethProvider = await sdk.wallet.ethProvider();
       const accounts = await ethProvider.request({ method: 'eth_requestAccounts' });
-      wallet = accounts && accounts.length > 0 ? accounts[0] : null;
+      wallet = accounts?.[0] || null;
 
       if (wallet) {
         // Ulož do cache pro budoucí použití
@@ -40,32 +40,9 @@ async function initWallet() {
     const span = document.getElementById('wallet-address');
     if (span) span.textContent = wallet;
 
-    await ensureUserExists();
     await getTheoryProgress();
   } catch (error) {
     console.error('Error during wallet init:', error);
-  }
-}
-
-async function ensureUserExists() {
-  if (!currentWallet) return;
-
-  try {
-    const res = await fetch(`${API_BASE}/api/database/init-user`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ wallet: currentWallet })
-    });
-
-    if (!res.ok) {
-      console.error('Failed to init user:', res.status);
-      return;
-    }
-
-    const data = await res.json();
-    console.log('User init:', data.created ? 'created' : 'exists');
-  } catch (error) {
-    console.error('ensureUserExists error:', error);
   }
 }
 
@@ -89,7 +66,7 @@ async function getTheoryProgress() {
 
     const data = await res.json();
     if (!data.success) {
-      console.error('API returned success=false');
+      console.error('API returned success:false');
       return;
     }
 
@@ -103,7 +80,7 @@ async function getTheoryProgress() {
     let completed = 0;
 
     theoryFields.forEach((field, index) => {
-      if (progress[field] === true) {
+      if (progress[field]) {
         completed++;
         markSectionCompleted(index + 1);
       }
@@ -129,27 +106,28 @@ function markSectionCompleted(sectionNumber) {
   const sectionId = sectionMap[sectionNumber];
   if (!sectionId) return;
 
-  const header = document.querySelector(
-    `[onclick="toggleAccordion('${sectionId}')"]`
-  );
+  // Najdi header a section
+  const header = document.querySelector(`[onclick="toggleAccordion('${sectionId}')"]`);
+  const section = header?.closest('.accordion-section');
 
   if (header) {
     header.classList.add('completed');
-    console.log(`Section ${sectionId} marked as completed`);
   }
+
+  if (section) {
+    section.classList.add('completed');
+    section.classList.add(`theory-item-${sectionNumber}`);
+  }
+
+  console.log(`Section ${sectionId} marked as completed`);
 }
 
 function updateProgressBar(percent) {
   const percentEl = document.getElementById('theory-progress-percent');
   const barEl = document.getElementById('theory-progress-bar-fill');
 
-  if (percentEl) {
-    percentEl.textContent = `${percent}%`;
-  }
-
-  if (barEl) {
-    barEl.style.width = `${percent}%`;
-  }
+  if (percentEl) percentEl.textContent = `${percent}%`;
+  if (barEl) barEl.style.width = `${percent}%`;
 }
 
 async function updateTheoryProgress(sectionNumber) {
@@ -165,15 +143,15 @@ async function updateTheoryProgress(sectionNumber) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         wallet: currentWallet,
-        table_name: 'USER_PROGRESS',
-        field_name: `theory${sectionNumber}`,
+        tablename: 'USER_PROGRESS',
+        field_dname: `theory${sectionNumber}`,
         value: true
       })
     });
 
     if (!res.ok) {
       const errorText = await res.text();
-      console.error(`Update failed (${res.status}):`, errorText);
+      console.error(`Update failed ${res.status}:`, errorText);
       return false;
     }
 
@@ -187,17 +165,18 @@ async function updateTheoryProgress(sectionNumber) {
 }
 
 function toggleAccordion(sectionId) {
-  const content = document.getElementById('content-' + sectionId);
-  const icon = document.getElementById('icon-' + sectionId);
+  const content = document.getElementById(`content-${sectionId}`);
+  const icon = document.getElementById(`icon-${sectionId}`);
 
   if (!content || !icon) {
-    console.error('Accordion elements not found:', sectionId);
+    console.error(`Accordion elements not found: ${sectionId}`);
     return;
   }
 
   const header = icon.parentElement;
   const isOpen = content.classList.contains('active');
 
+  // Zavři všechny ostatní accordiony
   document.querySelectorAll('.accordion-content').forEach(c => {
     c.classList.remove('active');
     c.style.maxHeight = null;
@@ -217,17 +196,19 @@ function toggleAccordion(sectionId) {
   });
 
   if (!isOpen) {
+    // Otevři tento accordion
     content.classList.add('active');
     content.style.maxHeight = content.scrollHeight + 'px';
+
     icon.textContent = '▲';
     icon.classList.add('active');
 
     if (!header.classList.contains('completed')) {
-      header.style.background =
-        'linear-gradient(135deg, #0052FF 0%, #0041CC 100%)';
+      header.style.background = 'linear-gradient(135deg, #0052FF 0%, #0041CC 100%)';
       header.style.color = 'white';
     }
 
+    // Update progress když se sekce otevře
     const sectionMap = {
       'core-blockchain': 1,
       'wallet-security': 2,
@@ -238,11 +219,12 @@ function toggleAccordion(sectionId) {
 
     const sectionNumber = sectionMap[sectionId];
     if (sectionNumber) {
-      console.log(`Opened section ${sectionId} -> theory${sectionNumber}`);
+      console.log(`Opened section ${sectionId} - theory${sectionNumber}`);
       updateTheoryProgress(sectionNumber);
     }
   }
 }
 
+// Inicializace
 window.addEventListener('load', initWallet);
 window.toggleAccordion = toggleAccordion;
