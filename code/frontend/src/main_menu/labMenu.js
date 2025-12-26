@@ -1,162 +1,187 @@
-import { sdk } from "https://esm.sh/@farcaster/miniapp-sdk";
+    import sdk from 'https://esm.sh/@farcaster/miniapp-sdk';
+const APIBASE = 'https://learn-base-backend.vercel.app';
+const BASESEPOLIACHAINIDDEC = 84532;
 
-const API_BASE = "https://learn-base-backend.vercel.app";
-const BASE_SEPOLIA_CHAIN_ID_DEC = 84532;
+// DEBUG systém
+const DEBUG = true;
 
-window.addEventListener("load", async () => {
+function debugLog(...args) {
+  if (DEBUG) {
+    console.log('%c[DEBUG]', 'color: #60a5fa; font-weight: bold;', ...args);
+  }
+}
+
+function debugError(...args) {
+  console.error('%c[ERROR]', 'color: #ef4444; font-weight: bold;', ...args);
+}
+
+function debugWarn(...args) {
+  console.warn('%c[WARN]', 'color: #f59e0b; font-weight: bold;', ...args);
+}
+
+window.addEventListener('load', async () => {
+  debugLog('Lab menu loaded, calling sdk.actions.ready...');
+
   let loadingOverlay = null;
 
   try {
-    console.log("Lab menu loaded, calling sdk.actions.ready()...");
     await sdk.actions.ready();
-    console.log("BaseCamp mini app is ready!");
+    debugLog('BaseCamp mini app is ready!');
 
-    // === START: loading overlay ===
+    // START loading overlay
     loadingOverlay = showLoadingOverlay();
 
-    const walletErrorSeen =
-      localStorage.getItem("wallet_error_seen") === "true";
-    let sepoliaStatus = localStorage.getItem("sepolia_status");
+    const walletErrorSeen = localStorage.getItem('walleterrorseen') === 'true';
+    let sepoliaStatus = localStorage.getItem('sepoliastatus');
 
-    // 1) Získání wallet
+    debugLog('walletErrorSeen:', walletErrorSeen);
+    debugLog('Initial sepoliaStatus:', sepoliaStatus);
+
+    // Získání wallet
     const ethProvider = await sdk.wallet.ethProvider;
+    debugLog('ethProvider available:', !!ethProvider);
+
     if (!ethProvider) {
       if (loadingOverlay) hideLoadingOverlay(loadingOverlay);
-      localStorage.setItem("sepolia_status", "error");
+      localStorage.setItem('sepoliastatus', 'error');
       if (!walletErrorSeen) {
-        showCompatibilityWarning("wallet");
-        localStorage.setItem("wallet_error_seen", "true");
+        showCompatibilityWarning('wallet');
+        localStorage.setItem('walleterrorseen', 'true');
       }
       return;
     }
 
     let accounts;
     try {
-      accounts = await ethProvider.request({ method: "eth_requestAccounts" });
+      accounts = await ethProvider.request({ method: 'eth_requestAccounts' });
+      debugLog('eth_requestAccounts success, accounts count:', accounts?.length);
     } catch (e) {
-      console.log("eth_requestAccounts failed:", e);
+      debugError('eth_requestAccounts failed:', e);
       if (loadingOverlay) hideLoadingOverlay(loadingOverlay);
-      localStorage.setItem("sepolia_status", "error");
+      localStorage.setItem('sepoliastatus', 'error');
       if (!walletErrorSeen) {
-        showCompatibilityWarning("wallet");
-        localStorage.setItem("wallet_error_seen", "true");
+        showCompatibilityWarning('wallet');
+        localStorage.setItem('walleterrorseen', 'true');
       }
       return;
     }
 
-    const wallet = accounts && accounts.length > 0 ? accounts[0] : null;
+    const wallet = accounts?.length > 0 ? accounts[0] : null;
+    debugLog('Final wallet address:', wallet);
+
     if (!wallet) {
-      console.warn("Wallet address not found from ethProvider.request()");
+      debugWarn('Wallet address not found from ethProvider.request');
       if (loadingOverlay) hideLoadingOverlay(loadingOverlay);
-      localStorage.setItem("sepolia_status", "error");
+      localStorage.setItem('sepoliastatus', 'error');
       if (!walletErrorSeen) {
-        showCompatibilityWarning("wallet");
-        localStorage.setItem("wallet_error_seen", "true");
+        showCompatibilityWarning('wallet');
+        localStorage.setItem('walleterrorseen', 'true');
       }
       return;
     }
 
-    console.log("Connected wallet from SDK:", wallet);
+    // Update wallet address v UI
+    const span = document.getElementById('wallet-address');
+    if (span) {
+      span.textContent = wallet.slice(0, 2) + wallet.slice(-4);
+    }
 
-    const span = document.getElementById("wallet-address");
-    if (span) span.textContent = wallet;
+    // 2. Network check + progress jen při prvním zjištění nekompatibility
+    sepoliaStatus = localStorage.getItem('sepoliastatus');
+    debugLog('Network check - cached sepoliaStatus:', sepoliaStatus);
 
-    // 2) Network check – progress jen při prvním zjištění nekompatibility
-    sepoliaStatus = localStorage.getItem("sepolia_status");
-
-    if (!sepoliaStatus) {
-      // ještě jsme nikdy netestovali
+    if (!sepoliaStatus) {  // Ještě jsme nikdy netestovali
+      debugLog('First time Sepolia compatibility check');
       const supportsSepolia = await detectBaseSepoliaSupport(ethProvider);
-      console.log("Base Sepolia support (lab menu):", supportsSepolia);
+      debugLog('Base Sepolia support result:', supportsSepolia);
 
       if (supportsSepolia) {
-        localStorage.setItem("sepolia_status", "ok");
+        localStorage.setItem('sepoliastatus', 'ok');
+        debugLog('Set sepoliaStatus: ok');
       } else {
-        // PRVNÍ zjištění nekompatibility → uděl progress
+        // PRVNÍ zjištění nekompatibility -> uděl progress
+        debugLog('Sepolia NOT supported -> granting full practice progress');
         await grantFullPracticeProgress(wallet);
-        localStorage.setItem("sepolia_status", "warning");
-        showCompatibilityWarning("chain");
+        localStorage.setItem('sepoliastatus', 'warning');
+        debugLog('Set sepoliaStatus: warning');
+        showCompatibilityWarning('chain');
       }
     } else {
-      console.log("Sepolia status from cache:", sepoliaStatus);
-
-      if (sepoliaStatus === "warning") {
-        // už víme, že je nekompatibilní → jen banner
-        showCompatibilityWarning("chain");
-      } else if (sepoliaStatus === "error" && !walletErrorSeen) {
-        showCompatibilityWarning("error");
-        localStorage.setItem("wallet_error_seen", "true");
+      debugLog('Using cached sepoliaStatus:', sepoliaStatus);
+      if (sepoliaStatus === 'warning') {
+        // Už víme, že je nekompatibilní -> jen banner
+        showCompatibilityWarning('chain');
+      } else if (sepoliaStatus === 'error' && !walletErrorSeen) {
+        showCompatibilityWarning('error');
+        localStorage.setItem('walleterrorseen', 'true');
       }
-      // sepolia_status === "ok" → nic navíc
+      // sepoliastatus === 'ok' -> nic navíc
     }
 
-    // === Wallet + Sepolia hotové → skryj loading a načti progress ===
+    // Wallet + Sepolia hotovo -> skryj loading a načti progress
     if (loadingOverlay) hideLoadingOverlay(loadingOverlay);
+    debugLog('Loading overlay hidden, fetching progress...');
     await getProgress(wallet);
+
   } catch (error) {
-    console.error("Error during MiniApp wallet init (labMenu):", error);
+    debugError('Error during MiniApp wallet init (labMenu):', error);
     if (loadingOverlay) hideLoadingOverlay(loadingOverlay);
-    localStorage.setItem("sepolia_status", "error");
-    if (!localStorage.getItem("wallet_error_seen")) {
-      showCompatibilityWarning("error");
-      localStorage.setItem("wallet_error_seen", "true");
+    localStorage.setItem('sepoliastatus', 'error');
+    if (!localStorage.getItem('walleterrorseen')) {
+      showCompatibilityWarning('error');
+      localStorage.setItem('walleterrorseen', 'true');
     }
   }
+
+  debugLog('=== MiniApp wallet init COMPLETE ===');
+  debugLog('Final sepoliaStatus:', localStorage.getItem('sepoliastatus'));
+  debugLog('Final walletErrorSeen:', localStorage.getItem('walleterrorseen'));
 });
 
 function showLoadingOverlay() {
-  const overlay = document.createElement("div");
+  debugLog('Showing loading overlay');
+  const overlay = document.createElement('div');
   overlay.style.cssText = `
-    position: fixed;
-    inset: 0;
+    position: fixed; inset: 0;
     background: rgba(2, 6, 23, 0.95);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    z-index: 9999;
-    backdrop-filter: blur(8px);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    z-index: 9999; backdrop-filter: blur(8px);
   `;
 
-  const spinner = document.createElement("div");
+  const spinner = document.createElement('div');
   spinner.style.cssText = `
-    width: 48px;
-    height: 48px;
+    width: 48px; height: 48px;
     border: 4px solid rgba(96, 165, 250, 0.2);
     border-top-color: #60a5fa;
     border-radius: 50%;
     animation: spin 0.8s linear infinite;
   `;
 
-  const text = document.createElement("div");
+  const text = document.createElement('div');
   text.style.cssText = `
-    margin-top: 20px;
-    color: #e5e7eb;
-    font-size: 15px;
-    font-weight: 600;
+    margin-top: 20px; color: #e5e7eb;
+    font-size: 15px; font-weight: 600;
     font-family: system-ui, -apple-system, Inter;
   `;
-  text.textContent = "Checking wallet and network compatibility...";
+  text.textContent = 'Checking wallet and network compatibility...';
 
   overlay.appendChild(spinner);
   overlay.appendChild(text);
 
-  const style = document.createElement("style");
-  style.textContent = `
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-  `;
+  const style = document.createElement('style');
+  style.textContent = `@keyframes spin { to { transform: rotate(360deg); } }`;
   document.head.appendChild(style);
-
   document.body.appendChild(overlay);
+
   return overlay;
 }
 
 function hideLoadingOverlay(overlay) {
+  debugLog('Hiding loading overlay');
   if (overlay && overlay.parentNode) {
-    overlay.style.opacity = "0";
-    overlay.style.transition = "opacity 0.3s ease";
+    overlay.style.opacity = '0';
+    overlay.style.transition = 'opacity 0.3s ease';
     setTimeout(() => {
       if (overlay.parentNode) {
         overlay.parentNode.removeChild(overlay);
@@ -166,153 +191,132 @@ function hideLoadingOverlay(overlay) {
 }
 
 async function detectBaseSepoliaSupport(ethProvider) {
+  debugLog('detectBaseSepoliaSupport started');
   try {
-    const { JsonRpcProvider } = await import(
-      "https://esm.sh/ethers@6.9.0"
-    );
+    const { JsonRpcProvider } = await import('https://esm.sh/ethers@6.9.0');
 
     let chainIdDec = null;
     try {
-      const chainIdHex = await ethProvider.request({
-        method: "eth_chainId",
-      });
+      const chainIdHex = await ethProvider.request({ method: 'eth_chainId' });
       chainIdDec = parseInt(chainIdHex, 16);
-      console.log("Current chain from ethProvider:", chainIdDec);
+      debugLog('Current chain from ethProvider:', chainIdDec);
     } catch (e) {
-      console.log("eth_chainId failed:", e);
+      debugError('eth_chainId failed:', e);
     }
 
+    // Kompatibilní považujeme jen pokud je uživatel přímo na Base Sepolia
     try {
-      const readProvider = new JsonRpcProvider("https://sepolia.base.org");
+      const readProvider = new JsonRpcProvider('https://sepolia.base.org');
       await readProvider.getBlockNumber();
-      // kompatibilní považujeme jen pokud je uživatel přímo na Base Sepolia
-      return chainIdDec === BASE_SEPOLIA_CHAIN_ID_DEC;
+      debugLog('Base Sepolia RPC check: OK');
+      const result = chainIdDec === BASESEPOLIACHAINIDDEC;
+      debugLog('Final Sepolia support (chain match):', result);
+      return result;
     } catch (e) {
-      console.log("Base Sepolia RPC check failed:", e);
+      debugError('Base Sepolia RPC check failed:', e);
       return false;
     }
   } catch (e) {
-    console.log("detectBaseSepoliaSupport fatal:", e);
+    debugError('detectBaseSepoliaSupport fatal:', e);
     return false;
   }
 }
 
 async function grantFullPracticeProgress(wallet) {
-  if (!wallet) return;
+  if (!wallet) {
+    debugWarn('grantFullPracticeProgress: no wallet provided');
+    return;
+  }
 
-  console.log(
-    "Granting full practice progress for wallet without Base Sepolia support (lab menu):",
-    wallet
-  );
-
-  const practiceFields = ["send", "receive", "mint", "launch"];
+  debugLog('Granting full practice progress for wallet:', wallet);
+  const practiceFields = ['send', 'receive', 'mint', 'launch'];
 
   try {
     for (const field of practiceFields) {
-      const res = await fetch(`${API_BASE}/api/database/update_field`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      debugLog(`Updating progress field: ${field}`);
+      const res = await fetch(`${APIBASE}/api/database/updatefield`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           wallet,
-          table_name: "USER_PROGRESS",
-          field_name: field,
-          value: true,
-        }),
+          tablename: 'USERPROGRESS',
+          fieldname: field,
+          value: true
+        })
       });
-      console.log(`update_field ${field}:`, res.ok, res.status);
-    }
 
-    console.log("Full practice progress granted successfully (lab menu)");
+      const status = res.ok ? 'OK' : 'FAILED';
+      debugLog(`updatefield ${field}: ${status} (${res.status})`);
+
+      if (!res.ok) {
+        try {
+          const errorText = await res.text();
+          debugError(`updatefield ${field} response:`, errorText);
+        } catch {
+          debugError(`updatefield ${field} failed to read error`);
+        }
+      }
+    }
+    debugLog('Full practice progress granted successfully (lab menu)');
   } catch (error) {
-    console.error("Error granting practice progress (lab menu):", error);
+    debugError('Error granting practice progress (lab menu):', error);
   }
 }
 
 function showCompatibilityWarning(type) {
-  let title = "Compatibility Issue";
-  let message = "";
-  let suggestion = "";
+  debugLog('showCompatibilityWarning called with type:', type);
 
-  if (type === "wallet") {
-    title = "Wallet Required";
-    message =
-      "This practice lab requires wallet access for Base transactions.";
-    suggestion =
-      "Open BaseCamp in Coinbase Wallet or Base App for full functionality.";
-  } else if (type === "chain") {
-    title = "Limited Network Support";
-    message =
-      "Your environment does not support Base Sepolia testnet.";
-    suggestion =
-      "Practice transactions may fail. You have been automatically granted practice progress and can still mint your completion badge.";
+  let title = 'Compatibility Issue';
+  let message, suggestion;
+
+  if (type === 'wallet') {
+    title = 'Wallet Required';
+    message = 'This practice lab requires wallet access for Base transactions.';
+    suggestion = 'Open BaseCamp in Coinbase Wallet or Base App for full functionality.';
+  } else if (type === 'chain') {
+    title = 'Limited Network Support';
+    message = 'Your environment does not support Base Sepolia testnet.';
+    suggestion = 'Practice transactions may fail. You have been automatically granted practice progress and can still mint your completion badge.';
   } else {
-    title = "Initialization Error";
-    message = "Failed to initialize the practice lab.";
-    suggestion =
-      "Try opening in Coinbase Wallet or refresh the page.";
+    title = 'Initialization Error';
+    message = 'Failed to initialize the practice lab.';
+    suggestion = 'Try opening in Coinbase Wallet or refresh the page.';
   }
 
-  const banner = document.createElement("div");
+  const banner = document.createElement('div');
   banner.style.cssText = `
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    background: ${
-      type === "chain"
-        ? "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)"
-        : "linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%)"
-    };
-    color: white;
-    padding: 14px 18px;
-    text-align: center;
-    z-index: 10000;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    font-family: system-ui, -apple-system, sans-serif;
-    font-size: 14px;
+    position: fixed; top: 0; left: 0; right: 0;
+    background: ${type === 'chain' ?
+      'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' :
+      'linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%)'};
+    color: white; padding: 14px 18px; text-align: center;
+    z-index: 10000; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    font-family: system-ui, -apple-system, sans-serif; font-size: 14px;
   `;
 
   banner.innerHTML = `
     <div style="max-width: 680px; margin: 0 auto; position: relative;">
       <button id="dismiss-warning" style="
-        position: absolute;
-        top: -6px;
-        right: 0;
-        width: 28px;
-        height: 28px;
-        background: rgba(255,255,255,0.25);
-        border: none;
-        border-radius: 50%;
-        font-size: 18px;
-        font-weight: 700;
-        color: white;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        position: absolute; top: -6px; right: 0;
+        width: 28px; height: 28px; background: rgba(255,255,255,0.25);
+        border: none; border-radius: 50%; font-size: 18px; font-weight: 700;
+        color: white; cursor: pointer; display: flex; align-items: center; justify-content: center;
         transition: all 0.2s ease;
-      " onmouseover="this.style.background='rgba(255,255,255,0.35)'" onmouseout="this.style.background='rgba(255,255,255,0.25)'">
-        ×
-      </button>
-      <div style="font-weight: 700; margin-bottom: 4px;">
-        ${title}
-      </div>
-      <div style="opacity: 0.95; margin-bottom: 4px;">
-        ${message}
-      </div>
-      <div style="opacity: 0.9; font-size: 13px;">
-        ${suggestion}
-      </div>
+        &:hover { background: rgba(255,255,255,0.35); }
+      ">×</button>
+      <div style="font-weight: 700; margin-bottom: 4px;">${title}</div>
+      <div style="opacity: 0.95; margin-bottom: 4px;">${message}</div>
+      <div style="opacity: 0.9; font-size: 13px;">${suggestion}</div>
     </div>
   `;
 
   document.body.insertBefore(banner, document.body.firstChild);
 
-  const dismissBtn = banner.querySelector("#dismiss-warning");
+  const dismissBtn = banner.querySelector('#dismiss-warning');
   if (dismissBtn) {
-    dismissBtn.addEventListener("click", () => {
-      banner.style.opacity = "0";
-      banner.style.transition = "opacity 0.3s ease";
+    dismissBtn.addEventListener('click', () => {
+      banner.style.opacity = '0';
+      banner.style.transition = 'opacity 0.3s ease';
       setTimeout(() => {
         if (banner.parentNode) {
           banner.parentNode.removeChild(banner);
@@ -320,86 +324,86 @@ function showCompatibilityWarning(type) {
       }, 300);
     });
   }
+
+  debugLog('Compatibility warning banner shown');
 }
 
 async function getProgress(wallet) {
-  if (!wallet) return;
+  if (!wallet) {
+    debugWarn('getProgress: no wallet provided');
+    return;
+  }
+
+  debugLog('Fetching progress for wallet:', wallet);
 
   try {
-    const res = await fetch(`${API_BASE}/api/database/get-user`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ wallet }),
+    const res = await fetch(`${APIBASE}/api/database/get-user`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ wallet })
     });
 
     if (!res.ok) {
-      let msg = "Unknown backend error";
+      let msg = 'Unknown backend error';
       try {
         const err = await res.json();
         msg = err.detail || JSON.stringify(err);
-      } catch (_) {}
-      console.error("get-user error:", msg);
+      } catch {
+        // ignore
+      }
+      debugError('get-user API failed:', res.status, msg);
       return;
     }
 
     const data = await res.json();
     const progress = data.progress;
+    debugLog('Backend progress data:', progress);
+
     if (!progress) {
-      console.error("No progress object in response");
+      debugError('No progress object in response');
       return;
     }
 
-    const parts = [
-      progress.faucet,
-      progress.send,
-      progress.receive,
-      progress.mint,
-      progress.launch,
-    ];
-
+    const parts = [progress.faucet, progress.send, progress.receive, progress.mint, progress.launch];
     let completed = 0;
     for (const part of parts) {
-      if (part === true) completed += 1;
+      if (part === true) completed++;
     }
+    const percent = Math.round((completed / parts.length) * 100);
+    debugLog('Calculated progress percent:', percent, 'completed:', completed, 'total:', parts.length);
 
-    const percent = (completed / parts.length) * 100;
-    console.log("Progress percent:", percent);
+    // Update progress UI
+    const label = document.getElementById('progress-percent');
+    if (label) label.textContent = `${percent}%`;
 
-    const label = document.getElementById("progress-percent");
-    if (label) {
-      label.textContent = `${percent}%`;
-    }
+    const bar = document.getElementById('progress-bar-fill');
+    if (bar) bar.style.width = `${percent}%`;
 
-    const bar = document.getElementById("progress-bar-fill");
-    if (bar) {
-      bar.style.width = `${percent}%`;
-    }
-
+    // Update menu items
     if (progress.faucet === true) {
-      const el = document.getElementById("item-faucet");
-      if (el) el.classList.add("completed");
+      const el = document.getElementById('item-faucet');
+      if (el) el.classList.add('completed');
     }
-
     if (progress.send === true) {
-      const el = document.getElementById("item-send");
-      if (el) el.classList.add("completed");
+      const el = document.getElementById('item-send');
+      if (el) el.classList.add('completed');
     }
-
     if (progress.receive === true) {
-      const el = document.getElementById("item-receive");
-      if (el) el.classList.add("completed");
+      const el = document.getElementById('item-receive');
+      if (el) el.classList.add('completed');
     }
-
     if (progress.mint === true) {
-      const el = document.getElementById("item-mint");
-      if (el) el.classList.add("completed");
+      const el = document.getElementById('item-mint');
+      if (el) el.classList.add('completed');
+    }
+    if (progress.launch === true) {
+      const el = document.getElementById('item-launch');
+      if (el) el.classList.add('completed');
     }
 
-    if (progress.launch === true) {
-      const el = document.getElementById("item-launch");
-      if (el) el.classList.add("completed");
-    }
+    debugLog('Progress UI updated successfully');
+
   } catch (err) {
-    console.error("getProgress error:", err);
+    debugError('getProgress error:', err);
   }
 }
