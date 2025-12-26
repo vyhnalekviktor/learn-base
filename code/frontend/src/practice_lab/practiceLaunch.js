@@ -197,31 +197,25 @@ window.launchToken = async function (tokenName) {
     await updatePracticeLaunchProgress(wallet)
 
     statusDiv.className = "success-box"
-    statusDiv.innerHTML = `
-      <p><strong>Token launched successfully!</strong></p>
-      <p><strong>${cleanName}</strong> (${symbol})</p>
-      <p>Supply: 1,000,000 tokens</p>
-      <p>Contract: <code>${tokenAddress.slice(0,4)}...${tokenAddress.slice(-4)}</code></p>
-      <button>
-      <div style="margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap;">
-  onclick="openSepoliaScanAddress('${scannerUrl}')"
-  style="
-    padding: 8px 16px;
-    background: #0052FF;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 600;
-    display: block;
-    margin: 12px auto 0;
-  "
->
-  View on BaseScan
-        </button>
-      </div>
-    `
+    // Místo innerHTML
+statusDiv.innerHTML = `
+  <p><strong>Token launched successfully!</strong></p>
+  <p><strong>${cleanName}</strong> (${symbol})</p>
+  <p>Supply: 1,000,000 tokens</p>
+  <p>Contract: <code>${tokenAddress.slice(0,4)}...${tokenAddress.slice(-4)}</code></p>
+`;
+
+// Přidej button odděleně
+const viewBtn = document.createElement('button');
+viewBtn.textContent = 'View on BaseScan';
+viewBtn.onclick = () => openSepoliaScanAddress(scannerUrl);
+viewBtn.style.cssText = `
+  padding: 8px 16px; background: #0052FF; color: white; border: none;
+  border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600;
+  display: block; margin: 12px auto 0;
+`;
+statusDiv.appendChild(viewBtn);
+
   } catch (error) {
     statusDiv.className = "error-box"
 
