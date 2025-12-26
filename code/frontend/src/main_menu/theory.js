@@ -10,25 +10,44 @@ async function initWallet() {
     await sdk.actions.ready();
     console.log('BaseCamp mini app is ready!');
 
-    const ethProvider = await sdk.wallet.ethProvider;
-    const accounts = await ethProvider.request({ method: 'eth_requestAccounts' });
-    const wallet = accounts && accounts.length > 0 ? accounts[0] : null;
+    // ====== USE WALLET CACHE FROM COMMON.JS ======
+    let wallet = null;
+    let cacheLoaded = false;
 
-    if (!wallet) {
-      console.warn('Wallet address not found');
+    // Try cache from common.js (max 3s wait)
+    if (window.BaseCampTheme?.waitForWallet) {
+      try {
+        const cache = await window.BaseCampTheme.waitForWallet();
+        cacheLoaded = true;
+        wallet = cache.wallet;
+        console.log('✅ theory: Wallet from cache:', wallet);
+      } catch (err) {
+        console.log('⏱️ theory: Cache timeout:', err);
+      }
+    }
+
+    // Fallback: Direct localStorage check
+    if (!cacheLoaded) {
+      wallet = localStorage.getItem('cached_wallet');
+      console.log('📦 theory: Direct localStorage:', wallet);
+    }
+
+    // Check if wallet exists
+    if (!wallet || wallet === '') {
+      console.warn('⚠️ No wallet available');
       return;
     }
 
-    console.log('Connected wallet:', wallet);
+    console.log('✅ Connected wallet:', wallet);
     currentWallet = wallet;
 
     const span = document.getElementById('wallet-address');
-    if (span) span.textContent = wallet;
+    if (span) span.textContent = wallet.slice(0,6)+'...'+wallet.slice(-4);
 
     await ensureUserExists();
     await getTheoryProgress();
   } catch (error) {
-    console.error('Error during wallet init:', error);
+    console.error('❌ theory wallet init error:', error);
   }
 }
 

@@ -108,6 +108,11 @@ body {
   margin-bottom: 0;
 }
 
+/* ACCORDION SECTION */
+.accordion-section {
+  margin-bottom: 12px;
+}
+
 /* ACCORDION - ČISTÝ DESIGN S HIERARCHIÍ */
 .accordion-item {
   background: var(--bg-card) !important;
@@ -175,9 +180,33 @@ body {
   text-align: left;
 }
 
-.accordion-content.open {
+.accordion-content.active {
   max-height: 5000px;
   border-top: 1px solid var(--border);
+}
+
+/* ✅ COMPLETED STATES - THEORY ACCORDION - HIGHEST SPECIFICITY */
+button.accordion-header.completed,
+.accordion-header.completed {
+  background: var(--success-bg) !important;
+  border-color: var(--success-border) !important;
+}
+
+button.accordion-header.completed:hover,
+.accordion-header.completed:hover {
+  background: color-mix(in srgb, var(--success-bg) 90%, var(--success-border)) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(22, 163, 74, 0.25);
+}
+
+/* All text inside completed accordion header */
+button.accordion-header.completed,
+button.accordion-header.completed span,
+button.accordion-header.completed .accordion-icon,
+.accordion-header.completed,
+.accordion-header.completed span,
+.accordion-header.completed .accordion-icon {
+  color: var(--success-text) !important;
 }
 
 /* TERM DEFINITION - LEPŠÍ SPACING */
@@ -196,7 +225,8 @@ body {
   padding-bottom: 20px;
 }
 
-.term-definition h4 {
+.term-definition h4,
+.term-definition .term-title {
   font-size: 16px;
   margin: 0 0 8px 0;
   color: var(--accent);
@@ -204,7 +234,8 @@ body {
   letter-spacing: -0.01em;
 }
 
-.term-definition p {
+.term-definition p,
+.term-definition .term-desc {
   margin: 0;
   line-height: 1.65;
   font-size: 14px;
@@ -213,6 +244,10 @@ body {
 }
 
 /* PROGRESS BAR */
+#theory-progress-container {
+  margin: 20px 0 24px;
+}
+
 .progress-bar {
   width: 100%;
   background: var(--bg-card);
@@ -235,6 +270,7 @@ body {
   color: var(--text-muted);
   font-weight: 500;
   margin-bottom: 6px;
+  text-align: center;
 }
 
 /* USER INFO + THEME TOGGLE */
@@ -424,6 +460,7 @@ body {
   align-items: center;
   justify-content: center;
   text-align: center;
+}
 
 .cta-button:hover:not(:disabled) {
   transform: translateY(-2px);
@@ -662,6 +699,19 @@ footer strong {
 .bottom-nav-icon {
   font-size: 22px;
   transition: transform 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bottom-nav-icon svg {
+  width: 22px;
+  height: 22px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .bottom-nav a:active .bottom-nav-icon {
@@ -708,11 +758,13 @@ footer strong {
     padding: 16px;
   }
 
-  .term-definition h4 {
+  .term-definition h4,
+  .term-definition .term-title {
     font-size: 15px;
   }
 
-  .term-definition p {
+  .term-definition p,
+  .term-definition .term-desc {
     font-size: 13px;
   }
 }
@@ -746,59 +798,14 @@ footer strong {
   }
 }
 
-/* COMPLETED STATES - THEORY + TUTORIAL */
-#theory-item-1.completed,
-#theory-item-2.completed,
-#theory-item-3.completed,
-#theory-item-4.completed,
-#theory-item-5.completed,
-.accordion-item.completed {
-  background: var(--success-bg) !important;
-  border-color: var(--success-border) !important;
-  color: var(--success-text) !important;
-}
-
-#theory-item-1.completed h3,
-#theory-item-1.completed p,
-#theory-item-2.completed h3,
-#theory-item-2.completed p,
-#theory-item-3.completed h3,
-#theory-item-3.completed p,
-#theory-item-4.completed h3,
-#theory-item-4.completed p,
-#theory-item-5.completed h3,
-#theory-item-5.completed p,
-.accordion-item.completed .accordion-header,
-.accordion-item.completed .accordion-header span {
-  color: var(--success-text) !important;
-}
-
-.accordion-item.completed:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 14px rgba(22, 163, 74, 0.35);
-}
-.bottom-nav-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.bottom-nav-icon svg {
-  width: 22px;
-  height: 22px;
-  stroke: currentColor;
-  fill: none;
-  stroke-width: 1.8;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
+/* SOURCES */
 .sources {
   font-size: 13px;
   line-height: 1.5;
   color: var(--text-muted);
   text-align: center;
   scroll-margin-top: 80px;
-    padding-bottom: 50px;
+  padding-bottom: 50px;
 }
 
 .sources a {
@@ -811,20 +818,7 @@ footer strong {
   text-decoration: underline;
 }
 
-/* COMPLETED STATES - THEORY ACCORDION HEADERS */
-.accordion-header.completed {
-  background: var(--success-bg) !important;
-  border-color: var(--success-border) !important;
-  color: var(--success-text) !important;
-}
-
-.accordion-header.completed span,
-.accordion-header.completed h3,
-.accordion-header.completed p {
-  color: var(--success-text) !important;
-}
-
-
+/* BONUS SECTION */
 .bonus-section {
   background: rgba(96, 165, 250, 0.10);
   border-radius: 12px;
