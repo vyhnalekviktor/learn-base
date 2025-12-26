@@ -11,124 +11,49 @@ window.addEventListener("load", async () => {
     await sdk.actions.ready();
     console.log("BaseCamp mini app is ready!");
 
-    const walletErrorSeen = localStorage.getItem("wallet_error_seen") === "true";
-    let sepoliaStatus = localStorage.getItem("sepolia_status");
+    loadingOverlay = showLoadingOverlay();
 
-    // Pokud už víme, že je error a banner už byl ukázaný, tiše skonči
-    if (sepoliaStatus === "error" && walletErrorSeen) {
-      console.log("Sepolia status is error and wallet error already seen, skipping init silently");
+    const ethProvider = await sdk.wallet.ethProvider;
+    if (!ethProvider) {
+      hideLoadingOverlay(loadingOverlay);
+      showCompatibilityWarning("wallet");
       return;
     }
 
-    // 2) Wallet z cache
-    let wallet = localStorage.getItem("cached_wallet");
+    const accounts = await ethProvider.request({
+      method: "eth_requestAccounts",
+    });
 
-    // 3) Pokud není wallet v cache, zkus ji získat z SDK
+    const wallet = accounts && accounts.length > 0 ? accounts[0] : null;
+
     if (!wallet) {
-      console.log("No cached wallet, fetching from SDK...");
-      loadingOverlay = showLoadingOverlay();
-
-      const ethProvider = await sdk.wallet.ethProvider;
-      if (!ethProvider) {
-        hideLoadingOverlay(loadingOverlay);
-        localStorage.setItem("sepolia_status", "error");
-        if (!walletErrorSeen) {
-          showCompatibilityWarning("wallet");
-          localStorage.setItem("wallet_error_seen", "true");
-        }
-        return;
-      }
-
-      let accounts;
-      try {
-        accounts = await ethProvider.request({ method: "eth_requestAccounts" });
-      } catch (e) {
-        console.log("eth_requestAccounts failed:", e);
-        hideLoadingOverlay(loadingOverlay);
-        localStorage.setItem("sepolia_status", "error");
-        if (!walletErrorSeen) {
-          showCompatibilityWarning("wallet");
-          localStorage.setItem("wallet_error_seen", "true");
-        }
-        return;
-      }
-
-      wallet = accounts && accounts.length > 0 ? accounts[0] : null;
-      if (!wallet) {
-        console.warn("Wallet address not found from ethProvider.request()");
-        hideLoadingOverlay(loadingOverlay);
-        localStorage.setItem("sepolia_status", "error");
-        if (!walletErrorSeen) {
-          showCompatibilityWarning("wallet");
-          localStorage.setItem("wallet_error_seen", "true");
-        }
-        return;
-      }
-
-      localStorage.setItem("cached_wallet", wallet);
-      console.log("Wallet cached:", wallet);
-    } else {
-      console.log("Using cached wallet from theme.js:", wallet);
+      console.warn("Wallet address not found from ethProvider.request()");
+      hideLoadingOverlay(loadingOverlay);
+      showCompatibilityWarning("wallet");
+      return;
     }
 
-    console.log("Connected wallet from SDK/cache:", wallet);
+    console.log("Connected wallet from SDK:", wallet);
 
     const span = document.getElementById("wallet-address");
     if (span) span.textContent = wallet;
 
-    // 4) Network check – jen pokud ještě neproběhl (sepolia_status není v cache)
-    sepoliaStatus = localStorage.getItem("sepolia_status");
-    if (!sepoliaStatus) {
-      if (!loadingOverlay) {
-        loadingOverlay = showLoadingOverlay();
-      }
+    const supportsSepolia = await detectBaseSepoliaSupport(ethProvider);
+    console.log("Base Sepolia support (lab menu):", supportsSepolia);
 
-      const ethProvider = await sdk.wallet.ethProvider;
-      if (!ethProvider) {
-        hideLoadingOverlay(loadingOverlay);
-        localStorage.setItem("sepolia_status", "error");
-        if (!walletErrorSeen) {
-          showCompatibilityWarning("wallet");
-          localStorage.setItem("wallet_error_seen", "true");
-        }
-        return;
-      }
-
-      const supportsSepolia = await detectBaseSepoliaSupport(ethProvider);
-      console.log("Base Sepolia support (lab menu):", supportsSepolia);
-
-      if (supportsSepolia) {
-        localStorage.setItem("sepolia_status", "ok");
-        hideLoadingOverlay(loadingOverlay);
-      } else {
-        await grantFullPracticeProgress(wallet);
-        localStorage.setItem("sepolia_status", "warning");
-        hideLoadingOverlay(loadingOverlay);
-        showCompatibilityWarning("chain");
-      }
+    if (!supportsSepolia) {
+      await grantFullPracticeProgress(wallet);
+      hideLoadingOverlay(loadingOverlay);
+      showCompatibilityWarning("chain");
     } else {
-      console.log("Sepolia status from cache:", sepoliaStatus);
-
-      if (sepoliaStatus === "warning") {
-        showCompatibilityWarning("chain");
-      } else if (sepoliaStatus === "error" && !walletErrorSeen) {
-        // error je v cache, ale banner ještě nikdy neproběhl (např. po vyčištění wallet_error_seen)
-        showCompatibilityWarning("error");
-        localStorage.setItem("wallet_error_seen", "true");
-      }
-
-      if (loadingOverlay) hideLoadingOverlay(loadingOverlay);
+      hideLoadingOverlay(loadingOverlay);
     }
 
     await getProgress(wallet);
   } catch (error) {
     console.error("Error during MiniApp wallet init (labMenu):", error);
     if (loadingOverlay) hideLoadingOverlay(loadingOverlay);
-    localStorage.setItem("sepolia_status", "error");
-    if (!localStorage.getItem("wallet_error_seen")) {
-      showCompatibilityWarning("error");
-      localStorage.setItem("wallet_error_seen", "true");
-    }
+    showCompatibilityWarning("error");
   }
 });
 
@@ -304,11 +229,13 @@ function showCompatibilityWarning(type) {
         position: absolute;
         top: -6px;
         right: 0;
-        width: 28px;
-        height: 28px;
+         width: 44px;
+        height: 44px;
         background: rgba(255,255,255,0.25);
         border: none;
         border-radius: 50%;
+        width: 28px;
+        height: 28px;
         font-size: 18px;
         font-weight: 700;
         color: white;
@@ -334,6 +261,7 @@ function showCompatibilityWarning(type) {
 
   document.body.insertBefore(banner, document.body.firstChild);
 
+  // Event listener pro zavření banneru
   const dismissBtn = banner.querySelector("#dismiss-warning");
   if (dismissBtn) {
     dismissBtn.addEventListener("click", () => {
@@ -347,6 +275,7 @@ function showCompatibilityWarning(type) {
     });
   }
 }
+
 
 async function getProgress(wallet) {
   try {
