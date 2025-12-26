@@ -1,31 +1,38 @@
 import sdk from 'https://esm.sh/@farcaster/miniapp-sdk';
+
 const API_BASE = 'https://learn-base-backend.vercel.app';
 
 let currentWallet = null;
 let addedProgress = false;
 let faucetVisited = false;
 
-// Nahraď getWalletFromCache() tímto:
+// ✅ OPRAVENO: Použij waitForWallet z common.js
 async function getWalletFromCache() {
-  // ✅ POUŽIJ common.js PUBLIC API
-  if (window.BaseCampTheme?.getWalletCache) {
-    const { wallet, sepolia_status } = window.BaseCampTheme.getWalletCache();
-    if (wallet) {
-      return wallet;
+  // 1. Zkus počkat na common.js cache (3s timeout)
+  if (window.BaseCampTheme?.waitForWallet) {
+    try {
+      const cache = await window.BaseCampTheme.waitForWallet();
+      console.log('✅ Faucet wallet from cache:', cache.wallet);
+      return cache.wallet;
+    } catch (err) {
+      console.log('⏱️ Faucet cache timeout:', err);
     }
   }
-  // Fallback na přímý localStorage
+
+  // 2. Fallback: Přímý localStorage
   const cached_wallet = localStorage.getItem('cached_wallet');
   if (cached_wallet) {
+    console.log('✅ Faucet wallet from localStorage:', cached_wallet);
     return cached_wallet;
   }
 
+  // 3. Poslední fallback: SDK request
+  console.log('🔄 Faucet requesting wallet from SDK...');
   await sdk.actions.ready();
   const ethProvider = await sdk.wallet.ethProvider;
   const accounts = await ethProvider.request({ method: 'eth_requestAccounts' });
   return accounts?.[0];
 }
-
 
 async function addProgress() {
   if (addedProgress || !currentWallet) {
@@ -45,12 +52,15 @@ async function addProgress() {
     });
 
     if (!res.ok) {
+      console.error('❌ Faucet progress update failed:', res.status);
       return false;
     }
 
     addedProgress = true;
+    console.log('✅ Faucet progress saved!');
     return true;
   } catch (e) {
+    console.error('❌ Faucet progress error:', e);
     return false;
   }
 }
@@ -67,28 +77,31 @@ async function initWallet() {
     currentWallet = await getWalletFromCache();
 
     const span = document.getElementById('wallet-address');
-    if (span) {
+    if (span && currentWallet) {
       span.textContent = `${currentWallet.slice(0,6)}...${currentWallet.slice(-4)}`;
     }
 
+    // Auto-progress pokud je Sepolia OK
     const sepolia_status = localStorage.getItem('sepolia_status');
     if (sepolia_status === 'ok') {
       await addProgress();
     }
 
-  } catch (e) {  }
+  } catch (e) {
+    console.error('❌ Faucet initWallet failed:', e);
+  }
 }
 
-function openEthFaucet() {
-  addProgress();
+// ✅ OPRAVENO: Async handlers s await
+async function openEthFaucet() {
+  await addProgress();  // ← ČEKÁ na dokončení!
   sdk.actions.openUrl('https://www.alchemy.com/faucets/base-sepolia');
 }
 
-function openUsdcFaucet() {
-  addProgress();
+async function openUsdcFaucet() {
+  await addProgress();  // ← ČEKÁ na dokončení!
   sdk.actions.openUrl('https://faucet.circle.com');
 }
-
 
 // GLOBÁLNÍ FUNKCE
 window.toggleAccordion = toggleAccordion;
