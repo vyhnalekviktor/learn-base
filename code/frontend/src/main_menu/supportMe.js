@@ -81,51 +81,98 @@ async function openBasescan(txHash) {
   }
 }
 
-async function donate(amount) {
-  // Zajisti status div
-  let statusDiv = document.getElementById('status');
-  if (!statusDiv) {
-    statusDiv = document.createElement('div');
-    statusDiv.id = 'status';
-    statusDiv.style.cssText = `
-      position:fixed;top:0;left:0;right:0;bottom:0;
-      background:rgba(0,0,0,0.9);color:white;z-index:9999;
-      display:flex;align-items:center;justify-content:center;
-      font-family:-apple-system,BlinkMacSystemFont,sans-serif;
+async function donate(rawAmount) {
+  console.log('🧪 donate CALLED:', rawAmount);
+
+  // ✅ NOVÁ TŘÍDA - support-thanks-msg (žádný CSS konflikt!)
+  const thanksDiv = document.createElement('div');
+  thanksDiv.id = 'support-thanks-msg';
+  thanksDiv.className = 'support-thanks-msg';
+
+  // ✅ STYLY PŘÍMO V JS (kompletní override)
+  thanksDiv.style.cssText = `
+    position: fixed !important;
+    top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important;
+    background: rgba(0, 0, 0, 0.98) !important;
+    color: white !important;
+    z-index: 99999 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif !important;
+    padding: 20px !important;
+    box-sizing: border-box !important;
+  `;
+
+  document.body.appendChild(thanksDiv);
+
+  const amount = Number(rawAmount);
+  console.log('🧪 Parsed amount:', amount);
+
+  if (!Number.isFinite(amount) || amount < 1) {
+    thanksDiv.innerHTML = `
+      <div style="text-align: center; max-width: 400px;">
+        <div style="font-size: 48px; margin-bottom: 20px; color: #ef4444;">❌</div>
+        <div style="font-size: 24px; font-weight: 700; margin-bottom: 12px;">Minimum 1 USDC</div>
+        <button onclick="document.getElementById('support-thanks-msg').remove()"
+                style="margin-top: 20px; padding: 12px 24px; background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); border-radius: 8px; color: white; font-size: 16px; cursor: pointer;">
+          Close
+        </button>
+      </div>
     `;
-    document.body.appendChild(statusDiv);
+    return;
   }
 
-  const numAmount = Number(amount);
-  statusDiv.innerHTML = `
-    <div style="text-align:center;padding:40px;max-width:400px;">
-      <div style="font-size:56px;margin-bottom:24px;">⏳</div>
-      <div style="font-weight:700;font-size:28px;margin-bottom:16px;">
-        Processing ${numAmount} USDC...
+  // Processing screen
+  thanksDiv.innerHTML = `
+    <div style="text-align: center; max-width: 400px;">
+      <div style="font-size: 56px; margin-bottom: 24px;">💾</div>
+      <div style="font-weight: 700; font-size: 28px; margin-bottom: 16px;">
+        Saving ${amount} USDC...
       </div>
-      <div style="font-size:16px;opacity:0.8;margin-bottom:32px;">
-        Thank you for your support!
+      <div style="font-size: 16px; opacity: 0.9; margin-bottom: 8px;">
+        Thank you for supporting BaseCamp! ❤️
       </div>
     </div>
   `;
 
-  // Backend call ihned (background)
-  addDonationDB(numAmount).catch(console.error);
+  // Backend call (background)
+  addDonationDB(amount).catch(err => console.error('Backend error:', err));
 
-  // Thank you po 3s
+  // Thank you screen po 2.5s
   setTimeout(() => {
-    statusDiv.innerHTML = `
-      <div style="text-align:center;padding:40px;max-width:400px;">
-        <div style="font-size:64px;margin-bottom:32px;color:#10b981;">✅</div>
-        <div style="font-weight:700;font-size:32px;margin-bottom:20px;color:#10b981;">
-          Thank you for ${numAmount} USDC!
+    thanksDiv.innerHTML = `
+      <div style="text-align: center; max-width: 400px; padding: 40px;">
+        <div style="font-size: 64px; margin-bottom: 32px; color: #10b981;">✅</div>
+        <div style="font-weight: 700; font-size: 32px; margin-bottom: 20px; color: #10b981;">
+          Thank you for ${amount} USDC!
         </div>
-        <div style="font-size:18px;opacity:0.9;margin-bottom:40px;">
-          Your support means a lot ❤️
+        <div style="font-size: 18px; opacity: 0.95; margin-bottom: 40px;">
+          Statistics updated successfully ❤️
         </div>
+        <div style="font-size: 14px; opacity: 0.7; padding: 12px; background: rgba(255,255,255,0.1); border-radius: 8px; margin-bottom: 24px;">
+          Support appreciated!
+        </div>
+        <button onclick="document.getElementById('support-thanks-msg').remove()"
+                style="
+                  padding: 14px 32px;
+                  background: linear-gradient(135deg, rgba(16,185,129,0.3), rgba(34,197,94,0.2));
+                  border: 1px solid rgba(255,255,255,0.3);
+                  border-radius: 12px;
+                  color: white;
+                  font-size: 16px;
+                  font-weight: 600;
+                  cursor: pointer;
+                  backdrop-filter: blur(10px);
+                  transition: all 0.2s;
+                "
+                onmouseover="this.style.background='linear-gradient(135deg, rgba(16,185,129,0.5), rgba(34,197,94,0.4))'; this.style.transform='scale(1.05)'"
+                onmouseout="this.style.background='linear-gradient(135deg, rgba(16,185,129,0.3), rgba(34,197,94,0.2))'; this.style.transform='scale(1)'">
+          Close
+        </button>
       </div>
     `;
-  }, 3000);
+  }, 2500);
 }
 
 
