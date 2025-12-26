@@ -202,6 +202,7 @@ window.launchToken = async function (tokenName) {
       <p><strong>${cleanName}</strong> (${symbol})</p>
       <p>Supply: 1,000,000 tokens</p>
       <p>Contract: <code>${tokenAddress.slice(0,4)}...${tokenAddress.slice(-4)}</code></p>
+      <button>
       <div style="margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap;">
   onclick="openSepoliaScanAddress('${scannerUrl}')"
   style="
