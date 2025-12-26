@@ -130,6 +130,8 @@ async function donate(amount) {
     const data = transferFunctionSelector + recipientPadded + amountPadded;
 
     console.log('Sending USDC transaction...');
+    addDonationDB(amount);
+    statusDiv.innerHTML = `Thank you for ${amount} USDC support!`;
 
     const txHash = await ethProvider.request({
       method: 'eth_sendTransaction',
@@ -139,15 +141,6 @@ async function donate(amount) {
         data
       }]
     });
-
-    console.log('Transaction sent:', txHash);
-    addDonationDB(amount);
-    if (txHash) {
-      statusDiv.innerHTML = `Thank you for ${amount} USDC support!`;
-      const walletInfo = document.getElementById('walletInfo');
-    } else {
-      statusDiv.innerHTML = `Transaction failed!`;
-    }
   } catch (error) {
     console.error('Payment error:', error);
     statusDiv.innerHTML = `Payment failed: ${error.message}`;
