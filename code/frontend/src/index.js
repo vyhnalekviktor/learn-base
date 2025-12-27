@@ -8,7 +8,6 @@ function hideLoader() {
   if (loader) {
     loader.style.opacity = '0';
     loader.style.visibility = 'hidden';
-    // Remove from DOM to free up memory
     setTimeout(() => {
       if (loader.parentNode) loader.parentNode.removeChild(loader);
     }, 550);
@@ -19,28 +18,81 @@ function showCompatibilityWarning(reason) {
   console.warn(`[Index] MiniApp needs ${reason}: wallet for full functionality`);
 }
 
+// ZMĚNA 1: Funkce vrací true, pokud byl uživatel vytvořen (je nový)
 async function initUserOnBackend(wallet) {
   try {
-    await fetch(`${API_BASE}/api/database/init-user`, {
+    const res = await fetch(`${API_BASE}/api/database/init-user`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ wallet }),
     });
+
+    if (res.ok) {
+        const data = await res.json();
+        // Backend vrací { created: true } pokud je user nový
+        return data.created === true;
+    }
+    return false;
   } catch (e) {
     console.warn("Backend init failed", e);
+    return false;
   }
 }
 
-// === MAIN LOGIC (DOMContentLoaded = Faster Start) ===
+// ZMĚNA 2: Přidána funkce pro zobrazení modalu (pokud tam chyběla nebo nebyla kompletní)
+function showWelcomeModal() {
+  // Check if already exists
+  if (document.getElementById('welcome-modal-overlay')) return;
+
+  const overlay = document.createElement("div");
+  overlay.id = 'welcome-modal-overlay';
+  overlay.style.cssText = `
+    position: fixed; inset: 0; background: rgba(15,23,42,0.85); backdrop-filter: blur(5px);
+    display: flex; align-items: center; justify-content: center; z-index: 10000;
+    animation: fadeIn 0.3s ease;
+  `;
+
+  const modal = document.createElement("div");
+  modal.style.cssText = `
+    max-width: 420px; width: 90%; background: linear-gradient(145deg,#0f172a,#020617);
+    border: 1px solid rgba(148,163,184,0.2); border-radius: 24px; padding: 32px 24px;
+    text-align: center; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+    animation: slideUp 0.4s ease;
+  `;
+
+  modal.innerHTML = `
+    <div style="font-size: 48px; margin-bottom: 20px;">🏕️</div>
+    <h2 style="color:white; margin:0 0 12px 0; font-size: 24px;">Welcome to BaseCamp!</h2>
+    <p style="color:#94a3b8; font-size: 16px; line-height: 1.6; margin-bottom: 24px;">
+      Start your journey into the Base ecosystem. Learn by doing, collect badges, and master the chain.
+    </p>
+    <button id="closeWelcome" style="
+      background: #0052FF; color: white; border: none; padding: 14px 32px;
+      border-radius: 12px; font-weight: 600; font-size: 16px; cursor: pointer;
+      width: 100%; transition: background 0.2s;
+    ">Let's go!</button>
+    <style>
+      @keyframes fadeIn { from { opacity:0 } to { opacity:1 } }
+      @keyframes slideUp { from { transform: translateY(20px); opacity:0 } to { transform: translateY(0); opacity:1 } }
+    </style>
+  `;
+
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
+
+  document.getElementById('closeWelcome').onclick = () => {
+    overlay.style.opacity = '0';
+    setTimeout(() => overlay.remove(), 300);
+  };
+}
+
+// === MAIN LOGIC ===
 document.addEventListener('DOMContentLoaded', async () => {
   try {
-    // 1. Initialize Farcaster SDK
     await sdk.actions.ready();
 
-    // 2. Get Wallet (Try Cache First)
     let wallet = sessionStorage.getItem('cached_wallet');
 
-    // If not in cache, try SDK
     if (!wallet) {
       const ethProvider = sdk.wallet.ethProvider;
       if (ethProvider) {
@@ -53,26 +105,30 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     }
 
-    // 3. If we have a wallet, initialize app & PRELOAD DATA
     if (wallet) {
       console.log("[Index] Wallet connected:", wallet);
       const span = document.getElementById("wallet-address");
       if (span) span.textContent = wallet;
 
-      // --- TOTO JE NOVÁ ČÁST PRO CACHING ---
-      // A) Inicializace uživatele na backendu (aby existoval v DB)
-      initUserOnBackend(wallet);
+      // ZMĚNA 3: Zpracování výsledku inicializace
+      // A) Inicializujeme backend a zjistíme, zda je user nový
+      const isNewUser = await initUserOnBackend(wallet);
 
-      // B) Stáhnutí dat do cache prohlížeče (aby podstránky byly rychlé)
+      // B) Pokud je nový, ukážeme Welcome Modal
+      if (isNewUser) {
+          showWelcomeModal();
+      }
+
+      // C) Paralelně stahujeme data do cache (Common.js)
       if (window.BaseCampTheme && window.BaseCampTheme.initUserData) {
           window.BaseCampTheme.initUserData(wallet);
       }
-      // -------------------------------------
+
     } else {
       showCompatibilityWarning("wallet");
     }
 
-    // 4. Load Farcaster Context (User Profile)
+    // Load Farcaster Context
     const context = await sdk.context;
     if (context && context.user) {
         const user = context.user;
@@ -94,7 +150,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // 5. Setup Footer Link
     const footerLink = document.getElementById('farcaster-link');
     if (footerLink) {
       footerLink.addEventListener('click', (e) => {
@@ -106,7 +161,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   } catch (error) {
     console.error("[Index] Init error:", error);
   } finally {
-    // Always hide loader
     hideLoader();
   }
 });
