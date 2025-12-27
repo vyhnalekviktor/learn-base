@@ -82,99 +82,155 @@ async function openBasescan(txHash) {
 }
 
 async function donate(rawAmount) {
-  console.log('🧪 donate CALLED:', rawAmount);
+  console.log('🧪 donate CALLED with:', rawAmount, 'type:', typeof rawAmount);
 
-  // ✅ NOVÁ TŘÍDA - support-thanks-msg (žádný CSS konflikt!)
-  const thanksDiv = document.createElement('div');
-  thanksDiv.id = 'support-thanks-msg';
-  thanksDiv.className = 'support-thanks-msg';
+  // ✅ FIX 1: Najdi statusDiv nebo vytvoř ho
+  let statusDiv = document.getElementById('status');
+  if (!statusDiv) {
+    console.warn('⚠️ No #status → creating fallback');
+    statusDiv = document.createElement('div');
+    statusDiv.id = 'status';
+    statusDiv.style.cssText = `
+      padding: 20px;
+      text-align: center;
+      min-height: 100px;
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    `;
+    document.body.appendChild(statusDiv);
+  }
 
-  // ✅ STYLY PŘÍMO V JS (kompletní override)
-  thanksDiv.style.cssText = `
-    position: fixed !important;
-    top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important;
-    background: rgba(0, 0, 0, 0.98) !important;
-    color: white !important;
-    z-index: 99999 !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif !important;
-    padding: 20px !important;
-    box-sizing: border-box !important;
-  `;
-
-  document.body.appendChild(thanksDiv);
-
+  // ✅ FIX 2: Ověř a přetypuj amount
   const amount = Number(rawAmount);
   console.log('🧪 Parsed amount:', amount);
 
   if (!Number.isFinite(amount) || amount < 1) {
-    thanksDiv.innerHTML = `
-      <div style="text-align: center; max-width: 400px;">
-        <div style="font-size: 48px; margin-bottom: 20px; color: #ef4444;">❌</div>
-        <div style="font-size: 24px; font-weight: 700; margin-bottom: 12px;">Minimum 1 USDC</div>
-        <button onclick="document.getElementById('support-thanks-msg').remove()"
-                style="margin-top: 20px; padding: 12px 24px; background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); border-radius: 8px; color: white; font-size: 16px; cursor: pointer;">
-          Close
-        </button>
+    statusDiv.innerHTML = `
+      <div style="color: #ef4444;">
+        ❌ Invalid amount: ${rawAmount}<br>
+        Minimum is 1 USDC
       </div>
     `;
     return;
   }
 
-  // Processing screen
-  thanksDiv.innerHTML = `
-    <div style="text-align: center; max-width: 400px;">
-      <div style="font-size: 56px; margin-bottom: 24px;">💾</div>
-      <div style="font-weight: 700; font-size: 28px; margin-bottom: 16px;">
-        Saving ${amount} USDC...
-      </div>
-      <div style="font-size: 16px; opacity: 0.9; margin-bottom: 8px;">
-        Thank you for supporting BaseCamp! ❤️
-      </div>
-    </div>
-  `;
+  let txHash = null;
 
-  // Backend call (background)
-  addDonationDB(amount).catch(err => console.error('Backend error:', err));
+  try {
+    if (!ethProvider) {
+      throw new Error('Provider not available');
+    }
 
-  // Thank you screen po 2.5s
-  setTimeout(() => {
-    thanksDiv.innerHTML = `
-      <div style="text-align: center; max-width: 400px; padding: 40px;">
-        <div style="font-size: 64px; margin-bottom: 32px; color: #10b981;">✅</div>
-        <div style="font-weight: 700; font-size: 32px; margin-bottom: 20px; color: #10b981;">
+    statusDiv.innerHTML = '🔄 Checking network...';
+
+    const { BrowserProvider } = await import('https://esm.sh/ethers@6.9.0');
+    const provider = new BrowserProvider(ethProvider);
+    const network = await provider.getNetwork();
+    const currentChainId = Number(network.chainId);
+
+    if (currentChainId !== 8453) {
+      statusDiv.innerHTML = '🔄 Switching to Base...';
+      try {
+        await ethProvider.request({
+          method: 'wallet_switchEthereumChain',
+          params: [{ chainId: BASE_CHAIN_ID }]
+        });
+      } catch (switchError) {
+        if (switchError.code === 4902) {
+          await ethProvider.request({
+            method: 'wallet_addEthereumChain',
+            params: [{
+              chainId: BASE_CHAIN_ID,
+              chainName: 'Base',
+              nativeCurrency: { name: 'Ethereum', symbol: 'ETH', decimals: 18 },
+              rpcUrls: ['https://mainnet.base.org'],
+              blockExplorerUrls: ['https://basescan.org']
+            }]
+          });
+        } else {
+          throw switchError;
+        }
+      }
+      await new Promise(r => setTimeout(r, 2000));
+    }
+
+    statusDiv.innerHTML = '📝 Preparing transaction...';
+
+    const accounts = await ethProvider.request({ method: 'eth_requestAccounts' });
+    if (!accounts?.[0]) {
+      throw new Error('No account connected');
+    }
+
+    const userAddress = accounts[0];
+    console.log('💳 User:', userAddress);
+
+    // ERC20 transfer data
+    const amountInWei = BigInt(Math.floor(amount * 1_000_000));
+    const transferFunctionSelector = '0xa9059cbb';
+    const recipientPadded = MY_WALLET.substring(2).padStart(64, '0');
+    const amountPadded = amountInWei.toString(16).padStart(64, '0');
+    const data = transferFunctionSelector + recipientPadded + amountPadded;
+
+    console.log('💸 Transaction details:', { amount, userAddress, contract: USDC_ADDRESS });
+
+    statusDiv.innerHTML = '⏳ Confirm in wallet...';
+
+    const txResponse = await ethProvider.request({
+      method: 'eth_sendTransaction',
+      params: [{ from: userAddress, to: USDC_ADDRESS, data }]
+    });
+
+    console.log('📦 TX Response:', typeof txResponse, txResponse);
+
+    txHash = typeof txResponse === 'string' ? txResponse : null;
+
+    statusDiv.innerHTML = '💾 Saving to statistics...';
+    const saved = await addDonationDB(amount);
+
+    // ✅ THANK YOU SCREEN
+    statusDiv.innerHTML = `
+      <div style="text-align: center; padding: 30px;">
+        <div style="font-size: 48px; margin-bottom: 20px;">✅</div>
+        <div style="font-weight: 700; font-size: 24px; margin-bottom: 12px; color: #10b981;">
           Thank you for ${amount} USDC!
         </div>
-        <div style="font-size: 18px; opacity: 0.95; margin-bottom: 40px;">
-          Statistics updated successfully ❤️
+        <div style="font-size: 16px; opacity: 0.8; margin-bottom: 24px;">
+          Transaction confirmed on Base
         </div>
-        <div style="font-size: 14px; opacity: 0.7; padding: 12px; background: rgba(255,255,255,0.1); border-radius: 8px; margin-bottom: 24px;">
-          Support appreciated!
-        </div>
-        <button onclick="document.getElementById('support-thanks-msg').remove()"
-                style="
-                  padding: 14px 32px;
-                  background: linear-gradient(135deg, rgba(16,185,129,0.3), rgba(34,197,94,0.2));
-                  border: 1px solid rgba(255,255,255,0.3);
-                  border-radius: 12px;
-                  color: white;
-                  font-size: 16px;
-                  font-weight: 600;
-                  cursor: pointer;
-                  backdrop-filter: blur(10px);
-                  transition: all 0.2s;
-                "
-                onmouseover="this.style.background='linear-gradient(135deg, rgba(16,185,129,0.5), rgba(34,197,94,0.4))'; this.style.transform='scale(1.05)'"
-                onmouseout="this.style.background='linear-gradient(135deg, rgba(16,185,129,0.3), rgba(34,197,94,0.2))'; this.style.transform='scale(1)'">
-          Close
-        </button>
+        ${txHash ? `
+          <div style="background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3); border-radius: 8px; padding: 12px 16px; margin-bottom: 24px; font-family: monospace; font-size: 13px; color: #10b981; word-break: break-all; max-width: 300px; margin: 0 auto 24px;">
+            ${txHash.slice(0,12)}...${txHash.slice(-10)}
+          </div>
+          <button onclick="window.openBasescan('${txHash}')" style="padding: 14px 28px; background: linear-gradient(135deg, #0052ff, #0041cc); border: none; border-radius: 12px; color: white; font-size: 16px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 14px rgba(0,82,255,0.4);">
+            View on Basescan →
+          </button>
+        ` : `
+          <div style="font-size: 14px; opacity: 0.6; font-style: italic;">
+            Check your wallet for details
+          </div>
+        `}
+        ${saved ? '<div style="font-size: 12px; opacity: 0.5; margin-top: 20px;">Statistics updated ✅</div>' : ''}
       </div>
     `;
-  }, 2500);
-}
 
+  } catch (error) {
+    console.error('❌ Payment error:', error);
+
+    let errorMsg = error.message || 'Unknown error';
+    if (error.code === 4001) errorMsg = 'Transaction cancelled';
+    if (error.code === -32002) errorMsg = 'Request pending';
+    if (error.code === -32603) errorMsg = 'Insufficient USDC';
+
+    statusDiv.innerHTML = `
+      <div style="text-align: center; padding: 30px; color: #ef4444;">
+        <div style="font-size: 48px; margin-bottom: 20px;">❌</div>
+        <div style="font-weight: 700; font-size: 20px; margin-bottom: 12px;">
+          Payment Failed
+        </div>
+        <div style="font-size: 15px; opacity: 0.9;">${errorMsg}</div>
+      </div>
+    `;
+  }
+}
 
 function stepAmount(delta) {
   const input = document.getElementById('customAmount');
