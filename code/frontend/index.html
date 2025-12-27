@@ -2,6 +2,19 @@
 <html lang="en">
 <head>
 <script type="module" src="src/common.js"></script>
+    <script>
+    (function() {
+        // Podíváme se, jestli už máme peněženku v paměti
+        const wallet = sessionStorage.getItem('cached_wallet');
+
+        // Pokud ano, přidáme styl, který okamžitě skryje loader
+        if (wallet) {
+            const style = document.createElement('style');
+            style.innerHTML = '#global-loader { display: none !important; }';
+            document.head.appendChild(style);
+        }
+    })();
+</script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="base:app_id" content="69419e4bd77c069a945bdf69" />

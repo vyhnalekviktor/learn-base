@@ -91,7 +91,7 @@ setTimeout(() => {
     hideLoader();
 }, 5000);
 
-window.addEventListener("load", async () => {
+window.addEventListener("DOMContentLoaded", async () => {
   try {
     await sdk.actions.ready();
 
