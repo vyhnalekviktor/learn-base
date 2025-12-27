@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 });
 
-// Helper function for status messages
+// Helper function for status messages (inline)
 function updateStatus(message, type = 'info') {
   let statusDiv = document.getElementById('status');
   if (!statusDiv) return;
@@ -59,57 +59,103 @@ function updateStatus(message, type = 'info') {
   `;
 }
 
-// Function to show the success screen
-function showSuccessView(amount, txHash) {
+// Function to show the success MODAL (Popup)
+function showSuccessModal(amount, txHash) {
+  // 1. Clear the inline status first
   const statusDiv = document.getElementById('status');
-  if (!statusDiv) return;
+  if (statusDiv) {
+      statusDiv.innerHTML = '';
+      statusDiv.style.display = 'none';
+  }
 
-  statusDiv.innerHTML = `
-    <div style="
-      background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.1));
-      border: 1px solid rgba(16, 185, 129, 0.3);
-      border-radius: 16px;
-      padding: 24px;
-      text-align: center;
-      margin-top: 20px;
-      animation: slideUp 0.4s ease-out;
-    ">
-      <h3 style="color: #10b981; margin: 0 0 8px 0; font-size: 22px;">Donation Successful</h3>
-      <p style="color: var(--text-secondary); margin: 0 0 20px 0;">
-        Thank you so much for supporting BaseCamp with <strong>${amount} USDC</strong>.
-      </p>
+  // 2. Create Overlay
+  const overlay = document.createElement('div');
+  overlay.style.cssText = `
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(5px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    animation: fadeIn 0.3s ease;
+  `;
 
-      ${txHash ? `
-        <a href="https://basescan.org/tx/${txHash}" target="_blank" style="
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
-          background: var(--bg-card);
-          padding: 10px 16px;
-          border-radius: 10px;
-          text-decoration: none;
-          color: var(--text-primary);
-          font-size: 13px;
-          border: 1px solid var(--border);
-          transition: transform 0.2s;
-        ">
-          <span>View Transaction</span>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-            <polyline points="15 3 21 3 21 9"></polyline>
-            <line x1="10" y1="14" x2="21" y2="3"></line>
-          </svg>
-        </a>
-      ` : ''}
-    </div>
+  // 3. Create Modal Content
+  const modal = document.createElement('div');
+  modal.style.cssText = `
+    background: linear-gradient(145deg, #0f172a, #020617);
+    border: 1px solid rgba(16, 185, 129, 0.4);
+    border-radius: 20px;
+    padding: 30px 24px;
+    width: 90%;
+    max-width: 400px;
+    text-align: center;
+    color: white;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+    transform: translateY(20px);
+    animation: slideUp 0.4s ease forwards;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  `;
+
+  modal.innerHTML = `
+    <div style="font-size: 48px; margin-bottom: 16px;">🎉</div>
+    <h3 style="color: #10b981; margin: 0 0 10px 0; font-size: 24px; font-weight: 700;">Donation Successful!</h3>
+    <p style="color: #cbd5e1; margin: 0 0 24px 0; line-height: 1.5;">
+      Thank you so much for supporting BaseCamp with <strong style="color: white;">${amount} USDC</strong>.
+    </p>
+
+    ${txHash ? `
+      <a href="https://basescan.org/tx/${txHash}" target="_blank" style="
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        background: rgba(255,255,255,0.05);
+        padding: 12px;
+        border-radius: 12px;
+        text-decoration: none;
+        color: #10b981;
+        font-size: 14px;
+        border: 1px solid rgba(16, 185, 129, 0.2);
+        margin-bottom: 20px;
+        transition: background 0.2s;
+      ">
+        <span>View Transaction on BaseScan</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+      </a>
+    ` : ''}
+
+    <button id="closeSuccessModal" style="
+        width: 100%;
+        padding: 14px;
+        background: #10b981;
+        color: #022c22;
+        border: none;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 16px;
+        cursor: pointer;
+    ">Close</button>
 
     <style>
-      @keyframes slideUp {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
-      }
+      @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+      @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
     </style>
   `;
+
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
+
+  // Close logic
+  const closeBtn = modal.querySelector('#closeSuccessModal');
+  closeBtn.onclick = () => {
+      overlay.style.opacity = '0';
+      setTimeout(() => {
+          if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+      }, 300);
+  };
 }
 
 async function addDonationDB(amount) {
@@ -207,12 +253,13 @@ async function donate(rawAmount) {
 
     txHash = typeof txResponse === 'string' ? txResponse : null;
 
-    // 7. Completion
-    updateStatus('Transaction sent! Finalizing...', 'success');
+    // 7. Completion - Show Popup instead of inline text
+    // Clear status first to avoid clutter
+    updateStatus('', 'success');
 
-    // Save to DB and show result in parallel
+    // Save to DB and show Popup
     addDonationDB(amount);
-    showSuccessView(amount, txHash);
+    showSuccessModal(amount, txHash);
 
   } catch (error) {
     console.error('Donation error:', error);
