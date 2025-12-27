@@ -164,6 +164,15 @@ window.addEventListener("load", async () => {
     if (fidEl) fidEl.textContent = fidDisplay;
 
     console.log("[Index] User display:", { displayName, fidDisplay, avatarUrl, user });
+    const footerLink = document.getElementById('farcaster-link');
+    if (footerLink) {
+      footerLink.addEventListener('click', (e) => {
+        // Prevent default browser navigation
+        e.preventDefault();
+        // Use Farcaster SDK to open URL
+        sdk.actions.openUrl('https://farcaster.xyz/satoshivv');
+      });
+    }
 
   } catch (error) {
     console.error("[Index] Error during MiniApp init:", error);

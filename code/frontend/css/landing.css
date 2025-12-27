@@ -464,3 +464,35 @@ footer strong {
   stroke-linecap: round;
   stroke-linejoin: round;
 }
+
+/* Footer Link Styling - ADD THIS TO END OF CSS */
+.footer-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+
+    /* Force text color from theme variable (white in dark mode, black in light mode) */
+    color: var(--text-primary) !important;
+
+    font-weight: 600;
+    transition: color 0.2s ease;
+}
+
+/* Ensure visited links don't turn purple */
+.footer-link:visited,
+.footer-link:active {
+    color: var(--text-primary) !important;
+    text-decoration: none;
+}
+
+/* Hover effect - turns Base Blue */
+.footer-link:hover {
+    color: #0052ff !important;
+    text-decoration: none;
+}
+
+/* Ensure SVG icon inherits the text color */
+.footer-link svg {
+    fill: currentColor;
+}
