@@ -4,38 +4,47 @@ const API_BASE = 'https://learn-base-backend.vercel.app';
 
 let currentWallet = null;
 let addedProgress = false;
-let faucetVisited = false;
 
-// ✅ OPRAVENO: Použij waitForWallet z common.js
-async function getWalletFromCache() {
-  // 1. Zkus počkat na common.js cache (3s timeout)
+// 1. ZÍSKÁNÍ PENĚŽENKY (ČEKÁ NA COMMON.JS)
+async function getWallet() {
+  // Pokud už ji máme v paměti, rovnou vracíme
+  if (currentWallet) return currentWallet;
+
+  // Spoléháme na common.js a jeho waitForWallet mechanismus
   if (window.BaseCampTheme?.waitForWallet) {
     try {
+      // Toto počká až 3 sekundy, než common.js načte peněženku
       const cache = await window.BaseCampTheme.waitForWallet();
-      console.log('✅ Faucet wallet from cache:', cache.wallet);
-      return cache.wallet;
+      if (cache.wallet) {
+        console.log('✅ Faucet: Wallet loaded from common.js:', cache.wallet);
+        currentWallet = cache.wallet;
+        return currentWallet;
+      }
     } catch (err) {
-      console.log('⏱️ Faucet cache timeout:', err);
+      console.warn('⚠️ Faucet: Waiting for wallet timed out, checking localStorage directly...');
     }
   }
 
-  // 2. Fallback: Přímý localStorage
-  const cached_wallet = localStorage.getItem('cached_wallet');
-  if (cached_wallet) {
-    console.log('✅ Faucet wallet from localStorage:', cached_wallet);
-    return cached_wallet;
+  // Fallback: Pokud waitForWallet selhal (timeout), zkusíme naposledy localStorage
+  const directCache = localStorage.getItem('cached_wallet');
+  if (directCache) {
+    currentWallet = directCache;
+    return currentWallet;
   }
 
-  // 3. Poslední fallback: SDK request
-  console.log('🔄 Faucet requesting wallet from SDK...');
-  await sdk.actions.ready();
-  const ethProvider = await sdk.wallet.ethProvider;
-  const accounts = await ethProvider.request({ method: 'eth_requestAccounts' });
-  return accounts?.[0];
+  return null;
 }
 
+// 2. ODESLÁNÍ PROGRESSU (ROBUSTNÍ VERZE)
 async function addProgress() {
-  if (addedProgress || !currentWallet) {
+  if (addedProgress) return true;
+
+  // DŮLEŽITÉ: Zde čekáme na peněženku. Pokud init ještě běží, kód se zde zastaví a počká.
+  const wallet = await getWallet();
+
+  if (!wallet) {
+    console.error('❌ Faucet: Cannot save progress - No wallet available.');
+    // Zde můžeme vrátit true, abychom neblokovali otevření URL, i když se logování nepovedlo
     return false;
   }
 
@@ -44,7 +53,7 @@ async function addProgress() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        wallet: currentWallet,
+        wallet: wallet, // Používáme lokální proměnnou, která je jistě naplněná
         tablename: 'USER_PROGRESS',
         field_name: 'faucet',
         value: true
@@ -52,19 +61,20 @@ async function addProgress() {
     });
 
     if (!res.ok) {
-      console.error('❌ Faucet progress update failed:', res.status);
+      console.error('❌ Faucet: Progress update failed:', res.status);
       return false;
     }
 
     addedProgress = true;
-    console.log('✅ Faucet progress saved!');
+    console.log('✅ Faucet: Progress saved successfully!');
     return true;
   } catch (e) {
-    console.error('❌ Faucet progress error:', e);
+    console.error('❌ Faucet: Network error during progress save:', e);
     return false;
   }
 }
 
+// 3. UI FUNKCE
 function toggleAccordion(id) {
   const content = document.getElementById(`content-${id}`);
   const icon = document.getElementById(`icon-${id}`);
@@ -72,41 +82,33 @@ function toggleAccordion(id) {
   icon.textContent = content.style.maxHeight ? '+' : '−';
 }
 
-async function initWallet() {
-  try {
-    currentWallet = await getWalletFromCache();
+async function initWalletDisplay() {
+  // Jen pro zobrazení v UI, neblokuje nic kritického
+  const wallet = await getWallet();
 
-    const span = document.getElementById('wallet-address');
-    if (span && currentWallet) {
-      span.textContent = `${currentWallet.slice(0,6)}...${currentWallet.slice(-4)}`;
-    }
-
-    // Auto-progress pokud je Sepolia OK
-    const sepolia_status = localStorage.getItem('sepolia_status');
-    if (sepolia_status === 'ok') {
-      await addProgress();
-    }
-
-  } catch (e) {
-    console.error('❌ Faucet initWallet failed:', e);
+  const span = document.getElementById('wallet-address');
+  if (span && wallet) {
+    span.textContent = `${wallet.slice(0,6)}...${wallet.slice(-4)}`;
   }
 }
 
-// ✅ OPRAVENO: Async handlers s await
+// 4. HANDLERY TLAČÍTEK
 async function openEthFaucet() {
-  await addProgress();  // ← ČEKÁ na dokončení!
+  // Čekáme na uložení progressu, pak otevíráme
+  await addProgress();
   sdk.actions.openUrl('https://www.alchemy.com/faucets/base-sepolia');
 }
 
 async function openUsdcFaucet() {
-  await addProgress();  // ← ČEKÁ na dokončení!
+  // Čekáme na uložení progressu, pak otevíráme
+  await addProgress();
   sdk.actions.openUrl('https://faucet.circle.com');
 }
 
-// GLOBÁLNÍ FUNKCE
+// GLOBÁLNÍ EXPORTY
 window.toggleAccordion = toggleAccordion;
-window.addProgress = addProgress;
 window.openEthFaucet = openEthFaucet;
 window.openUsdcFaucet = openUsdcFaucet;
 
-window.addEventListener('load', initWallet);
+// Inicializace pouze zobrazení peněženky
+window.addEventListener('load', initWalletDisplay);
