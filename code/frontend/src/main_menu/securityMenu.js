@@ -2,130 +2,59 @@ import { sdk } from "https://esm.sh/@farcaster/miniapp-sdk";
 
 const API_BASE = "https://learn-base-backend.vercel.app";
 
-window.addEventListener("load", async () => {
+document.addEventListener("DOMContentLoaded", async () => {
   try {
-    console.log("Page loaded, calling sdk.actions.ready()...");
     await sdk.actions.ready();
-    console.log("BaseCamp mini app is ready!");
 
-    // ZMĚNA: Zkus načíst wallet z cache (sessionStorage)
-    let wallet = sessionStorage.getItem('cached_wallet');
-
-    // Pokud není v cache, získej ho (fallback)
-    if (!wallet) {
-      console.log('No cached wallet, fetching from SDK...');
-      const ethProvider = await sdk.wallet.ethProvider;
-      const accounts = await ethProvider.request({
-        method: "eth_requestAccounts",
-      });
-      wallet = accounts && accounts.length > 0 ? accounts[0] : null;
-
-      if (wallet) {
-        // ZMĚNA: Ulož do sessionStorage
-        sessionStorage.setItem('cached_wallet', wallet);
-        console.log('Wallet cached to session:', wallet);
-      }
-    } else {
-      console.log('Using cached wallet from session:', wallet);
+    let wallet = null;
+    if (window.BaseCampTheme?.waitForWallet) {
+        try {
+            const cache = await window.BaseCampTheme.waitForWallet();
+            wallet = cache.wallet;
+        } catch (e) {}
     }
 
     if (!wallet) {
-      console.warn("Wallet address not found from ethProvider.request()");
+      console.warn("No wallet found");
       return;
     }
-
-    console.log("Connected wallet from SDK:", wallet);
 
     const span = document.getElementById("wallet-address");
     if (span) span.textContent = wallet;
 
-    await getProgress(wallet);
+    renderSecurityProgress(wallet);
+
   } catch (error) {
-    console.error("Error during MiniApp wallet init:", error);
+    console.error("Error:", error);
   }
 });
-// ... zbytek souboru securityMenu.js je v pořádku, kopíruj ho sem ...
-async function getProgress(wallet) {
-  try {
-    const res = await fetch(`${API_BASE}/api/database/get-user`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ wallet }),
-    });
 
-    if (!res.ok) {
-      let msg = "Unknown backend error";
-      try {
-        const err = await res.json();
-        msg = err.detail || JSON.stringify(err);
-      } catch (_) {}
-      console.error("get-user error:", msg);
-      return;
+async function renderSecurityProgress(wallet) {
+    let data = window.BaseCampTheme?.getUserData();
+    if (!data) {
+        await window.BaseCampTheme.initUserData(wallet);
+        data = window.BaseCampTheme.getUserData();
     }
 
-    const data = await res.json();
+    if (!data || !data.progress) return;
     const progress = data.progress;
 
-    if (!progress) {
-      console.error("No progress object in response");
-      return;
-    }
-
-    // cekujeme lab1–lab5 misto faucet/send/...
-    const parts = [
-      progress.lab1,
-      progress.lab2,
-      progress.lab3,
-      progress.lab4,
-      progress.lab5,
-    ];
-
+    const parts = ['lab1', 'lab2', 'lab3', 'lab4', 'lab5'];
     let completed = 0;
-    for (const part of parts) {
-      if (part === true) {
-        completed += 1;
-      }
-    }
+
+    parts.forEach(part => {
+        if (progress[part]) {
+            completed++;
+            const el = document.getElementById(`item-${part}`);
+            if (el) el.classList.add("completed");
+        }
+    });
 
     const percent = (completed / parts.length) * 100;
-    console.log("Progress percent:", percent);
 
     const label = document.getElementById("progress-percent");
-    if (label) {
-      label.textContent = `${percent}%`;
-    }
+    if (label) label.textContent = `${percent}%`;
 
     const bar = document.getElementById("progress-bar-fill");
-    if (bar) {
-      bar.style.width = `${percent}%`;
-    }
-
-    // oznaceni hotovych labu podle id v security.html
-    if (progress.lab1 === true) {
-      const el = document.getElementById("item-lab1");
-      if (el) el.classList.add("completed");
-    }
-
-    if (progress.lab2 === true) {
-      const el = document.getElementById("item-lab2");
-      if (el) el.classList.add("completed");
-    }
-
-    if (progress.lab3 === true) {
-      const el = document.getElementById("item-lab3");
-      if (el) el.classList.add("completed");
-    }
-
-    if (progress.lab4 === true) {
-      const el = document.getElementById("item-lab4");
-      if (el) el.classList.add("completed");
-    }
-
-    if (progress.lab5 === true) {
-      const el = document.getElementById("item-lab5");
-      if (el) el.classList.add("completed");
-    }
-  } catch (err) {
-    console.error("getProgress error:", err);
-  }
+    if (bar) bar.style.width = `${percent}%`;
 }

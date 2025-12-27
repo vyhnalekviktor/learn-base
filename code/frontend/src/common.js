@@ -2,6 +2,7 @@
 'use strict';
 
 const BASE_SEPOLIA_CHAIN_ID_HEX = '0x14a34'; // 84532
+const API_URL = 'https://learn-base-backend.vercel.app'; // Backend URL for caching
 
 // === 1. SET THEME IMMEDIATELY (no flash) ===
 // Uses localStorage to persist theme across sessions
@@ -38,156 +39,19 @@ async function initWalletCache() {
     return;
   }
 
-  try {
-    const { sdk } = await import("https://esm.sh/@farcaster/miniapp-sdk");
-    await sdk.actions.ready();
-
-    const ethProvider = await sdk.wallet.ethProvider;
-    if (!ethProvider) {
-      console.log('[Common] Warning: No ethProvider available');
-      sessionStorage.setItem('sepolia_status', 'error');
-      sessionStorage.setItem('cached_wallet', '');
-      return;
-    }
-
-    let accounts;
-    try {
-      accounts = await ethProvider.request({ method: "eth_requestAccounts" });
-    } catch (e) {
-      console.log('[Common] Warning: eth_requestAccounts failed:', e.message);
-      sessionStorage.setItem('sepolia_status', 'error');
-      sessionStorage.setItem('cached_wallet', '');
-      return;
-    }
-
-    const wallet = accounts && accounts.length > 0 ? accounts[0] : null;
-
-    if (!wallet) {
-      console.log('[Common] Warning: No wallet in accounts');
-      sessionStorage.setItem('sepolia_status', 'error');
-      sessionStorage.setItem('cached_wallet', '');
-      return;
-    }
-
-    // Cache wallet to session storage
-    sessionStorage.setItem('cached_wallet', wallet);
-    console.log('[Common] Wallet cached to session:', wallet);
-
-    const isFarcaster = isFarcasterMiniApp();
-
-    if (isFarcaster) {
-      // Force warning for Farcaster - no Sepolia support in webview usually
-      sessionStorage.setItem('sepolia_status', 'warning');
-      console.log('[Common] Farcaster detected: Forcing sepolia_status=warning');
-      return;
-    }
-
-    // Check for Sepolia support (non-Farcaster wallets)
-    let supportsSepolia = false;
-    try {
-      await ethProvider.request({
-        method: 'wallet_switchEthereumChain',
-        params: [{ chainId: BASE_SEPOLIA_CHAIN_ID_HEX }]
-      });
-      supportsSepolia = true;
-    } catch (e) {
-      if (e.code === 4001) supportsSepolia = true; // User rejected request, but chain is supported
-      else if (e.code === 4902) supportsSepolia = false; // Chain not added
-      else supportsSepolia = false;
-    }
-
-    const status = supportsSepolia ? 'ok' : 'warning';
-    sessionStorage.setItem('sepolia_status', status);
-    console.log(`[Common] Cache complete: wallet=${wallet.slice(0,6)}... sepolia=${status}`);
-
-  } catch (error) {
-    console.error('[Common] Error: Wallet cache init failed:', error.message);
-    sessionStorage.setItem('sepolia_status', 'error');
-    sessionStorage.setItem('cached_wallet', '');
-  }
+  // If we are in Farcaster context, we might want to wait or check SDK
+  // But common.js is synchronous, so we just provide helper methods below.
 }
 
-// === 3. THEME FUNCTIONS ===
-function initTheme() {
-  const savedTheme = localStorage.getItem('theme');
-  const prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
-  const defaultTheme = savedTheme || (prefersLight ? 'light' : 'dark');
+// Initialize cache check
+initWalletCache();
 
-  document.documentElement.setAttribute('data-theme', defaultTheme);
-  if (document.body) {
-    document.body.classList.remove('light', 'dark');
-    document.body.classList.add(defaultTheme);
-  }
-
-  const toggle = document.getElementById('themeToggle');
-  if (toggle) {
-    const isDark = defaultTheme === 'dark';
-    toggle.classList.toggle('on', isDark);
-  }
-}
-
-function setupToggle() {
-  const toggle = document.getElementById('themeToggle');
-  if (!toggle) return;
-
-  toggle.addEventListener('click', () => {
-    const current = document.documentElement.getAttribute('data-theme');
-    const next = current === 'light' ? 'dark' : 'light';
-
-    document.documentElement.setAttribute('data-theme', next);
-    if (document.body) {
-      document.body.classList.remove('light', 'dark');
-      document.body.classList.add(next);
-    }
-
-    localStorage.setItem('theme', next);
-    const isDark = next === 'dark';
-    toggle.classList.toggle('on', isDark);
-
-    document.dispatchEvent(new CustomEvent('themeChanged', {
-      detail: { theme: next }
-    }));
-  });
-
-  toggle.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      toggle.click();
-    }
-  });
-}
-
-function setupSystemPreferenceListener() {
-  const mediaQuery = window.matchMedia('(prefers-color-scheme: light)');
-  mediaQuery.addEventListener('change', (e) => {
-    const savedTheme = localStorage.getItem('theme');
-    if (!savedTheme) {
-      const newTheme = e.matches ? 'light' : 'dark';
-      document.documentElement.setAttribute('data-theme', newTheme);
-      if (document.body) {
-        document.body.classList.remove('light', 'dark');
-        document.body.classList.add(newTheme);
-      }
-      const toggle = document.getElementById('themeToggle');
-      if (toggle) {
-        toggle.classList.toggle('on', newTheme === 'dark');
-      }
-    }
-  });
-}
-
-// === 4. PUBLIC API ===
+// === 3. GLOBAL EXPORTS (BaseCampTheme) ===
 window.BaseCampTheme = {
-  init: () => {
-    initTheme();
-    setupToggle();
-    setupSystemPreferenceListener();
-    initWalletCache().catch(console.error);
-  },
 
-  getCurrentTheme: () => document.documentElement.getAttribute('data-theme'),
-
-  setTheme: (theme) => {
+  toggleTheme: () => {
+    const current = document.documentElement.getAttribute('data-theme');
+    const theme = current === 'dark' ? 'light' : 'dark';
     document.documentElement.setAttribute('data-theme', theme);
     if (document.body) {
       document.body.classList.remove('light', 'dark');
@@ -231,7 +95,62 @@ window.BaseCampTheme = {
   clearCache: () => {
     sessionStorage.removeItem('cached_wallet');
     sessionStorage.removeItem('sepolia_status');
+    sessionStorage.removeItem('user_data_cache'); // Clear user data too
     console.log('[Common] Wallet session cache cleared');
+  },
+
+  // === USER DATA CACHING (Frontend) ===
+
+  // 1. Fetch data from DB and save to session (call this on app init)
+  initUserData: async (wallet) => {
+    if (!wallet) return;
+    try {
+      const res = await fetch(`${API_URL}/api/database/get-user`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ wallet })
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        // Save the whole object (info + progress) to sessionStorage
+        const cacheObj = {
+          info: data.info,
+          progress: data.progress,
+          timestamp: Date.now()
+        };
+        sessionStorage.setItem('user_data_cache', JSON.stringify(cacheObj));
+        console.log('[Common] User data downloaded & cached');
+      }
+    } catch (e) {
+      console.error('[Common] Failed to cache user data:', e);
+    }
+  },
+
+  // 2. Return data from cache (instant). Returns null if missing.
+  getUserData: () => {
+    const raw = sessionStorage.getItem('user_data_cache');
+    if (!raw) return null;
+    return JSON.parse(raw);
+  },
+
+  // 3. Update cache locally (Optimistic UI)
+  updateLocalProgress: (field, value) => {
+    const raw = sessionStorage.getItem('user_data_cache');
+    if (!raw) return;
+
+    let data = JSON.parse(raw);
+
+    // Check if it belongs to 'progress' or 'info' object
+    if (data.progress && data.progress.hasOwnProperty(field)) {
+      data.progress[field] = value;
+    } else if (data.info && data.info.hasOwnProperty(field)) {
+      data.info[field] = value;
+    }
+
+    // Save updated version back to storage
+    sessionStorage.setItem('user_data_cache', JSON.stringify(data));
+    console.log(`[Common] Cache updated locally: ${field} = ${value}`);
   },
 
   isFarcaster: isFarcasterMiniApp
@@ -239,9 +158,11 @@ window.BaseCampTheme = {
 
 // Auto-init on DOM ready
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', window.BaseCampTheme.init);
+  document.addEventListener('DOMContentLoaded', () => {
+    // console.log('[Common] DOM Loaded');
+  });
 } else {
-  window.BaseCampTheme.init();
+  // console.log('[Common] DOM already loaded');
 }
 
 })();

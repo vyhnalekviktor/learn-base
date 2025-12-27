@@ -19,7 +19,6 @@ async function initWallet() {
   try {
     await sdk.actions.ready();
 
-    // 1. Try cache from common.js (fastest)
     if (window.BaseCampTheme?.waitForWallet) {
         try {
             const cache = await window.BaseCampTheme.waitForWallet();
@@ -28,12 +27,9 @@ async function initWallet() {
                 updateUI(currentWallet);
                 return;
             }
-        } catch (e) {
-            // Timeout, proceed to fallback
-        }
+        } catch (e) {}
     }
 
-    // 2. Try sessionStorage fallback
     const sessionWallet = sessionStorage.getItem('cached_wallet');
     if (sessionWallet) {
         currentWallet = sessionWallet;
@@ -41,7 +37,6 @@ async function initWallet() {
         return;
     }
 
-    // 3. Fallback: SDK request (slowest)
     const ethProvider = await sdk.wallet.ethProvider;
     const accounts = await ethProvider.request({ method: "eth_requestAccounts" });
     currentWallet = accounts && accounts.length > 0 ? accounts[0] : null;
@@ -61,10 +56,16 @@ function updateUI(wallet) {
     if (span) span.textContent = `${wallet.slice(0,6)}...${wallet.slice(-4)}`;
 }
 
-// === BACKEND PROGRESS ===
+// === UPDATE PROGRESS (OPTIMIZED) ===
 async function updateLabProgress(wallet) {
   if (!wallet) return false;
 
+  // 1. Optimistic Update
+  if (window.BaseCampTheme) {
+      window.BaseCampTheme.updateLocalProgress('lab2', true);
+  }
+
+  // 2. DB Update
   const res = await fetch(`${API_BASE}/api/database/update_field`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -80,7 +81,6 @@ async function updateLabProgress(wallet) {
   return true;
 }
 
-// === DOM READY ===
 document.addEventListener("DOMContentLoaded", async function () {
   console.log("Lab 2 loaded");
   await initWallet();
@@ -152,7 +152,6 @@ document.addEventListener("DOMContentLoaded", async function () {
   }
 });
 
-// === SIMULATION LOGIC ===
 function updateHoneyBalanceText() {
   const el = document.getElementById("honey-balance");
   if (el) el.textContent = "Your HONEY balance: " + userHoneyBalance.toLocaleString();
@@ -182,7 +181,6 @@ function simulateSell() {
   );
 }
 
-// === MODAL SYSTEM ===
 function showModal(type, message) {
   const oldModal = document.querySelector(".custom-modal");
   if (oldModal) oldModal.remove();

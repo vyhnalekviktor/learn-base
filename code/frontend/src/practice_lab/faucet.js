@@ -5,28 +5,22 @@ const API_BASE = 'https://learn-base-backend.vercel.app';
 let currentWallet = null;
 let addedProgress = false;
 
-// 1. ZÍSKÁNÍ PENĚŽENKY (ČEKÁ NA COMMON.JS)
+// 1. ZÍSKÁNÍ PENĚŽENKY (OPTIMALIZOVANÉ)
 async function getWallet() {
-  // Pokud už ji máme v paměti, rovnou vracíme
   if (currentWallet) return currentWallet;
 
-  // Spoléháme na common.js a jeho waitForWallet mechanismus
+  // A) Cache z common.js
   if (window.BaseCampTheme?.waitForWallet) {
     try {
-      // Toto počká až 3 sekundy, než common.js načte peněženku
       const cache = await window.BaseCampTheme.waitForWallet();
       if (cache.wallet) {
-        console.log('✅ Faucet: Wallet loaded from common.js:', cache.wallet);
         currentWallet = cache.wallet;
         return currentWallet;
       }
-    } catch (err) {
-      console.warn('⚠️ Faucet: Waiting for wallet timed out, checking storage directly...');
-    }
+    } catch (err) {}
   }
 
-  // Fallback: Pokud waitForWallet selhal (timeout), zkusíme naposledy sessionStorage
-  // ZMĚNA: sessionStorage místo localStorage
+  // B) Přímý session storage
   const directCache = sessionStorage.getItem('cached_wallet');
   if (directCache) {
     currentWallet = directCache;
@@ -36,17 +30,20 @@ async function getWallet() {
   return null;
 }
 
-// 2. ODESLÁNÍ PROGRESSU (ROBUSTNÍ VERZE)
+// 2. ODESLÁNÍ PROGRESSU (OPTIMALIZOVANÉ)
 async function addProgress() {
   if (addedProgress) return true;
 
   const wallet = await getWallet();
+  if (!wallet) return false;
 
-  if (!wallet) {
-    console.error('❌ Faucet: Cannot save progress - No wallet available.');
-    return false;
+  // --- A) OPTIMISTIC UPDATE (HNED) ---
+  if (window.BaseCampTheme) {
+      window.BaseCampTheme.updateLocalProgress('faucet', true);
   }
+  addedProgress = true; // Lokální flag, abychom to neposílali 100x
 
+  // --- B) DB UPDATE (POZADÍ) ---
   try {
     const res = await fetch(`${API_BASE}/api/database/update_field`, {
       method: 'POST',
@@ -59,16 +56,10 @@ async function addProgress() {
       })
     });
 
-    if (!res.ok) {
-      console.error('❌ Faucet: Progress update failed:', res.status);
-      return false;
-    }
-
-    addedProgress = true;
-    console.log('✅ Faucet: Progress saved successfully!');
+    if (!res.ok) console.error('Faucet DB update failed');
     return true;
   } catch (e) {
-    console.error('❌ Faucet: Network error during progress save:', e);
+    console.error('Faucet network error:', e);
     return false;
   }
 }
@@ -82,32 +73,27 @@ function toggleAccordion(id) {
 }
 
 async function initWalletDisplay() {
-  // Jen pro zobrazení v UI, neblokuje nic kritického
+  await sdk.actions.ready();
   const wallet = await getWallet();
-
   const span = document.getElementById('wallet-address');
   if (span && wallet) {
     span.textContent = `${wallet.slice(0,6)}...${wallet.slice(-4)}`;
   }
 }
 
-// 4. HANDLERY TLAČÍTEK
+// 4. HANDLERY
 async function openEthFaucet() {
-  // Čekáme na uložení progressu, pak otevíráme
   await addProgress();
   sdk.actions.openUrl('https://www.alchemy.com/faucets/base-sepolia');
 }
 
 async function openUsdcFaucet() {
-  // Čekáme na uložení progressu, pak otevíráme
   await addProgress();
   sdk.actions.openUrl('https://faucet.circle.com');
 }
 
-// GLOBÁLNÍ EXPORTY
 window.toggleAccordion = toggleAccordion;
 window.openEthFaucet = openEthFaucet;
 window.openUsdcFaucet = openUsdcFaucet;
 
-// Inicializace: ZMĚNA NA DOMContentLoaded pro rychlost
 document.addEventListener('DOMContentLoaded', initWalletDisplay);

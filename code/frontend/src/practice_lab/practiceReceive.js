@@ -1,16 +1,12 @@
 import { sdk } from 'https://esm.sh/@farcaster/miniapp-sdk';
 
 const API_BASE = "https://learn-base-backend.vercel.app";
-
 let ethProvider = null;
 
-// ZMĚNA: Obaleno do DOMContentLoaded
 document.addEventListener('DOMContentLoaded', async () => {
   try {
-    console.log('Initializing Base App (Receive)...');
     ethProvider = await sdk.wallet.ethProvider;
     await sdk.actions.ready();
-    console.log('Base App ready');
   } catch (error) {
     console.error('Init error:', error);
   }
@@ -28,10 +24,14 @@ window.toggleAccordion = function(id) {
   }
 };
 
-// update USER_PROGRESS.receive = true
 async function updateReceiveProgress(wallet) {
-  try {
-    const res = await fetch(`${API_BASE}/api/database/update_field`, {
+  // 1. Optimistic
+  if (window.BaseCampTheme) {
+      window.BaseCampTheme.updateLocalProgress('receive', true);
+  }
+
+  // 2. DB
+  const res = await fetch(`${API_BASE}/api/database/update_field`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -40,22 +40,8 @@ async function updateReceiveProgress(wallet) {
         field_name: "receive",
         value: true,
       }),
-    });
-
-    if (!res.ok) {
-      let msg = "Unknown backend error";
-      try {
-        const err = await res.json();
-        msg = err.detail || JSON.stringify(err);
-      } catch (_) {}
-      console.error("update_field receive error:", msg);
-      return false;
-    }
-    return true;
-  } catch (e) {
-    console.error("update_field receive network error:", e);
-    return false;
-  }
+  });
+  return res.ok;
 }
 
 window.requestTestUSDC = async function() {
@@ -65,17 +51,10 @@ window.requestTestUSDC = async function() {
 
   const address = walletInput.value.trim();
 
-  if (!address) {
+  if (!address || !address.startsWith('0x') || address.length !== 42) {
     statusDiv.style.display = 'block';
     statusDiv.className = 'error-box';
-    statusDiv.innerHTML = '\n\nPlease enter your wallet address';
-    return;
-  }
-
-  if (!address.startsWith('0x') || address.length !== 42) {
-    statusDiv.style.display = 'block';
-    statusDiv.className = 'error-box';
-    statusDiv.innerHTML = '\n\nInvalid wallet address. Must start with 0x and be 42 characters long.';
+    statusDiv.innerHTML = 'Invalid wallet address.';
     return;
   }
 
@@ -83,15 +62,11 @@ window.requestTestUSDC = async function() {
     receiveBtn.disabled = true;
     statusDiv.style.display = 'block';
     statusDiv.className = 'info-box';
-    statusDiv.innerHTML = '\n\nAsking your friend to send you USDC...';
-
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    statusDiv.innerHTML = 'Asking your friend to send you USDC...';
 
     const response = await fetch('https://learn-base-backend.vercel.app/api/testnet/send-test', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ wallet: address }),
     });
 
@@ -101,43 +76,24 @@ window.requestTestUSDC = async function() {
       throw new Error(result.msg || result.detail || 'Failed to send USDC');
     }
 
-    // ✅ progress update po úspěšném receive
-    const progressOk = await updateReceiveProgress(address);
-    console.log("receive progress updated:", progressOk);
+    // Update progress
+    updateReceiveProgress(address);
 
     statusDiv.className = 'info-box';
     statusDiv.innerHTML = `
         <strong>Payment Received!</strong><br><br>
-            Your friend sent you <strong>1 USDC</strong> on Base Sepolia!<br><br>
-        <strong>To:</strong> ${address.substring(0, 6)}...${address.substring(38)}<br><br>
-        <small style="color: #666;">Transaction should appear in your wallet within 10–30 seconds</small>
+        Your friend sent you <strong>1 USDC</strong> on Base Sepolia!<br>
+        <small style="color: #666;">Transaction should appear in 10–30s</small>
     `;
 
-
   } catch (error) {
-    console.error('Error:', error);
     statusDiv.className = 'error-box';
-    statusDiv.style.display = 'block';
-    statusDiv.innerHTML = `
-
-${error.message || 'Failed to send USDC. Please try again later.'}`;
+    statusDiv.innerHTML = error.message || 'Failed to send USDC.';
   } finally {
     receiveBtn.disabled = false;
   }
 };
 
-function openSepoliaScan() {
-  sdk.actions.openUrl("https://sepolia.basescan.org");
-}
-
-function openBaseScan() {
-  sdk.actions.openUrl("https://basescan.org");
-}
-
-window.openSepoliaScanAddress = function(addr) {
-  sdk.actions.openUrl(`https://sepolia.basescan.org/address/${addr}`);
-};
-
-
-window.openSepoliaScan = openSepoliaScan;
-window.openBaseScan = openBaseScan;
+window.openSepoliaScan = () => sdk.actions.openUrl("https://sepolia.basescan.org");
+window.openBaseScan = () => sdk.actions.openUrl("https://basescan.org");
+window.openSepoliaScanAddress = (addr) => sdk.actions.openUrl(`https://sepolia.basescan.org/address/${addr}`);

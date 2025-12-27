@@ -18,9 +18,7 @@ async function initWallet() {
                 updateUI(currentWallet);
                 return;
             }
-        } catch (e) {
-            // Timeout, jedeme dál
-        }
+        } catch (e) {}
     }
 
     // 2. Zkus sessionStorage (záloha)
@@ -32,7 +30,7 @@ async function initWallet() {
         return;
     }
 
-    // 3. Fallback: SDK request (nejpomalejší)
+    // 3. Fallback: SDK request
     console.log('🔄 Lab 1: Fetching wallet from SDK...');
     const ethProvider = await sdk.wallet.ethProvider;
     const accounts = await ethProvider.request({ method: "eth_requestAccounts" });
@@ -40,7 +38,6 @@ async function initWallet() {
     currentWallet = accounts && accounts.length > 0 ? accounts[0] : null;
 
     if (currentWallet) {
-        // Uložíme pro příště
         sessionStorage.setItem('cached_wallet', currentWallet);
         updateUI(currentWallet);
     } else {
@@ -63,6 +60,12 @@ async function updateLabProgress(wallet) {
     return false;
   }
 
+  // 1. OPTIMISTIC UPDATE (Hned)
+  if (window.BaseCampTheme) {
+      window.BaseCampTheme.updateLocalProgress('lab1', true);
+  }
+
+  // 2. DB UPDATE (Pozadí)
   const res = await fetch(`${API_BASE}/api/database/update_field`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -78,7 +81,6 @@ async function updateLabProgress(wallet) {
   return true;
 }
 
-// ZMĚNA: DOMContentLoaded pro rychlý start
 document.addEventListener('DOMContentLoaded', async function() {
     console.log('Lab 1 loaded');
     await initWallet();

@@ -4,7 +4,6 @@ const API_BASE = "https://learn-base-backend.vercel.app";
 let currentWallet = null;
 let transactionCompleted = false;
 
-// ZMĚNA: Cache logika
 async function initWallet() {
   try {
     await sdk.actions.ready();
@@ -39,8 +38,16 @@ async function initWallet() {
   }
 }
 
+// === OPTIMIZED UPDATE ===
 async function updateLabProgress(wallet) {
   if (!wallet) return false;
+
+  // 1. Optimistic
+  if (window.BaseCampTheme) {
+      window.BaseCampTheme.updateLocalProgress('lab3', true);
+  }
+
+  // 2. DB
   const res = await fetch(`${API_BASE}/api/database/update_field`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -167,7 +174,6 @@ function showTransactionUI(runButton) {
   });
 }
 
-// ZMĚNA: DOMContentLoaded
 document.addEventListener("DOMContentLoaded", async () => {
   console.log("Lab 3 loaded");
   await initWallet();

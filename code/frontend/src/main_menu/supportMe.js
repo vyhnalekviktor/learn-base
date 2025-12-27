@@ -101,7 +101,6 @@ function showErrorModal(message, title = 'Error') {
   `;
 
   modal.innerHTML = `
-    <div style="font-size: 48px; margin-bottom: 16px;">⚠️</div>
     <h3 style="color: #ef4444; margin: 0 0 10px 0; font-size: 24px; font-weight: 700;">${title}</h3>
     <p style="color: #cbd5e1; margin: 0 0 24px 0; line-height: 1.5;">
       ${message}
@@ -175,10 +174,9 @@ function showSuccessModal(amount, txHash) {
   `;
 
   modal.innerHTML = `
-    <div style="font-size: 48px; margin-bottom: 16px;">🎉</div>
     <h3 style="color: #10b981; margin: 0 0 10px 0; font-size: 24px; font-weight: 700;">Donation Successful!</h3>
     <p style="color: #cbd5e1; margin: 0 0 24px 0; line-height: 1.5;">
-      Thank you so much for supporting BaseCamp with <strong style="color: white;">${amount} USDC</strong>.
+      Thank you so much for supporting BaseCamp with <strong style="color: white;">${amount} USDC</strong>!
     </p>
 
     ${txHash ? `

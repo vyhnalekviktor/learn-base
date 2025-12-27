@@ -8,28 +8,21 @@ const AMOUNT_USDC = '1';
 let ethProvider = null;
 let currentWallet = null;
 
-// ZMĚNA: DOMContentLoaded + Cache logika
 document.addEventListener('DOMContentLoaded', async () => {
   try {
-    console.log('Initializing Base App (Send)...');
     await sdk.actions.ready();
     ethProvider = await sdk.wallet.ethProvider;
 
-    // 1. Zkusit cache (rychlé)
+    // 1. Cache
     currentWallet = sessionStorage.getItem('cached_wallet');
 
-    // 2. Pokud není, načíst z SDK (pomalé)
+    // 2. Fallback SDK
     if (!currentWallet) {
         const accounts = await ethProvider.request({ method: "eth_requestAccounts" });
         currentWallet = accounts && accounts.length > 0 ? accounts[0] : null;
-
-        // Uložit pro příště
-        if (currentWallet) {
-            sessionStorage.setItem('cached_wallet', currentWallet);
-        }
+        if (currentWallet) sessionStorage.setItem('cached_wallet', currentWallet);
     }
 
-    console.log('Base App ready');
     console.log('Connected wallet:', currentWallet);
   } catch (error) {
     console.error('Init error:', error);
@@ -38,28 +31,21 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 async function callPracticeSent(wallet) {
   try {
-    const res = await fetch(`${API_BASE}/api/database/practice-sent`, {
+    await fetch(`${API_BASE}/api/database/practice-sent`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ wallet }),
     });
-    if (!res.ok) {
-      let msg = "Unknown backend error";
-      try {
-        const err = await res.json();
-        msg = err.detail || JSON.stringify(err);
-      } catch (_) {}
-      console.error("practice-sent error:", msg);
-      return false;
-    }
-    return true;
-  } catch (e) {
-    console.error("practice-sent network error:", e);
-    return false;
-  }
+  } catch (e) { console.error(e); }
 }
 
 async function updatePracticeSendProgress(wallet) {
+  // 1. Optimistic Update
+  if (window.BaseCampTheme) {
+      window.BaseCampTheme.updateLocalProgress('send', true);
+  }
+
+  // 2. DB Update
   const res = await fetch(`${API_BASE}/api/database/update_field`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -70,16 +56,7 @@ async function updatePracticeSendProgress(wallet) {
       value: true,
     }),
   });
-  if (!res.ok) {
-    let msg = "Unknown backend error";
-    try {
-      const err = await res.json();
-      msg = err.detail || JSON.stringify(err);
-    } catch (_) {}
-    console.error("update_field error:", msg);
-    return false;
-  }
-  return true;
+  return res.ok;
 }
 
 window.toggleAccordion = function(id) {
@@ -95,7 +72,6 @@ window.toggleAccordion = function(id) {
 };
 
 window.sendTransaction = async function() {
-  console.log('Send transaction clicked!');
   const statusDiv = document.getElementById('txStatus');
 
   try {
@@ -104,18 +80,16 @@ window.sendTransaction = async function() {
     statusDiv.innerHTML = 'Preparing USDC payment...';
 
     statusDiv.innerHTML = 'Please confirm the payment in your wallet...';
-    const payment = await pay({
+    await pay({
       amount: AMOUNT_USDC,
       to: RECIPIENT_ADDRESS,
       testnet: true
     });
 
-    console.log('Payment sent!', payment);
-
     if (currentWallet) {
-      const okPractice = await callPracticeSent(currentWallet);
-      const okProgress = await updatePracticeSendProgress(currentWallet);
-      console.log('practice-sent:', okPractice, 'progress send:', okProgress);
+      // Paralelně: update statistik bota a update user progressu
+      callPracticeSent(currentWallet);
+      updatePracticeSendProgress(currentWallet);
     }
 
     statusDiv.className = 'info-box';
@@ -123,34 +97,18 @@ window.sendTransaction = async function() {
       <strong>Payment Sent!</strong><br>
       Amount: ${AMOUNT_USDC} USDC<br>
       To: ${RECIPIENT_ADDRESS.substring(0, 6)}...${RECIPIENT_ADDRESS.substring(38)}<br><br>
-      <small>Payment successfully processed on Base Sepolia testnet</small><br>
-      <small>Check it in your wallet</small>
+      <small>Payment successfully processed on Base Sepolia testnet</small>
     `;
   } catch (error) {
-    console.error('Payment error:', error);
     statusDiv.className = 'error-box';
-    if (error.message.includes('User rejected') || error.message.includes('rejected')) {
+    if (error.message.includes('rejected')) {
       statusDiv.innerHTML = 'Payment rejected by user';
-    } else if (error.message.includes('insufficient')) {
-      statusDiv.innerHTML = 'Insufficient USDC balance. Get testnet USDC from Circle Faucet.';
     } else {
       statusDiv.innerHTML = `Payment failed: ${error.message}`;
     }
   }
 };
 
-function openBridgeBase() {
-  sdk.actions.openUrl("https://bridge.base.org");
-}
-
-function openCircleFaucet() {
-  sdk.actions.openUrl("https://faucet.circle.com");
-}
-
-function openBaseScan() {
-  sdk.actions.openUrl("https://sepolia.basescan.org");
-}
-
-window.openBridgeBase = openBridgeBase;
-window.openCircleFaucet = openCircleFaucet;
-window.openBaseScan = openBaseScan;
+window.openBridgeBase = () => sdk.actions.openUrl("https://bridge.base.org");
+window.openCircleFaucet = () => sdk.actions.openUrl("https://faucet.circle.com");
+window.openBaseScan = () => sdk.actions.openUrl("https://sepolia.basescan.org");
