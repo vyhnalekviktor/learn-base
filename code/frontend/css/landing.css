@@ -496,3 +496,64 @@ footer strong {
 .footer-link svg {
     fill: currentColor;
 }
+
+/* =========================================
+   THEME TOGGLE BUTTON (Slider)
+   ========================================= */
+
+.theme-toggle {
+    position: relative;
+    width: 52px;
+    height: 28px;
+    background-color: #cbd5e1; /* Šedá pro světlý režim */
+    border-radius: 14px;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    transition: background-color 0.3s ease;
+    display: flex;
+    align-items: center;
+    outline: none;
+    /* Reset default button styles */
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Kolečko uvnitř */
+.theme-toggle-knob {
+    position: absolute;
+    top: 3px;
+    left: 4px;
+    width: 22px;
+    height: 22px;
+    background-color: white;
+    border-radius: 50%;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+    z-index: 2;
+    pointer-events: none; /* Aby kliknutí procházelo na button */
+}
+
+/* Ikona měsíce/slunce (volitelné, pokud ji tam máš) */
+.theme-toggle-icon {
+    position: absolute;
+    right: 8px;
+    color: #64748b;
+    font-size: 14px;
+    transition: opacity 0.3s;
+}
+
+/* === STAVY PRO TMAVÝ REŽIM === */
+/* Tady se děje ta magie, když common.js nastaví data-theme="dark" */
+
+html[data-theme="dark"] .theme-toggle {
+    background-color: #0052FF; /* Base Blue */
+}
+
+html[data-theme="dark"] .theme-toggle-knob {
+    transform: translateX(24px); /* Posun kolečka doprava */
+}
+
+/* Hover efekt */
+.theme-toggle:hover {
+    opacity: 0.9;
+}
