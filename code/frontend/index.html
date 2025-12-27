@@ -36,7 +36,15 @@
     justify-content: center;
     transition: opacity 0.5s ease, visibility 0.5s ease;
 ">
-    <img src="images/icon.png" alt="Logo" style="width: 80px; margin-bottom: 20px;">
+    <img src="images/icon.png" alt="Logo" style="
+    width: 90px;
+    height: 90px;
+    margin-bottom: 30px;
+    border-radius: 24px;
+    box-shadow: 0 15px 35px -10px rgba(0, 82, 255, 0.6),
+                0 5px 15px -5px rgba(0, 82, 255, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    ">
 
     <div class="spinner" style="
         width: 40px;
@@ -63,7 +71,16 @@
 </div>
     <div class="container">
         <div class="hero">
-            <img src="images/icon.png" alt="BaseCamp Logo" style="max-width: 120px; margin: 20px auto; display: block;">
+            <img src="images/icon.png" alt="BaseCamp Logo" style="
+    width: 120px;
+    height: 120px;
+    z-index: 1;
+    position: relative;
+    border-radius: 32px; /* Výraznější zaoblení pro větší ikonu */
+    /* Jemnější stín přímo na ikoně, který doplňuje ten velký blur za ní */
+    box-shadow: 0 20px 40px -10px rgba(0, 82, 255, 0.5);
+    border: 2px solid rgba(255, 255, 255, 0.08); /* Tenký rámeček */
+">
             <h1>BaseCamp</h1>
             <p class="description">
                 Learn BASE fundamentals, practice transactions, and understand
