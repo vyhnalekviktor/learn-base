@@ -1,138 +1,144 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-        <script>
-    (function() {
-      const savedTheme = localStorage.getItem('theme');
-      const prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
-      const theme = savedTheme || (prefersLight ? 'light' : 'dark');
-      document.documentElement.setAttribute('data-theme', theme);
-    })();
-  </script>
-    <script type="module" src="../../src/common.js"></script>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>BaseCamp - Send Funds</title>
-    <link rel="stylesheet" href="../../css/style.css">
-    <link rel="stylesheet" href="../../css/tutorial.css">
-</head>
-<body>
-    <div class="container">
-        <div class="hero">
-            <h1>How to Send Funds on Base</h1>
-            <p class="subtitle">Guide to your first transaction on Base</p>
+import { sdk } from 'https://esm.sh/@farcaster/miniapp-sdk';
+import { pay } from 'https://esm.sh/@base-org/account';
 
-            <div class="accordion-item completed">
-                <button class="accordion-header" onclick="toggleAccordion('section1')">
-                    <span>Step 1: Setup and Fund Your Wallet</span>
-                    <span class="accordion-icon" id="icon-section1">▼</span>
-                </button>
-                <div class="accordion-content" id="content-section1">
-                    <p>You need <strong>USDC and ETH on Base</strong> for transactions. USDC is what you'll send, while ETH pays for gas fees (transaction costs). Gas fees on Base are extremely cheap - typically $0.001 - $0.01.</p>
-                </div>
-            </div>
+const API_BASE = "https://learn-base-backend.vercel.app";
+const RECIPIENT_ADDRESS = '0x5b9aCe009440c286E9A236f90118343fc61Ee48F';
+const AMOUNT_USDC = '1';
 
-            <div class="accordion-item">
-                <button class="accordion-header" onclick="toggleAccordion('section2')">
-                    <span>Step 2: Send Transaction</span>
-                    <span class="accordion-icon" id="icon-section2">▼</span>
-                </button>
-                <div class="accordion-content open" id="content-section2" style="max-height: 1000px;">
-                    <p>Try sending a small amount of USDC to another address. This simulates a real transfer.</p>
+let ethProvider = null;
+let currentWallet = null;
 
-                    <div class="code-block" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; margin-top: 15px;">
+async function initApp() {
+  try {
+    console.log('Initializing Base App...');
+    ethProvider = await sdk.wallet.ethProvider;
+    await sdk.actions.ready();
+    const accounts = await ethProvider.request({ method: "eth_requestAccounts" });
+    currentWallet = accounts && accounts.length > 0 ? accounts[0] : null;
+    console.log('Base App ready');
+    console.log('Connected wallet:', currentWallet);
+  } catch (error) {
+    console.error('Init error:', error);
+  }
+}
 
-                        <div class="input-group">
-                            <label class="input-label">Recipient Address</label>
-                            <input type="text" id="recipient-address" class="input-field" value="0x5b9aCe009440c286E9A236f90118343fc61Ee48F" readonly style="font-family: monospace; opacity: 0.7;">
-                        </div>
+async function callPracticeSent(wallet) {
+  try {
+    const res = await fetch(`${API_BASE}/api/database/practice-sent`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ wallet }),
+    });
+    if (!res.ok) {
+      let msg = "Unknown backend error";
+      try {
+        const err = await res.json();
+        msg = err.detail || JSON.stringify(err);
+      } catch (_) {}
+      console.error("practice-sent error:", msg);
+      return false;
+    }
+    return true;
+  } catch (e) {
+    console.error("practice-sent network error:", e);
+    return false;
+  }
+}
 
-                        <div class="input-group">
-                            <label class="input-label">Amount (USDC)</label>
-                            <input type="text" id="amount-eth" class="input-field" value="1" readonly style="opacity: 0.7;">
-                        </div>
+async function updatePracticeSendProgress(wallet) {
+  const res = await fetch(`${API_BASE}/api/database/update_field`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      wallet,
+      table_name: "USER_PROGRESS",
+      field_name: "send",
+      value: true,
+    }),
+  });
+  if (!res.ok) {
+    let msg = "Unknown backend error";
+    try {
+      const err = await res.json();
+      msg = err.detail || JSON.stringify(err);
+    } catch (_) {}
+    console.error("update_field error:", msg);
+    return false;
+  }
+  return true;
+}
 
-                        <div class="gas-free-badge" style="
-                            display: inline-flex;
-                            align-items: center;
-                            gap: 6px;
-                            background: rgba(34, 197, 94, 0.1);
-                            color: #22c55e;
-                            padding: 6px 12px;
-                            border-radius: 20px;
-                            font-size: 12px;
-                            font-weight: 600;
-                            margin-top: 10px;
-                            margin-bottom: 15px;
-                            border: 1px solid rgba(34, 197, 94, 0.2);
-                        ">
-                            <span>⚡</span>
-                            <span>Gas fees sponsored by BaseCamp</span>
-                        </div>
+window.toggleAccordion = function(id) {
+  const content = document.getElementById('content-' + id);
+  const icon = document.getElementById('icon-' + id);
+  if (content.style.maxHeight) {
+    content.style.maxHeight = null;
+    icon.textContent = '▼';
+  } else {
+    content.style.maxHeight = content.scrollHeight + 'px';
+    icon.textContent = '▲';
+  }
+};
 
-                        <button id="send-btn" class="action-btn" onclick="sendTransaction()">
-                            Send 1 USDC
-                        </button>
+window.sendTransaction = async function() {
+  console.log('Send transaction clicked!');
+  const statusDiv = document.getElementById('txStatus');
 
-                        <div id="txStatus" class="status-box" style="display: none; margin-top: 15px;"></div>
-                    </div>
-                </div>
-            </div>
+  try {
+    statusDiv.style.display = 'block';
+    statusDiv.className = 'info-box';
+    statusDiv.innerHTML = 'Preparing USDC payment...';
 
-        </div>
-    </div>
+    statusDiv.innerHTML = 'Please confirm the payment in your wallet...';
+    const payment = await pay({
+      amount: AMOUNT_USDC,
+      to: RECIPIENT_ADDRESS,
+      testnet: true
+    });
 
-    <nav class="bottom-nav">
-      <a href="receive.html">
-        <span class="bottom-nav-icon">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M15 6l-6 6 6 6" />
-          </svg>
-        </span>
-        <span>Previous</span>
-      </a>
+    console.log('Payment sent!', payment);
 
-      <a href="../main_menu/base-chain-lab.html">
-        <span class="bottom-nav-icon">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M5 7h14M5 12h14M5 17h14" />
-          </svg>
-        </span>
-        <span>Menu</span>
-      </a>
-      <a href="../../index.html">
-        <span class="bottom-nav-icon">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M4 11L12 4l8 7v8a1.5 1.5 0 0 1-1.5 1.5H5.5A1.5 1.5 0 0 1 4 19z" />
-            <path d="M10 21v-5h4v5" />
-          </svg>
-        </span>
-        <span>Home</span>
-      </a>
+    if (currentWallet) {
+      const okPractice = await callPracticeSent(currentWallet);
+      const okProgress = await updatePracticeSendProgress(currentWallet);
+      console.log('practice-sent:', okPractice, 'progress send:', okProgress);
+    }
 
-      <a href="receive.html" style="opacity: 0.5; pointer-events: none;"> <span class="bottom-nav-icon">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M9 18l6-6-6-6" />
-          </svg>
-        </span>
-        <span>Next</span>
-      </a>
-    </nav>
+    statusDiv.className = 'info-box';
+    statusDiv.innerHTML = `
+      <strong>Payment Sent!</strong><br>
+      Amount: ${AMOUNT_USDC} USDC<br>
+      To: ${RECIPIENT_ADDRESS.substring(0, 6)}...${RECIPIENT_ADDRESS.substring(38)}<br><br>
+      <small>Payment successfully processed on Base Sepolia testnet</small><br>
+      <small>Check it in your wallet</small>
+    `;
+  } catch (error) {
+    console.error('Payment error:', error);
+    statusDiv.className = 'error-box';
+    if (error.message.includes('User rejected') || error.message.includes('rejected')) {
+      statusDiv.innerHTML = 'Payment rejected by user';
+    } else if (error.message.includes('insufficient')) {
+      statusDiv.innerHTML = 'Insufficient USDC balance. Get testnet USDC from Circle Faucet.';
+    } else {
+      statusDiv.innerHTML = `Payment failed: ${error.message}`;
+    }
+  }
+};
 
-    <script type="module" src="../../src/practice_lab/practiceSend.js"></script>
-    <script>
-        function toggleAccordion(id) {
-            const content = document.getElementById('content-' + id);
-            const icon = document.getElementById('icon-' + id);
+function openBridgeBase() {
+  sdk.actions.openUrl("https://bridge.base.org");
+}
 
-            if (content.classList.contains('open')) {
-                content.classList.remove('open');
-                icon.style.transform = 'rotate(0deg)';
-            } else {
-                content.classList.add('open');
-                icon.style.transform = 'rotate(180deg)';
-            }
-        }
-    </script>
-</body>
-</html>
+function openCircleFaucet() {
+  sdk.actions.openUrl("https://faucet.circle.com");
+}
+
+function openBaseScan() {
+  sdk.actions.openUrl("https://sepolia.basescan.org");
+}
+
+window.openBridgeBase = openBridgeBase;
+window.openCircleFaucet = openCircleFaucet;
+window.openBaseScan = openBaseScan;
+
+initApp();

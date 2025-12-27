@@ -1,60 +1,76 @@
 import { sdk } from 'https://esm.sh/@farcaster/miniapp-sdk';
-
-// ⬇️ TVŮJ NOVÝ PAYMASTER URL
-const PAYMASTER_URL = "https://api.developer.coinbase.com/rpc/v1/base/LmqaivWtGVqE238WPHQBoWgD1wOOQPXg";
+import { pay } from 'https://esm.sh/@base-org/account';
 
 const API_BASE = "https://learn-base-backend.vercel.app";
 const RECIPIENT_ADDRESS = '0x5b9aCe009440c286E9A236f90118343fc61Ee48F';
-const AMOUNT_USDC = '1'; // Pro účely dema
+const AMOUNT_USDC = '1';
 
 let ethProvider = null;
 let currentWallet = null;
 
-document.addEventListener('DOMContentLoaded', async () => {
+async function initApp() {
   try {
-    await sdk.actions.ready();
+    console.log('Initializing Base App...');
     ethProvider = await sdk.wallet.ethProvider;
-
-    // 1. Cache wallet
-    currentWallet = sessionStorage.getItem('cached_wallet');
-
-    // 2. Fallback SDK
-    if (!currentWallet) {
-        const accounts = await ethProvider.request({ method: "eth_requestAccounts" });
-        currentWallet = accounts && accounts.length > 0 ? accounts[0] : null;
-        if (currentWallet) sessionStorage.setItem('cached_wallet', currentWallet);
-    }
-
+    await sdk.actions.ready();
+    const accounts = await ethProvider.request({ method: "eth_requestAccounts" });
+    currentWallet = accounts && accounts.length > 0 ? accounts[0] : null;
+    console.log('Base App ready');
     console.log('Connected wallet:', currentWallet);
   } catch (error) {
     console.error('Init error:', error);
   }
-});
+}
 
-// Funkce pro update v DB
 async function callPracticeSent(wallet) {
   try {
-    await fetch(`${API_BASE}/api/database/practice-sent`, {
+    const res = await fetch(`${API_BASE}/api/database/practice-sent`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ wallet }),
     });
+    if (!res.ok) {
+      let msg = "Unknown backend error";
+      try {
+        const err = await res.json();
+        msg = err.detail || JSON.stringify(err);
+      } catch (_) {}
+      console.error("practice-sent error:", msg);
+      return false;
+    }
+    return true;
   } catch (e) {
-    console.error("Database error:", e);
+    console.error("practice-sent network error:", e);
+    return false;
   }
 }
 
-// Funkce pro update v Cache (Optimistic UI)
-function updatePracticeSendProgress(wallet) {
-  if (window.BaseCampTheme && window.BaseCampTheme.updateLocalProgress) {
-      window.BaseCampTheme.updateLocalProgress('practice_send', true);
+async function updatePracticeSendProgress(wallet) {
+  const res = await fetch(`${API_BASE}/api/database/update_field`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      wallet,
+      table_name: "USER_PROGRESS",
+      field_name: "send",
+      value: true,
+    }),
+  });
+  if (!res.ok) {
+    let msg = "Unknown backend error";
+    try {
+      const err = await res.json();
+      msg = err.detail || JSON.stringify(err);
+    } catch (_) {}
+    console.error("update_field error:", msg);
+    return false;
   }
+  return true;
 }
 
-// UI Helpers
-const toggleDetails = () => {
-  const content = document.getElementById('details-content');
-  const icon = document.getElementById('toggle-icon');
+window.toggleAccordion = function(id) {
+  const content = document.getElementById('content-' + id);
+  const icon = document.getElementById('icon-' + id);
   if (content.style.maxHeight) {
     content.style.maxHeight = null;
     icon.textContent = '▼';
@@ -63,68 +79,66 @@ const toggleDetails = () => {
     icon.textContent = '▲';
   }
 };
-window.toggleDetails = toggleDetails;
 
-// === HLAVNÍ FUNKCE ODESLÁNÍ (Upravená pro Paymaster) ===
 window.sendTransaction = async function() {
+  console.log('Send transaction clicked!');
   const statusDiv = document.getElementById('txStatus');
-
-  if (!currentWallet) {
-      alert("Wallet not connected. Please reload.");
-      return;
-  }
 
   try {
     statusDiv.style.display = 'block';
     statusDiv.className = 'info-box';
-    statusDiv.innerHTML = 'Requesting Sponsored Transaction...';
+    statusDiv.innerHTML = 'Preparing USDC payment...';
 
-    // === NOVÁ LOGIKA S PAYMASTEREM ===
-    // Používáme wallet_sendCalls (EIP-5792) místo pay()
-    const batchId = await ethProvider.request({
-        method: 'wallet_sendCalls',
-        params: [{
-            version: '1.0',
-            chainId: '0x2105', // Base Mainnet (8453)
-            from: currentWallet,
-            calls: [{
-                to: RECIPIENT_ADDRESS,
-                value: "0x0", // Posíláme 0 ETH (jen data/signál), aby to uživatele nic nestálo
-                data: "0x"
-            }],
-            capabilities: {
-                paymasterService: {
-                    url: PAYMASTER_URL
-                }
-            }
-        }]
+    statusDiv.innerHTML = 'Please confirm the payment in your wallet...';
+    const payment = await pay({
+      amount: AMOUNT_USDC,
+      to: RECIPIENT_ADDRESS,
+      testnet: true
     });
 
-    console.log("Transaction Batch ID:", batchId);
+    console.log('Payment sent!', payment);
 
-    // Pokud to prošlo sem, transakce byla odeslána
     if (currentWallet) {
-      // Paralelně: update statistik bota a update user progressu
-      callPracticeSent(currentWallet);
-      updatePracticeSendProgress(currentWallet);
+      const okPractice = await callPracticeSent(currentWallet);
+      const okProgress = await updatePracticeSendProgress(currentWallet);
+      console.log('practice-sent:', okPractice, 'progress send:', okProgress);
     }
 
     statusDiv.className = 'info-box';
     statusDiv.innerHTML = `
-      <strong>Sponsored Transaction Sent!</strong><br>
-      <span style="color:#22c55e">Gas fees paid by BaseCamp</span><br>
-      Amount: ${AMOUNT_USDC} USDC (Simulated)<br>
+      <strong>Payment Sent!</strong><br>
+      Amount: ${AMOUNT_USDC} USDC<br>
       To: ${RECIPIENT_ADDRESS.substring(0, 6)}...${RECIPIENT_ADDRESS.substring(38)}<br><br>
+      <small>Payment successfully processed on Base Sepolia testnet</small><br>
+      <small>Check it in your wallet</small>
     `;
   } catch (error) {
-    console.error(error);
+    console.error('Payment error:', error);
     statusDiv.className = 'error-box';
-    if (error.message && error.message.includes('rejected')) {
-      statusDiv.innerHTML = 'Transaction rejected by user';
+    if (error.message.includes('User rejected') || error.message.includes('rejected')) {
+      statusDiv.innerHTML = 'Payment rejected by user';
+    } else if (error.message.includes('insufficient')) {
+      statusDiv.innerHTML = 'Insufficient USDC balance. Get testnet USDC from Circle Faucet.';
     } else {
-      statusDiv.innerHTML = `Failed: ${error.message}`;
+      statusDiv.innerHTML = `Payment failed: ${error.message}`;
     }
   }
 };
 
-window.openBridgeBase = () => sdk.actions.openUrl("https://bridge.base.org/deposit");
+function openBridgeBase() {
+  sdk.actions.openUrl("https://bridge.base.org");
+}
+
+function openCircleFaucet() {
+  sdk.actions.openUrl("https://faucet.circle.com");
+}
+
+function openBaseScan() {
+  sdk.actions.openUrl("https://sepolia.basescan.org");
+}
+
+window.openBridgeBase = openBridgeBase;
+window.openCircleFaucet = openCircleFaucet;
+window.openBaseScan = openBaseScan;
+
+initApp();
