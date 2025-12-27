@@ -33,16 +33,21 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 });
 
-// Helper function for status messages (inline)
+// Helper function for status messages (ONLY for Loading/Progress now)
 function updateStatus(message, type = 'info') {
   let statusDiv = document.getElementById('status');
   if (!statusDiv) return;
 
+  // If message is empty, hide the div
+  if (!message) {
+    statusDiv.style.display = 'none';
+    statusDiv.innerHTML = '';
+    return;
+  }
+
   statusDiv.style.display = 'block';
 
   let color = '#9ca3af'; // default gray
-  if (type === 'error') color = '#ef4444';
-  if (type === 'success') color = '#10b981';
   if (type === 'warning') color = '#f59e0b';
 
   // Spinner for loading state
@@ -59,14 +64,84 @@ function updateStatus(message, type = 'info') {
   `;
 }
 
+// Function to show the ERROR MODAL
+function showErrorModal(message, title = 'Error') {
+  // 1. Clear the inline status first so it doesn't stay visible behind modal
+  updateStatus('');
+
+  // 2. Create Overlay
+  const overlay = document.createElement('div');
+  overlay.style.cssText = `
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(5px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    animation: fadeIn 0.3s ease;
+  `;
+
+  // 3. Create Modal Content
+  const modal = document.createElement('div');
+  modal.style.cssText = `
+    background: linear-gradient(145deg, #0f172a, #020617);
+    border: 1px solid rgba(239, 68, 68, 0.4); /* Red border */
+    border-radius: 20px;
+    padding: 30px 24px;
+    width: 90%;
+    max-width: 400px;
+    text-align: center;
+    color: white;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+    transform: translateY(20px);
+    animation: slideUp 0.4s ease forwards;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  `;
+
+  modal.innerHTML = `
+    <div style="font-size: 48px; margin-bottom: 16px;">⚠️</div>
+    <h3 style="color: #ef4444; margin: 0 0 10px 0; font-size: 24px; font-weight: 700;">${title}</h3>
+    <p style="color: #cbd5e1; margin: 0 0 24px 0; line-height: 1.5;">
+      ${message}
+    </p>
+
+    <button id="closeErrorModal" style="
+        width: 100%;
+        padding: 14px;
+        background: #ef4444;
+        color: white;
+        border: none;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 16px;
+        cursor: pointer;
+    ">Close</button>
+
+    <style>
+      @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+      @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+  `;
+
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
+
+  // Close logic
+  const closeBtn = modal.querySelector('#closeErrorModal');
+  closeBtn.onclick = () => {
+      overlay.style.opacity = '0';
+      setTimeout(() => {
+          if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+      }, 300);
+  };
+}
+
 // Function to show the success MODAL (Popup)
 function showSuccessModal(amount, txHash) {
   // 1. Clear the inline status first
-  const statusDiv = document.getElementById('status');
-  if (statusDiv) {
-      statusDiv.innerHTML = '';
-      statusDiv.style.display = 'none';
-  }
+  updateStatus('');
 
   // 2. Create Overlay
   const overlay = document.createElement('div');
@@ -177,13 +252,13 @@ async function donate(rawAmount) {
   // 1. Validation
   const amount = Number(rawAmount);
   if (!Number.isFinite(amount) || amount < 1) {
-    updateStatus('Minimum donation is 1 USDC', 'error');
+    showErrorModal('Minimum donation is 1 USDC', 'Invalid Amount');
     return;
   }
 
   // 2. Provider Check
   if (!ethProvider) {
-    updateStatus('Wallet not initialized. Please reload.', 'error');
+    showErrorModal('Wallet not initialized. Please reload the frame.', 'Wallet Error');
     return;
   }
 
@@ -226,7 +301,7 @@ async function donate(rawAmount) {
       await new Promise(r => setTimeout(r, 1500));
     }
 
-    // 4. User Warning (Real Transaction)
+    // 4. User Warning (Real Transaction) - This is technically progress/warning, staying inline
     updateStatus(`Preparing real transaction (${amount} USDC)...`, 'warning');
 
     const accounts = await ethProvider.request({ method: 'eth_requestAccounts' });
@@ -254,10 +329,6 @@ async function donate(rawAmount) {
     txHash = typeof txResponse === 'string' ? txResponse : null;
 
     // 7. Completion - Show Popup instead of inline text
-    // Clear status first to avoid clutter
-    updateStatus('', 'success');
-
-    // Save to DB and show Popup
     addDonationDB(amount);
     showSuccessModal(amount, txHash);
 
@@ -268,7 +339,8 @@ async function donate(rawAmount) {
     if (error.code === 4001) msg = 'Transaction cancelled by user';
     if (msg.includes('insufficient')) msg = 'Insufficient USDC balance on Base';
 
-    updateStatus(msg, 'error');
+    // Show Error Modal instead of inline status
+    showErrorModal(msg, 'Transaction Failed');
   }
 }
 
@@ -290,7 +362,7 @@ function donateCustom() {
   if (amount && Number(amount) >= 1) {
     donate(amount);
   } else {
-    updateStatus('Minimum amount is 1 USDC', 'warning');
+    showErrorModal('Minimum amount is 1 USDC', 'Invalid Amount');
   }
 }
 
