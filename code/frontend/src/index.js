@@ -18,28 +18,6 @@ function showCompatibilityWarning(reason) {
   console.warn(`[Index] MiniApp needs ${reason}: wallet for full functionality`);
 }
 
-// ZMĚNA 1: Funkce vrací true, pokud byl uživatel vytvořen (je nový)
-async function initUserOnBackend(wallet) {
-  try {
-    const res = await fetch(`${API_BASE}/api/database/init-user`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ wallet }),
-    });
-
-    if (res.ok) {
-        const data = await res.json();
-        // Backend vrací { created: true } pokud je user nový
-        return data.created === true;
-    }
-    return false;
-  } catch (e) {
-    console.warn("Backend init failed", e);
-    return false;
-  }
-}
-
-// ZMĚNA 2: Přidána funkce pro zobrazení modalu (pokud tam chyběla nebo nebyla kompletní)
 function showWelcomeModal() {
   // Check if already exists
   if (document.getElementById('welcome-modal-overlay')) return;
@@ -61,10 +39,9 @@ function showWelcomeModal() {
   `;
 
   modal.innerHTML = `
-    <div style="font-size: 48px; margin-bottom: 20px;">🏕️</div>
     <h2 style="color:white; margin:0 0 12px 0; font-size: 24px;">Welcome to BaseCamp!</h2>
     <p style="color:#94a3b8; font-size: 16px; line-height: 1.6; margin-bottom: 24px;">
-      Start your journey into the Base ecosystem. Learn by doing, collect badges, and master the chain.
+      Start your journey into the Base ecosystem. Learn basics, check out common scams, earn an NFT badge!
     </p>
     <button id="closeWelcome" style="
       background: #0052FF; color: white; border: none; padding: 14px 32px;
@@ -84,6 +61,25 @@ function showWelcomeModal() {
     overlay.style.opacity = '0';
     setTimeout(() => overlay.remove(), 300);
   };
+}
+
+async function initUserOnBackend(wallet) {
+  try {
+    const res = await fetch(`${API_BASE}/api/database/init-user`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ wallet }),
+    });
+
+    if (res.ok) {
+        const data = await res.json();
+        return data.created === true;
+    }
+    return false;
+  } catch (e) {
+    console.warn("Backend init failed", e);
+    return false;
+  }
 }
 
 // === MAIN LOGIC ===
@@ -110,16 +106,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       const span = document.getElementById("wallet-address");
       if (span) span.textContent = wallet;
 
-      // ZMĚNA 3: Zpracování výsledku inicializace
-      // A) Inicializujeme backend a zjistíme, zda je user nový
       const isNewUser = await initUserOnBackend(wallet);
 
-      // B) Pokud je nový, ukážeme Welcome Modal
       if (isNewUser) {
           showWelcomeModal();
       }
 
-      // C) Paralelně stahujeme data do cache (Common.js)
       if (window.BaseCampTheme && window.BaseCampTheme.initUserData) {
           window.BaseCampTheme.initUserData(wallet);
       }
@@ -149,6 +141,19 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (initialsEl) initialsEl.textContent = "";
         }
     }
+
+    // --- ZMĚNA: Přidána obsluha pro Theme Toggle ---
+    const themeBtn = document.getElementById('themeToggle');
+    if (themeBtn) {
+        themeBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            // Voláme funkci z common.js
+            if (window.BaseCampTheme) {
+                window.BaseCampTheme.toggleTheme();
+            }
+        });
+    }
+    // ----------------------------------------------
 
     const footerLink = document.getElementById('farcaster-link');
     if (footerLink) {
