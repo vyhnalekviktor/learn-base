@@ -39,12 +39,10 @@ async function getWallet() {
 async function addProgress() {
   if (addedProgress) return true;
 
-  // DŮLEŽITÉ: Zde čekáme na peněženku. Pokud init ještě běží, kód se zde zastaví a počká.
   const wallet = await getWallet();
 
   if (!wallet) {
     console.error('❌ Faucet: Cannot save progress - No wallet available.');
-    // Zde můžeme vrátit true, abychom neblokovali otevření URL, i když se logování nepovedlo
     return false;
   }
 
@@ -53,8 +51,8 @@ async function addProgress() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        wallet: wallet, // Používáme lokální proměnnou, která je jistě naplněná
-        tablename: 'USER_PROGRESS',
+        wallet: wallet,
+        table_name: 'USER_PROGRESS',
         field_name: 'faucet',
         value: true
       })
