@@ -149,6 +149,27 @@
     <span>Next</span>
   </a>
 </nav>
+    <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+<script>
+    // Inicializace konzole
+    eruda.init();
+
+    // Otevřít konzoli automaticky (volitelné, pro pohodlí)
+    // eruda.show();
+
+    console.log("🚀 Debug console ready via Eruda");
+    console.log("🔍 Checking wallet status...");
+
+    // Rychlá diagnostika pro tebe hned po startu
+    setTimeout(() => {
+        const wallet = localStorage.getItem('cached_wallet');
+        const status = localStorage.getItem('sepolia_status');
+        console.log("💾 LocalStorage Check:");
+        console.log("- cached_wallet:", wallet);
+        console.log("- sepolia_status:", status);
+        console.log("- currentWallet var:", window.currentWallet || "undefined (scope issue)");
+    }, 1000);
+</script>
     <script type="module" src="../../src/practice_lab/faucet.js"></script>
 </body>
 </html>
