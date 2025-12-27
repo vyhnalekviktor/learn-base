@@ -8,19 +8,33 @@ const AMOUNT_USDC = '1';
 let ethProvider = null;
 let currentWallet = null;
 
-async function initApp() {
+// ZMĚNA: DOMContentLoaded + Cache logika
+document.addEventListener('DOMContentLoaded', async () => {
   try {
-    console.log('Initializing Base App...');
-    ethProvider = await sdk.wallet.ethProvider;
+    console.log('Initializing Base App (Send)...');
     await sdk.actions.ready();
-    const accounts = await ethProvider.request({ method: "eth_requestAccounts" });
-    currentWallet = accounts && accounts.length > 0 ? accounts[0] : null;
+    ethProvider = await sdk.wallet.ethProvider;
+
+    // 1. Zkusit cache (rychlé)
+    currentWallet = sessionStorage.getItem('cached_wallet');
+
+    // 2. Pokud není, načíst z SDK (pomalé)
+    if (!currentWallet) {
+        const accounts = await ethProvider.request({ method: "eth_requestAccounts" });
+        currentWallet = accounts && accounts.length > 0 ? accounts[0] : null;
+
+        // Uložit pro příště
+        if (currentWallet) {
+            sessionStorage.setItem('cached_wallet', currentWallet);
+        }
+    }
+
     console.log('Base App ready');
     console.log('Connected wallet:', currentWallet);
   } catch (error) {
     console.error('Init error:', error);
   }
-}
+});
 
 async function callPracticeSent(wallet) {
   try {
@@ -140,5 +154,3 @@ function openBaseScan() {
 window.openBridgeBase = openBridgeBase;
 window.openCircleFaucet = openCircleFaucet;
 window.openBaseScan = openBaseScan;
-
-initApp();

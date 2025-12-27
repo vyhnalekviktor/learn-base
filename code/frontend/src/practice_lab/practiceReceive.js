@@ -4,16 +4,17 @@ const API_BASE = "https://learn-base-backend.vercel.app";
 
 let ethProvider = null;
 
-async function initApp() {
+// ZMĚNA: Obaleno do DOMContentLoaded
+document.addEventListener('DOMContentLoaded', async () => {
   try {
-    console.log('Initializing Base App...');
+    console.log('Initializing Base App (Receive)...');
     ethProvider = await sdk.wallet.ethProvider;
     await sdk.actions.ready();
     console.log('Base App ready');
   } catch (error) {
     console.error('Init error:', error);
   }
-}
+});
 
 window.toggleAccordion = function(id) {
   const content = document.getElementById('content-' + id);
@@ -140,5 +141,3 @@ window.openSepoliaScanAddress = function(addr) {
 
 window.openSepoliaScan = openSepoliaScan;
 window.openBaseScan = openBaseScan;
-
-initApp();

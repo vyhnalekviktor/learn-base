@@ -2,32 +2,59 @@ import { sdk } from "https://esm.sh/@farcaster/miniapp-sdk";
 const API_BASE = "https://learn-base-backend.vercel.app";
 let currentWallet = null;
 
+// ZMĚNA: Robustní načtení peněženky přes common.js cache
 async function initWallet() {
   try {
-    console.log("Page loaded, calling sdk.actions.ready()...");
+    console.log("Lab 1 init...");
     await sdk.actions.ready();
-    console.log("BaseCamp mini app is ready!");
 
-    const ethProvider = await sdk.wallet.ethProvider;
-    const accounts = await ethProvider.request({
-      method: "eth_requestAccounts",
-    });
-
-    const wallet = accounts && accounts.length > 0 ? accounts[0] : null;
-
-    if (!wallet) {
-      console.warn("Wallet address not found from ethProvider.request()");
-      return;
+    // 1. Zkus cache z common.js (nejrychlejší)
+    if (window.BaseCampTheme?.waitForWallet) {
+        try {
+            const cache = await window.BaseCampTheme.waitForWallet();
+            if (cache.wallet) {
+                currentWallet = cache.wallet;
+                console.log('✅ Lab 1: Wallet from cache:', currentWallet);
+                updateUI(currentWallet);
+                return;
+            }
+        } catch (e) {
+            // Timeout, jedeme dál
+        }
     }
 
-    console.log("Connected wallet from SDK:", wallet);
-    currentWallet = wallet;
+    // 2. Zkus sessionStorage (záloha)
+    const sessionWallet = sessionStorage.getItem('cached_wallet');
+    if (sessionWallet) {
+        currentWallet = sessionWallet;
+        console.log('✅ Lab 1: Wallet from session:', currentWallet);
+        updateUI(currentWallet);
+        return;
+    }
 
-    const span = document.getElementById("wallet-address");
-    if (span) span.textContent = wallet;
+    // 3. Fallback: SDK request (nejpomalejší)
+    console.log('🔄 Lab 1: Fetching wallet from SDK...');
+    const ethProvider = await sdk.wallet.ethProvider;
+    const accounts = await ethProvider.request({ method: "eth_requestAccounts" });
+
+    currentWallet = accounts && accounts.length > 0 ? accounts[0] : null;
+
+    if (currentWallet) {
+        // Uložíme pro příště
+        sessionStorage.setItem('cached_wallet', currentWallet);
+        updateUI(currentWallet);
+    } else {
+        console.warn("⚠️ Lab 1: No wallet found");
+    }
+
   } catch (error) {
-    console.error("Error during MiniApp wallet init:", error);
+    console.error("❌ Lab 1 init error:", error);
   }
+}
+
+function updateUI(wallet) {
+    const span = document.getElementById("wallet-address");
+    if (span) span.textContent = `${wallet.slice(0,6)}...${wallet.slice(-4)}`;
 }
 
 async function updateLabProgress(wallet) {
@@ -35,8 +62,6 @@ async function updateLabProgress(wallet) {
     console.error("NO WALLET - cannot call API");
     return false;
   }
-
-  console.log("Calling API with wallet:", wallet);
 
   const res = await fetch(`${API_BASE}/api/database/update_field`, {
     method: "POST",
@@ -49,59 +74,39 @@ async function updateLabProgress(wallet) {
     }),
   });
 
-  console.log("API response status:", res.status);
-
-  if (!res.ok) {
-    let msg = "Unknown backend error";
-    try {
-      const err = await res.json();
-      msg = err.detail || JSON.stringify(err);
-    } catch (_) {}
-    console.error("update_field error:", msg);
-    return false;
-  }
-
-  console.log("API call SUCCESS");
+  if (!res.ok) return false;
   return true;
 }
 
+// ZMĚNA: DOMContentLoaded pro rychlý start
 document.addEventListener('DOMContentLoaded', async function() {
-    console.log('Lab 1 loaded - Modal-based SCAM detection (WITH API)');
-
-    // Wallet init PRVNĚ
+    console.log('Lab 1 loaded');
     await initWallet();
 
     const scamButton = document.querySelector('.scam-warning-btn');
     const runButton = document.querySelector('.cta-button');
 
-    if (!scamButton) {
-        console.error('SCAM button (.scam-warning-btn) not found');
-        return;
+    if (scamButton) {
+        scamButton.addEventListener('click', async function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            if (!currentWallet) {
+                showModal('warning', 'Please connect your wallet first!');
+                return;
+            }
+
+            const success = await updateLabProgress(currentWallet);
+            if (success) {
+                showModal('success',
+                "CONGRATS! Lab 1 COMPLETE!\n\n" +
+                "Never share seed phrase or private key with anybody!");
+            } else {
+                showModal('danger', 'Failed to save progress.');
+            }
+        });
     }
 
-    // 1. SCAM BUTTON - FIXED jako faucet.js
-    scamButton.addEventListener('click', async function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-
-        console.log("SCAM button clicked, currentWallet:", currentWallet);
-
-        if (!currentWallet) {
-            showModal('warning', 'Please connect your wallet first!');
-            return;
-        }
-
-        const success = await updateLabProgress(currentWallet);
-        if (success) {
-            showModal('success',
-            "CONGRATS! Lab 1 COMPLETE!\n\n" +
-            "Never share seed phrase or private key with anybody!");
-        } else {
-            showModal('danger', 'Failed to save progress. Check console for details.');
-        }
-    });
-
-    // 2. Run The Lab - scam demo
     if (runButton) {
         runButton.addEventListener('click', function(e) {
             e.preventDefault();
@@ -112,7 +117,6 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     function showScamDemo() {
         runButton.style.display = 'none';
-
         const trySection = document.querySelector('.try-section');
         if (!trySection) return;
 
@@ -121,33 +125,31 @@ document.addEventListener('DOMContentLoaded', async function() {
                 <h2>Claim BASE Airdrop</h2>
                 <p>Get 500 BASE tokens FREE!</p>
             </div>
-
             <div class="fake-wallet-section">
                 <button class="connect-btn" onclick="showSeedInput()">Connect Wallet</button>
             </div>
-
             <div class="seed-input-section" id="seedSection" style="display: none;">
                 <h4>Enter your 12/24 word seed phrase to claim</h4>
                 <textarea class="seed-textarea" placeholder="word1 word2 word3 ... word24" id="seedInput"></textarea>
                 <button class="scam-claim-btn" onclick="showScamAlert()" id="claimBtn">Claim 500 BASE</button>
             </div>
         `;
-
         trySection.classList.add('scam-active');
 
-        // 3. SEED INPUT - Danger modal při psaní
-        const seedInput = document.getElementById('seedInput');
-        seedInput.addEventListener('input', function() {
-            if (this.value.trim().length > 0) {
-                showModal('danger', 'NEVER enter your seed phrase anywhere!\nYour wallet could be DRAINED instantly!');
-                this.value = ''; // Vymaže input
+        setTimeout(() => {
+            const seedInput = document.getElementById('seedInput');
+            if(seedInput) {
+                seedInput.addEventListener('input', function() {
+                    if (this.value.trim().length > 0) {
+                        showModal('danger', 'NEVER enter your seed phrase anywhere!\nYour wallet could be DRAINED instantly!');
+                        this.value = '';
+                    }
+                });
             }
-        });
+        }, 100);
     }
 
-    // Frontend MODAL systém
     function showModal(type, message) {
-        // Odstraní případný starý modal
         const oldModal = document.querySelector('.custom-modal');
         if (oldModal) oldModal.remove();
 
@@ -166,17 +168,16 @@ document.addEventListener('DOMContentLoaded', async function() {
                 </div>
             </div>
         `;
-
         document.body.appendChild(modal);
 
-        // Zavře modal
-        modal.querySelector('.modal-close-btn').onclick = () => modal.remove();
+        const closeBtn = modal.querySelector('.modal-close-btn');
+        if(closeBtn) closeBtn.onclick = () => modal.remove();
+
         modal.addEventListener('click', function(e) {
             if (e.target === modal) modal.remove();
         });
     }
 
-    // Global functions
     window.showSeedInput = function() {
         document.getElementById('seedSection').style.display = 'block';
         document.querySelector('.fake-wallet-section').style.display = 'none';
@@ -184,14 +185,10 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     window.showScamAlert = function() {
         const seedValue = document.getElementById('seedInput').value.trim();
-
-        // 4. CLAIM bez seed - Warning modal
         if (!seedValue) {
             showModal('warning', 'Please enter your seed phrase to claim 500 BASE tokens!');
             return;
         }
-
-        // Lab complete - Success modal
         showModal('success', 'LAB 1 COMPLETE!\n\nYou understood the SCAM mechanics perfectly!\n\nKey lesson: NEVER enter seed phrase anywhere!');
     };
 });

@@ -14,7 +14,8 @@ let originalChainId = null
 let currentWallet = null
 const API_BASE = "https://learn-base-backend.vercel.app"
 
-async function initApp() {
+// ZMĚNA: Obaleno do DOMContentLoaded
+document.addEventListener('DOMContentLoaded', async () => {
   try {
     ethProvider = await sdk.wallet.ethProvider
     await sdk.actions.ready()
@@ -24,7 +25,7 @@ async function initApp() {
   } catch (error) {
     console.error("Init error:", error)
   }
-}
+});
 
 window.toggleAccordion = function (id) {
   const content = document.getElementById("content-" + id)
@@ -237,6 +238,3 @@ statusDiv.appendChild(viewBtn);
 window.openSepoliaScanAddress = function(addr) {
   sdk.actions.openUrl(`${addr}`);
 };
-
-
-initApp()

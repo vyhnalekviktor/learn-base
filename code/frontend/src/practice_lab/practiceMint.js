@@ -299,4 +299,5 @@ window.openSepoliaScanAddress = function(addr) {
   sdk.actions.openUrl(`${addr}`);
 };
 
-window.addEventListener("load", initApp);
+// ZMĚNA: DOMContentLoaded
+document.addEventListener("DOMContentLoaded", initApp);

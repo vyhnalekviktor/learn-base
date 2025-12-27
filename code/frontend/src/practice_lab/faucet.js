@@ -21,12 +21,13 @@ async function getWallet() {
         return currentWallet;
       }
     } catch (err) {
-      console.warn('⚠️ Faucet: Waiting for wallet timed out, checking localStorage directly...');
+      console.warn('⚠️ Faucet: Waiting for wallet timed out, checking storage directly...');
     }
   }
 
-  // Fallback: Pokud waitForWallet selhal (timeout), zkusíme naposledy localStorage
-  const directCache = localStorage.getItem('cached_wallet');
+  // Fallback: Pokud waitForWallet selhal (timeout), zkusíme naposledy sessionStorage
+  // ZMĚNA: sessionStorage místo localStorage
+  const directCache = sessionStorage.getItem('cached_wallet');
   if (directCache) {
     currentWallet = directCache;
     return currentWallet;
@@ -108,5 +109,5 @@ window.toggleAccordion = toggleAccordion;
 window.openEthFaucet = openEthFaucet;
 window.openUsdcFaucet = openUsdcFaucet;
 
-// Inicializace pouze zobrazení peněženky
-window.addEventListener('load', initWalletDisplay);
+// Inicializace: ZMĚNA NA DOMContentLoaded pro rychlost
+document.addEventListener('DOMContentLoaded', initWalletDisplay);
