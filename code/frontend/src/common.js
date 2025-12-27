@@ -1,9 +1,9 @@
-// src/common.js - FIXED WALLET CACHE
+// src/common.js - FIXED WALLET CACHE + PROPER SEPOLIA TEST
 
 (function() {
 'use strict';
 
-const BASE_SEPOLIA_CHAIN_ID_DEC = 84532;
+const BASE_SEPOLIA_CHAIN_ID_HEX = '0x14a34'; // 84532
 
 // === 1. SET THEME IMMEDIATELY (no flash) ===
 (function setThemeImmediately() {
@@ -16,7 +16,7 @@ const BASE_SEPOLIA_CHAIN_ID_DEC = 84532;
   }
 })();
 
-// === 2. WALLET CACHE - FIXED VERSION ===
+// === 2. WALLET CACHE - FIXED VERSION WITH PROPER SEPOLIA TEST ===
 async function initWalletCache() {
   const cachedWallet = localStorage.getItem('cached_wallet');
   const sepoliaStatus = localStorage.getItem('sepolia_status');
@@ -61,14 +61,29 @@ async function initWalletCache() {
     localStorage.setItem('cached_wallet', wallet);
     console.log('✅ Wallet cached:', wallet);
 
-    // Then check Sepolia support
+    // ✅ PROPER SEPOLIA TEST - Try to switch chain
     let supportsSepolia = false;
     try {
-      const chainIdHex = await ethProvider.request({ method: "eth_chainId" });
-      const chainIdDec = parseInt(chainIdHex, 16);
-      supportsSepolia = chainIdDec === BASE_SEPOLIA_CHAIN_ID_DEC;
+      await ethProvider.request({
+        method: 'wallet_switchEthereumChain',
+        params: [{ chainId: BASE_SEPOLIA_CHAIN_ID_HEX }]
+      });
+      supportsSepolia = true; // ✅ Switch successful
+      console.log('✅ Sepolia switch: SUCCESS');
     } catch (e) {
-      console.log('⚠️ Sepolia check failed:', e.message);
+      if (e.code === 4001) {
+        // User rejected the switch, but wallet SUPPORTS Sepolia
+        supportsSepolia = true;
+        console.log('✅ Sepolia switch: User rejected (but supported)');
+      } else if (e.code === 4902) {
+        // Chain not configured - wallet DOESN'T support Sepolia
+        supportsSepolia = false;
+        console.log('❌ Sepolia switch: Chain not configured (not supported)');
+      } else {
+        // Other errors - assume not supported
+        supportsSepolia = false;
+        console.log('❌ Sepolia switch: Error', e.code, e.message);
+      }
     }
 
     const status = supportsSepolia ? 'ok' : 'warning';
@@ -157,8 +172,8 @@ window.BaseCampTheme = {
     initTheme();
     setupToggle();
     setupSystemPreferenceListener();
-    // Cache wallet in background (non-blocking)
-    setTimeout(() => initWalletCache().catch(console.error), 100);
+    // ✅ Start cache immediately (no delay)
+    initWalletCache().catch(console.error);
   },
 
   getCurrentTheme: () => document.documentElement.getAttribute('data-theme'),
