@@ -1,11 +1,10 @@
-// src/common.js - FIXED WITH FARCASTER DETECTION
-
 (function() {
 'use strict';
 
 const BASE_SEPOLIA_CHAIN_ID_HEX = '0x14a34'; // 84532
 
 // === 1. SET THEME IMMEDIATELY (no flash) ===
+// Uses localStorage to persist theme across sessions
 (function setThemeImmediately() {
   const savedTheme = localStorage.getItem('theme');
   const prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
@@ -16,26 +15,26 @@ const BASE_SEPOLIA_CHAIN_ID_HEX = '0x14a34'; // 84532
   }
 })();
 
-// ✅ DETECT FARCASTER ENVIRONMENT
+// Detect Farcaster Environment
 function isFarcasterMiniApp() {
-  // Check for Farcaster-specific indicators
   const userAgent = navigator.userAgent.toLowerCase();
   const isFarcaster = userAgent.includes('farcaster') ||
                       userAgent.includes('warpcast') ||
                       window.location.hostname.includes('farcaster') ||
                       window.location.hostname.includes('warpcast');
 
-  console.log('🔍 Farcaster detection:', isFarcaster, '| UA:', userAgent);
+  console.log('[Common] Farcaster detection:', isFarcaster, '| UA:', userAgent);
   return isFarcaster;
 }
 
-// === 2. WALLET CACHE - FIXED VERSION WITH FARCASTER DETECTION ===
+// === 2. WALLET CACHE ===
+// Uses sessionStorage so wallet resets when app/tab is closed
 async function initWalletCache() {
-  const cachedWallet = localStorage.getItem('cached_wallet');
-  const sepoliaStatus = localStorage.getItem('sepolia_status');
+  const cachedWallet = sessionStorage.getItem('cached_wallet');
+  const sepoliaStatus = sessionStorage.getItem('sepolia_status');
 
   if (cachedWallet && sepoliaStatus) {
-    console.log('✅ Full cache hit:', cachedWallet, sepoliaStatus);
+    console.log('[Common] Session cache hit:', cachedWallet, sepoliaStatus);
     return;
   }
 
@@ -45,9 +44,9 @@ async function initWalletCache() {
 
     const ethProvider = await sdk.wallet.ethProvider;
     if (!ethProvider) {
-      console.log('⚠️ No ethProvider available');
-      localStorage.setItem('sepolia_status', 'error');
-      localStorage.setItem('cached_wallet', '');
+      console.log('[Common] Warning: No ethProvider available');
+      sessionStorage.setItem('sepolia_status', 'error');
+      sessionStorage.setItem('cached_wallet', '');
       return;
     }
 
@@ -55,36 +54,35 @@ async function initWalletCache() {
     try {
       accounts = await ethProvider.request({ method: "eth_requestAccounts" });
     } catch (e) {
-      console.log('⚠️ eth_requestAccounts failed:', e.message);
-      localStorage.setItem('sepolia_status', 'error');
-      localStorage.setItem('cached_wallet', '');
+      console.log('[Common] Warning: eth_requestAccounts failed:', e.message);
+      sessionStorage.setItem('sepolia_status', 'error');
+      sessionStorage.setItem('cached_wallet', '');
       return;
     }
 
     const wallet = accounts && accounts.length > 0 ? accounts[0] : null;
 
     if (!wallet) {
-      console.log('⚠️ No wallet in accounts');
-      localStorage.setItem('sepolia_status', 'error');
-      localStorage.setItem('cached_wallet', '');
+      console.log('[Common] Warning: No wallet in accounts');
+      sessionStorage.setItem('sepolia_status', 'error');
+      sessionStorage.setItem('cached_wallet', '');
       return;
     }
 
-    // ✅ Cache wallet FIRST
-    localStorage.setItem('cached_wallet', wallet);
-    console.log('✅ Wallet cached:', wallet);
+    // Cache wallet to session storage
+    sessionStorage.setItem('cached_wallet', wallet);
+    console.log('[Common] Wallet cached to session:', wallet);
 
-    // ✅ CHECK IF FARCASTER MINIAPP
     const isFarcaster = isFarcasterMiniApp();
 
     if (isFarcaster) {
-      // ✅ FORCE WARNING for Farcaster - no Sepolia support
-      localStorage.setItem('sepolia_status', 'warning');
-      console.log('⚠️ Farcaster detected: Forcing sepolia_status=warning (no testnet support)');
+      // Force warning for Farcaster - no Sepolia support in webview usually
+      sessionStorage.setItem('sepolia_status', 'warning');
+      console.log('[Common] Farcaster detected: Forcing sepolia_status=warning');
       return;
     }
 
-    // ✅ PROPER SEPOLIA TEST for non-Farcaster wallets
+    // Check for Sepolia support (non-Farcaster wallets)
     let supportsSepolia = false;
     try {
       await ethProvider.request({
@@ -92,28 +90,20 @@ async function initWalletCache() {
         params: [{ chainId: BASE_SEPOLIA_CHAIN_ID_HEX }]
       });
       supportsSepolia = true;
-      console.log('✅ Sepolia switch: SUCCESS');
     } catch (e) {
-      if (e.code === 4001) {
-        supportsSepolia = true;
-        console.log('✅ Sepolia switch: User rejected (but supported)');
-      } else if (e.code === 4902) {
-        supportsSepolia = false;
-        console.log('❌ Sepolia switch: Chain not configured (not supported)');
-      } else {
-        supportsSepolia = false;
-        console.log('❌ Sepolia switch: Error', e.code, e.message);
-      }
+      if (e.code === 4001) supportsSepolia = true; // User rejected request, but chain is supported
+      else if (e.code === 4902) supportsSepolia = false; // Chain not added
+      else supportsSepolia = false;
     }
 
     const status = supportsSepolia ? 'ok' : 'warning';
-    localStorage.setItem('sepolia_status', status);
-    console.log(`✅ Cache complete: wallet=${wallet.slice(0,6)}... sepolia=${status}`);
+    sessionStorage.setItem('sepolia_status', status);
+    console.log(`[Common] Cache complete: wallet=${wallet.slice(0,6)}... sepolia=${status}`);
 
   } catch (error) {
-    console.log('❌ Wallet cache init failed:', error.message);
-    localStorage.setItem('sepolia_status', 'error');
-    localStorage.setItem('cached_wallet', '');
+    console.error('[Common] Error: Wallet cache init failed:', error.message);
+    sessionStorage.setItem('sepolia_status', 'error');
+    sessionStorage.setItem('cached_wallet', '');
   }
 }
 
@@ -207,18 +197,19 @@ window.BaseCampTheme = {
   },
 
   getWalletCache: () => ({
-    wallet: localStorage.getItem('cached_wallet') || null,
-    sepolia_status: localStorage.getItem('sepolia_status') || null
+    // Reading from sessionStorage
+    wallet: sessionStorage.getItem('cached_wallet') || null,
+    sepolia_status: sessionStorage.getItem('sepolia_status') || null
   }),
 
   waitForWallet: () => {
     return new Promise((resolve, reject) => {
-      const maxAttempts = 60; // 3s timeout
+      const maxAttempts = 60; // 3s timeout (60 * 50ms)
       let attempts = 0;
 
       const check = () => {
-        const wallet = localStorage.getItem('cached_wallet');
-        const sepolia = localStorage.getItem('sepolia_status');
+        const wallet = sessionStorage.getItem('cached_wallet');
+        const sepolia = sessionStorage.getItem('sepolia_status');
 
         if (wallet !== null && sepolia !== null) {
           resolve({
@@ -238,12 +229,11 @@ window.BaseCampTheme = {
   },
 
   clearCache: () => {
-    localStorage.removeItem('cached_wallet');
-    localStorage.removeItem('sepolia_status');
-    console.log('🗑️ Wallet cache cleared');
+    sessionStorage.removeItem('cached_wallet');
+    sessionStorage.removeItem('sepolia_status');
+    console.log('[Common] Wallet session cache cleared');
   },
 
-  // ✅ NEW: Check if running in Farcaster
   isFarcaster: isFarcasterMiniApp
 };
 
