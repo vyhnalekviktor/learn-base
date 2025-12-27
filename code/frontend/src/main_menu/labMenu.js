@@ -3,8 +3,57 @@ import sdk from 'https://esm.sh/@farcaster/miniapp-sdk';
 const API_BASE = 'https://learn-base-backend.vercel.app';
 const BASE_SEPOLIA_CHAIN_ID = '0x14a34'; // 84532 hex
 
+// ====== DEBUG OVERLAY ======
+function showDebugInfo(data) {
+  const debug = document.createElement('div');
+  debug.id = 'debug-overlay';
+  debug.style.cssText = `
+    position: fixed;
+    bottom: 70px;
+    left: 10px;
+    right: 10px;
+    background: rgba(0,0,0,0.95);
+    color: #00ff00;
+    padding: 14px;
+    border-radius: 12px;
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+    z-index: 9998;
+    line-height: 1.6;
+    border: 2px solid #00ff00;
+    max-height: 200px;
+    overflow-y: auto;
+  `;
+
+  const walletShort = data.wallet ? `${data.wallet.slice(0,6)}...${data.wallet.slice(-4)}` : 'NULL';
+
+  debug.innerHTML = `
+    <strong style="color: #0ff;">🐛 DEBUG INFO</strong><br>
+    <span style="color: #fff;">wallet:</span> ${walletShort}<br>
+    <span style="color: #fff;">sepolia_status:</span> ${data.sepolia_status || 'NULL'}<br>
+    <span style="color: #fff;">cacheLoaded:</span> ${data.cacheLoaded}<br>
+    <span style="color: #fff;">localStorage.wallet:</span> ${localStorage.getItem('cached_wallet')?.slice(0,10) || 'NULL'}...<br>
+    <span style="color: #fff;">localStorage.sepolia:</span> ${localStorage.getItem('sepolia_status') || 'NULL'}<br>
+    <span style="color: #fff;">progressGranted:</span> ${data.progressGranted || 'NO'}<br>
+    <span style="color: #fff;">warningShown:</span> ${data.warningShown || 'NO'}<br>
+    <button onclick="this.parentElement.remove()" style="margin-top:8px;padding:6px 12px;background:#ff0000;color:#fff;border:none;border-radius:6px;font-weight:bold;cursor:pointer;">Close</button>
+  `;
+
+  // Remove old debug if exists
+  const old = document.getElementById('debug-overlay');
+  if (old) old.remove();
+
+  document.body.appendChild(debug);
+
+  // Auto-hide after 15s
+  setTimeout(() => {
+    if (debug.parentElement) debug.remove();
+  }, 15000);
+}
+
 window.addEventListener('load', async () => {
   let loadingOverlay = null;
+  const debugData = { cacheLoaded: false, progressGranted: false, warningShown: false };
 
   try {
     await sdk.actions.ready();
@@ -35,11 +84,16 @@ window.addEventListener('load', async () => {
       console.log('📦 labMenu: Direct localStorage:', { wallet, sepolia_status });
     }
 
+    debugData.wallet = wallet;
+    debugData.sepolia_status = sepolia_status;
+    debugData.cacheLoaded = cacheLoaded;
+
     // ====== 2. CHECK IF WALLET EXISTS ======
     if (!wallet || wallet === '') {
       hideLoadingOverlay(loadingOverlay);
       showCompatibilityWarning('wallet');
       console.error('❌ No wallet available - please open in Coinbase Wallet/Base App');
+      showDebugInfo(debugData); // Show debug before return
       return; // ✅ Stop here - no wallet = no progress
     }
 
@@ -61,22 +115,35 @@ window.addEventListener('load', async () => {
         sepolia_status = 'warning';
         console.log('⚠️ Sepolia support: NOT AVAILABLE');
         await grantFullPracticeProgress(wallet);
+        debugData.progressGranted = true;
         showCompatibilityWarning('chain');
+        debugData.warningShown = true;
       }
     } else if (sepolia_status === 'warning') {
-      // Already detected - show warning
-      console.log('⚠️ Sepolia support: cached as warning');
+      // ✅ FIXED: Grant progress when cached as warning
+      console.log('⚠️ Sepolia support: cached as warning - granting progress');
+      await grantFullPracticeProgress(wallet);
+      debugData.progressGranted = true;
       showCompatibilityWarning('chain');
+      debugData.warningShown = true;
     }
+
+    // Update debug data
+    debugData.sepolia_status = sepolia_status;
 
     // ====== 5. ALWAYS LOAD PROGRESS ======
     hideLoadingOverlay(loadingOverlay);
     await getProgress(wallet);
 
+    // ====== SHOW DEBUG OVERLAY ======
+    showDebugInfo(debugData);
+
   } catch (error) {
     console.error('❌ labMenu init error:', error);
     hideLoadingOverlay(loadingOverlay);
     showCompatibilityWarning('error');
+    debugData.error = error.message;
+    showDebugInfo(debugData);
   }
 });
 
@@ -104,7 +171,7 @@ async function detectSepoliaSupportSimple(ethProvider) {
 async function grantFullPracticeProgress(wallet) {
   if (!wallet) return;
 
-  const fields = ['send', 'receive', 'mint', 'launch'];
+  const fields = ['send', 'receive', 'mint', 'launch']; // Faucet excluded - works without Sepolia
   console.log('🎁 Granting full practice progress...');
 
   try {
