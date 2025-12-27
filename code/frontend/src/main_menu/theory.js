@@ -8,13 +8,11 @@ async function initWallet() {
   try {
     console.log('Theory page loaded, calling sdk.actions.ready...');
     await sdk.actions.ready();
-    console.log('BaseCamp mini app is ready!');
 
-    // ====== USE WALLET CACHE FROM COMMON.JS ======
     let wallet = null;
     let cacheLoaded = false;
 
-    // Try cache from common.js (max 3s wait)
+    // Try cache from common.js
     if (window.BaseCampTheme?.waitForWallet) {
       try {
         const cache = await window.BaseCampTheme.waitForWallet();
@@ -26,13 +24,12 @@ async function initWallet() {
       }
     }
 
-    // Fallback: Direct localStorage check
+    // Fallback: Direct sessionStorage check (ZMĚNA Z LOCALSTORAGE)
     if (!cacheLoaded) {
-      wallet = localStorage.getItem('cached_wallet');
-      console.log('📦 theory: Direct localStorage:', wallet);
+      wallet = sessionStorage.getItem('cached_wallet');
+      console.log('📦 theory: Direct sessionStorage:', wallet);
     }
 
-    // Check if wallet exists
     if (!wallet || wallet === '') {
       console.warn('⚠️ No wallet available');
       return;
@@ -50,7 +47,8 @@ async function initWallet() {
     console.error('❌ theory wallet init error:', error);
   }
 }
-
+// ... zbytek souboru theory.js je stejný ...
+// (kopíruj zbytek svého původního souboru od funkce ensureUserExists dolů)
 async function ensureUserExists() {
   if (!currentWallet) return;
 

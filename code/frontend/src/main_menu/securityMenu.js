@@ -8,8 +8,8 @@ window.addEventListener("load", async () => {
     await sdk.actions.ready();
     console.log("BaseCamp mini app is ready!");
 
-    // Zkus načíst wallet z cache (z theme.js)
-    let wallet = localStorage.getItem('cached_wallet');
+    // ZMĚNA: Zkus načíst wallet z cache (sessionStorage)
+    let wallet = sessionStorage.getItem('cached_wallet');
 
     // Pokud není v cache, získej ho (fallback)
     if (!wallet) {
@@ -21,12 +21,12 @@ window.addEventListener("load", async () => {
       wallet = accounts && accounts.length > 0 ? accounts[0] : null;
 
       if (wallet) {
-        // Ulož do cache pro budoucí použití
-        localStorage.setItem('cached_wallet', wallet);
-        console.log('Wallet cached:', wallet);
+        // ZMĚNA: Ulož do sessionStorage
+        sessionStorage.setItem('cached_wallet', wallet);
+        console.log('Wallet cached to session:', wallet);
       }
     } else {
-      console.log('Using cached wallet from theme.js:', wallet);
+      console.log('Using cached wallet from session:', wallet);
     }
 
     if (!wallet) {
@@ -44,7 +44,7 @@ window.addEventListener("load", async () => {
     console.error("Error during MiniApp wallet init:", error);
   }
 });
-
+// ... zbytek souboru securityMenu.js je v pořádku, kopíruj ho sem ...
 async function getProgress(wallet) {
   try {
     const res = await fetch(`${API_BASE}/api/database/get-user`, {

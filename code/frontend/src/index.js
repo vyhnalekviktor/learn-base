@@ -41,7 +41,6 @@ function showWelcomeModal() {
   modal.style.fontFamily = "system-ui, -apple-system, BlinkMacSystemFont, 'Inter', Inter";
 
   modal.innerHTML = `
-<div style="text-align:center;margin-bottom:15px;font-size:42px">🎓</div>
 <h2 style="margin:0 0 10px 0;font-size:22px;font-weight:700;color:#fff;text-align:center">Welcome to BaseCamp</h2>
 <p style="margin:0 0 16px 0;font-size:14px;line-height:1.6;color:#cbd5e1;text-align:center">
 BaseCamp is an interactive MiniApp for learning blockchain on Base (Ethereum L2).

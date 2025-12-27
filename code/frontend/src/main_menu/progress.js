@@ -1,7 +1,7 @@
 import sdk from 'https://esm.sh/@farcaster/miniapp-sdk';
 
 const API_BASE = 'https://learn-base-backend.vercel.app';
-const BASE_CHAIN_ID_HEX = '0x2105';
+const BASE_CHAIN_ID_HEX = '0x2105'; // Base Mainnet
 
 const NFT_CONTRACT = '0xE0F8cb7B89DB4619B21526AC70786444dd9d2f0f';
 const USDC = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913';
@@ -10,10 +10,10 @@ window.addEventListener('load', async () => {
   try {
     await sdk.actions.ready();
 
-    // Zkus načíst wallet z cache (z theme.js)
-    let wallet = localStorage.getItem('cached_wallet');
+    // 1. Zkus načíst wallet z cache (sessionStorage)
+    let wallet = sessionStorage.getItem('cached_wallet');
 
-    // Pokud není v cache, získej ho (fallback)
+    // 2. Pokud není v cache, získej ho (fallback)
     if (!wallet) {
       console.log('No cached wallet, fetching from SDK...');
       const ethProvider = sdk.wallet.ethProvider;
@@ -21,12 +21,12 @@ window.addEventListener('load', async () => {
       wallet = accounts && accounts.length > 0 ? accounts[0] : null;
 
       if (wallet) {
-        // Ulož do cache pro budoucí použití
-        localStorage.setItem('cached_wallet', wallet);
-        console.log('Wallet cached:', wallet);
+        // ZMĚNA: Ulož do sessionStorage
+        sessionStorage.setItem('cached_wallet', wallet);
+        console.log('Wallet cached to session:', wallet);
       }
     } else {
-      console.log('Using cached wallet from theme.js:', wallet);
+      console.log('Using cached wallet from session:', wallet);
     }
 
     if (!wallet) {
@@ -42,7 +42,7 @@ window.addEventListener('load', async () => {
     console.error('Load error:', error);
   }
 });
-
+// ... zbytek souboru progress.js je v pořádku, kopíruj ho sem ...
 async function getProgressAndSetupMint(wallet, ethProvider) {
   try {
     const res = await fetch(`${API_BASE}/api/database/get-user`, {
