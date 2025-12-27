@@ -1,7 +1,70 @@
 import { sdk } from "https://esm.sh/@farcaster/miniapp-sdk";
 
-const API_BASE = "https://learn-base-backend.vercel.app";
+// === DEBUG LOGGER START ===
+// Přepíšeme console.log a console.error, aby psaly i na obrazovku
+(function initDebug() {
+    const originalLog = console.log;
+    const originalError = console.error;
+    const originalWarn = console.warn;
+    const outputDiv = document.getElementById('debug-output');
 
+    function logToScreen(type, args) {
+        if (!outputDiv) return; // Pokud HTML ještě není ready
+
+        const line = document.createElement('div');
+        line.style.borderBottom = '1px solid #333';
+        line.style.padding = '2px 0';
+
+        if (type === 'error') line.style.color = '#ff4444';
+        if (type === 'warn') line.style.color = '#ffbb33';
+
+        // Převedeme argumenty na string
+        const msg = args.map(arg => {
+            if (typeof arg === 'object') {
+                try { return JSON.stringify(arg); } catch(e) { return '[Object]'; }
+            }
+            return String(arg);
+        }).join(' ');
+
+        const time = new Date().toLocaleTimeString().split(' ')[0];
+        line.textContent = `[${time}] ${msg}`;
+
+        outputDiv.appendChild(line);
+        // Auto-scroll dolů
+        const overlay = document.getElementById('debug-overlay');
+        if(overlay) overlay.scrollTop = overlay.scrollHeight;
+    }
+
+    console.log = function(...args) {
+        originalLog.apply(console, args);
+        logToScreen('log', args);
+    };
+
+    console.error = function(...args) {
+        originalError.apply(console, args);
+        logToScreen('error', args);
+    };
+
+    console.warn = function(...args) {
+        originalWarn.apply(console, args);
+        logToScreen('warn', args);
+    };
+
+    // Odchytávání globálních chyb (např. syntax error)
+    window.addEventListener('error', (event) => {
+        logToScreen('error', [`UNCIPHERED ERROR: ${event.message}`]);
+    });
+
+    // Odchytávání Promise chyb (např. fetch fail)
+    window.addEventListener('unhandledrejection', (event) => {
+        logToScreen('error', [`UNHANDLED PROMISE: ${event.reason}`]);
+    });
+
+})();
+// === DEBUG LOGGER END ===
+
+const API_BASE = "https://learn-base-backend.vercel.app";
+// ... zbytek tvého kódu ...
 // === LOADER FUNCTION ===
 function hideLoader() {
   const loader = document.getElementById('global-loader');
