@@ -1,168 +1,161 @@
 (function() {
 'use strict';
 
-const BASE_SEPOLIA_CHAIN_ID_HEX = '0x14a34'; // 84532
-const API_URL = 'https://learn-base-backend.vercel.app'; // Backend URL for caching
+const API_URL = 'https://learn-base-backend.vercel.app';
 
-// === 1. SET THEME IMMEDIATELY (no flash) ===
-// Uses localStorage to persist theme across sessions
+// === 1. OKAMŽITÉ NASTAVENÍ THEME ===
 (function setThemeImmediately() {
   const savedTheme = localStorage.getItem('theme');
   const prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
   const theme = savedTheme || (prefersLight ? 'light' : 'dark');
   document.documentElement.setAttribute('data-theme', theme);
-  if (document.body) {
-    document.body.classList.add(theme);
-  }
 })();
 
-// Detect Farcaster Environment
+// === 2. DETEKCE FARCASTERU ===
 function isFarcasterMiniApp() {
-  const userAgent = navigator.userAgent.toLowerCase();
-  const isFarcaster = userAgent.includes('farcaster') ||
-                      userAgent.includes('warpcast') ||
-                      window.location.hostname.includes('farcaster') ||
-                      window.location.hostname.includes('warpcast');
-
-  console.log('[Common] Farcaster detection:', isFarcaster, '| UA:', userAgent);
-  return isFarcaster;
+  const ua = navigator.userAgent.toLowerCase();
+  return ua.includes('warpcast') || ua.includes('farcaster');
 }
 
-// === 2. WALLET CACHE ===
-// Uses sessionStorage so wallet resets when app/tab is closed
-async function initWalletCache() {
-  const cachedWallet = sessionStorage.getItem('cached_wallet');
-  const sepoliaStatus = sessionStorage.getItem('sepolia_status');
-
-  if (cachedWallet && sepoliaStatus) {
-    console.log('[Common] Session cache hit:', cachedWallet, sepoliaStatus);
-    return;
-  }
-
-  // If we are in Farcaster context, we might want to wait or check SDK
-  // But common.js is synchronous, so we just provide helper methods below.
-}
-
-// Initialize cache check
-initWalletCache();
-
-// === 3. GLOBAL EXPORTS (BaseCampTheme) ===
+// === 3. HLAVNÍ LOGIKA (BaseCampTheme) ===
 window.BaseCampTheme = {
 
+  // A) Toggle Theme
   toggleTheme: () => {
     const current = document.documentElement.getAttribute('data-theme');
-    const theme = current === 'dark' ? 'light' : 'dark';
-    document.documentElement.setAttribute('data-theme', theme);
-    if (document.body) {
-      document.body.classList.remove('light', 'dark');
-      document.body.classList.add(theme);
-    }
-    localStorage.setItem('theme', theme);
+    const next = current === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('theme', next);
   },
 
-  getWalletCache: () => ({
-    // Reading from sessionStorage
-    wallet: sessionStorage.getItem('cached_wallet') || null,
-    sepolia_status: sessionStorage.getItem('sepolia_status') || null
-  }),
+  isFarcaster: isFarcasterMiniApp,
 
-  waitForWallet: () => {
-    return new Promise((resolve, reject) => {
-      const maxAttempts = 60; // 3s timeout (60 * 50ms)
-      let attempts = 0;
-
-      const check = () => {
-        const wallet = sessionStorage.getItem('cached_wallet');
-        const sepolia = sessionStorage.getItem('sepolia_status');
-
-        if (wallet !== null && sepolia !== null) {
-          resolve({
-            wallet: wallet || null,
-            sepolia_status: sepolia
-          });
-        } else if (attempts >= maxAttempts) {
-          reject(new Error('Wallet cache timeout after 3s'));
-        } else {
-          attempts++;
-          setTimeout(check, 50);
-        }
-      };
-
-      check();
-    });
-  },
-
-  clearCache: () => {
-    sessionStorage.removeItem('cached_wallet');
-    sessionStorage.removeItem('sepolia_status');
-    sessionStorage.removeItem('user_data_cache'); // Clear user data too
-    console.log('[Common] Wallet session cache cleared');
-  },
-
-  // === USER DATA CACHING (Frontend) ===
-
-  // 1. Fetch data from DB and save to session (call this on app init)
+  // B) Init User Data (Stáhnout z backendu)
   initUserData: async (wallet) => {
     if (!wallet) return;
     try {
-      const res = await fetch(`${API_URL}/api/database/get-user`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ wallet })
-      });
-      const data = await res.json();
-
-      if (data.success) {
-        // Save the whole object (info + progress) to sessionStorage
+      console.log(`[Common] Fetching data for ${wallet}...`);
+      const res = await fetch(`${API_URL}/api/database/get-user-data?wallet_address=${wallet}`);
+      if (res.ok) {
+        const data = await res.json();
         const cacheObj = {
-          info: data.info,
-          progress: data.progress,
+          info: data.info || {},
+          progress: data.progress || {},
           timestamp: Date.now()
         };
         sessionStorage.setItem('user_data_cache', JSON.stringify(cacheObj));
-        console.log('[Common] User data downloaded & cached');
+        console.log('[Common] Data cached:', cacheObj);
+
+        // Pokud jsme na podstránce, hned překresli UI
+        window.BaseCampTheme.refreshUI();
       }
     } catch (e) {
-      console.error('[Common] Failed to cache user data:', e);
+      console.error('[Common] Failed to fetch user data:', e);
     }
   },
 
-  // 2. Return data from cache (instant). Returns null if missing.
+  // C) Get User Data (Bezpečné čtení)
+  // OPRAVA: Nikdy nevrací null, vrací prázdný objekt, aby UI nezamrzlo
   getUserData: () => {
     const raw = sessionStorage.getItem('user_data_cache');
-    if (!raw) return null;
+    if (!raw) {
+        // Fallback: vrátíme prázdné progressy, dokud se data nenačtou
+        return { progress: {}, info: {} };
+    }
     return JSON.parse(raw);
   },
 
-  // 3. Update cache locally (Optimistic UI)
+  // D) Update Local Progress (Optimistic UI)
   updateLocalProgress: (field, value) => {
     const raw = sessionStorage.getItem('user_data_cache');
-    if (!raw) return;
+    let data = raw ? JSON.parse(raw) : { progress: {}, info: {} };
 
-    let data = JSON.parse(raw);
+    if (!data.progress) data.progress = {};
+    data.progress[field] = value;
 
-    // Check if it belongs to 'progress' or 'info' object
-    if (data.progress && data.progress.hasOwnProperty(field)) {
-      data.progress[field] = value;
-    } else if (data.info && data.info.hasOwnProperty(field)) {
-      data.info[field] = value;
-    }
-
-    // Save updated version back to storage
     sessionStorage.setItem('user_data_cache', JSON.stringify(data));
-    console.log(`[Common] Cache updated locally: ${field} = ${value}`);
+    console.log(`[Common] Local update: ${field} = ${value}`);
+
+    // Hned aktualizuj UI na stránce
+    window.BaseCampTheme.refreshUI();
   },
 
-  isFarcaster: isFarcasterMiniApp
+  // E) Refresh UI (Najde elementy a aktualizuje je)
+  refreshUI: () => {
+    const data = window.BaseCampTheme.getUserData();
+    const progress = data.progress || {};
+
+    console.log("[Common] Refreshing UI with progress:", progress);
+
+    // 1. Najdi všechny elementy s atributem data-lab-progress (např. progress bary)
+    // Hledá elementy jako: <div class="progress-fill" data-lab-progress="lab1">
+    document.querySelectorAll('[data-lab-progress]').forEach(el => {
+        const labKey = el.getAttribute('data-lab-progress');
+        const isDone = progress[labKey] === true;
+
+        if (el.classList.contains('progress-fill')) {
+             el.style.width = isDone ? '100%' : '0%';
+        }
+    });
+
+    // 2. Najdi status texty (Pending/Completed)
+    // Hledá elementy jako: <span class="status-text" data-lab-status="lab1">
+    document.querySelectorAll('[data-lab-status]').forEach(el => {
+        const labKey = el.getAttribute('data-lab-status');
+        const isDone = progress[labKey] === true;
+
+        el.textContent = isDone ? 'Completed' : 'Pending';
+        el.style.color = isDone ? '#22c55e' : '#94a3b8';
+    });
+
+    // 3. Reset Loading indikátorů
+    // Pokud někde svítí "Loading...", změň to na "-" nebo skryj
+    document.querySelectorAll('.loading-indicator').forEach(el => {
+        el.style.display = 'none';
+    });
+  },
+
+  // F) Záchranná funkce pro podstránky
+  ensureDataLoaded: async () => {
+      // Pokud nemáme data, ale máme peněženku v cache, zkusíme je stáhnout znovu
+      const rawData = sessionStorage.getItem('user_data_cache');
+      const wallet = sessionStorage.getItem('cached_wallet');
+
+      // Pokud nemáme data, ale víme kdo je uživatel -> stáhneme je
+      if (!rawData && wallet) {
+          console.log("[Common] Missing data on subpage, fetching...");
+          await window.BaseCampTheme.initUserData(wallet);
+      } else {
+          // Data buď máme, nebo nemáme ani peněženku -> jen překreslíme UI (aby zmizelo Loading)
+          window.BaseCampTheme.refreshUI();
+      }
+  },
+
+  // G) Reset UI (pro Guest Mode v index.js)
+  resetProgressUI: () => {
+      document.querySelectorAll('.loading-indicator').forEach(el => el.style.display = 'none');
+      document.querySelectorAll('.progress-fill').forEach(bar => bar.style.width = '0%');
+  },
+
+  // H) Helper pro Labs (čekání na peněženku)
+  waitForWallet: async () => {
+      let attempts = 0;
+      while (attempts < 20) { // 4 sekundy timeout
+          const w = sessionStorage.getItem('cached_wallet');
+          if (w) return { wallet: w };
+          await new Promise(r => setTimeout(r, 200));
+          attempts++;
+      }
+      return { wallet: null };
+  }
 };
 
-// Auto-init on DOM ready
+// === 4. AUTO-START NA PODSTRÁNKÁCH ===
+// Jakmile se načte DOM, zkontroluj data
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => {
-    // console.log('[Common] DOM Loaded');
-  });
+    document.addEventListener('DOMContentLoaded', () => window.BaseCampTheme.ensureDataLoaded());
 } else {
-  // console.log('[Common] DOM already loaded');
+    window.BaseCampTheme.ensureDataLoaded();
 }
 
 })();
