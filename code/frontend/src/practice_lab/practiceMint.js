@@ -128,9 +128,9 @@ window.mintNFT = async function () {
     const userAddress = await signer.getAddress();
 
     const balance = await sepoliaProvider.getBalance(userAddress);
-    if (balance === 0n) {
+    /*if (balance === 0n) {
         throw new Error("Insufficient Base Sepolia ETH");
-    }
+    }*/
 
     statusDiv.innerHTML = 'Confirm in wallet...';
     const contract = new Contract(CONTRACT_ADDRESS, ABI, signer);
