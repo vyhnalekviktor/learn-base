@@ -21,8 +21,6 @@ window.BaseCampTheme = {
     localStorage.setItem('theme', next);
   },
 
-  isFarcaster: isFarcasterMiniApp,
-
   // --- DATA SYNC ---
   initUserData: async (wallet) => {
     if (!wallet) return;
