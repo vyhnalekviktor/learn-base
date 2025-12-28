@@ -68,7 +68,7 @@ window.BaseCampTheme = {
     const data = window.BaseCampTheme.getUserData();
     const progress = data.progress || {};
 
-    // 1. Progress bary (podle data-lab-progress)
+    // 1. Progress bary
     document.querySelectorAll('[data-lab-progress]').forEach(el => {
         const key = el.getAttribute('data-lab-progress');
         if (el.classList.contains('progress-fill')) {
@@ -114,21 +114,25 @@ window.BaseCampTheme = {
       return { wallet: null };
   },
 
-  // --- NOVÉ: VALIDACE SEPOLIA ---
+  // --- NOVÉ: VALIDACE SEPOLIA (Zpřísněná pro Farcaster) ---
   validatePracticeCompatibility: async () => {
-    // Pokud už jsme testovali, vrátíme výsledek z cache
+    // 1. HARD CHECK: Pokud je to Farcaster, rovnou blokujeme Practice Lab
+    // Protože Farcaster sice umí switch, ale neumí transakce na Sepolii.
+    if (isFarcasterMiniApp()) {
+        console.warn("[Common] Farcaster detected -> Disabling Practice Lab (Sepolia TX issue)");
+        sessionStorage.setItem('practice_compatible', 'false');
+        return false;
+    }
+
+    // 2. CACHE CHECK: Pokud už jsme testovali, vrátíme výsledek
     const cached = sessionStorage.getItem('practice_compatible');
     if (cached) return cached === 'true';
 
+    // 3. STANDARD CHECK: Pro ostatní peněženky (Metamask, Coinbase Wallet app)
     try {
-      // Zkusíme najít providera (window.ethereum vkládá většina walletů i ve webview)
       const provider = window.ethereum;
-      if (!provider) {
-          throw new Error("No provider found");
-      }
+      if (!provider) throw new Error("No provider found");
 
-      // Zkusíme přepnout na Sepolii (Dry Run)
-      // Pokud tohle selže, víme, že wallet neumí testnet
       await provider.request({
         method: 'wallet_switchEthereumChain',
         params: [{ chainId: '0x14a34' }], // Base Sepolia
