@@ -1,109 +1,111 @@
-import sdk from 'https://esm.sh/@farcaster/miniapp-sdk';
-
-const API_BASE = 'https://learn-base-backend.vercel.app';
-
-// Loader functions (stejné jako předtím)
-function showLoadingOverlay() { /* ... tvůj kód ... */ }
-function hideLoadingOverlay() { /* ... tvůj kód ... */ }
-
 document.addEventListener('DOMContentLoaded', async () => {
-  // Jen pokud chceme zobrazit loader při prvním načítání (volitelné)
-  // showLoadingOverlay();
-
-  try {
-    await sdk.actions.ready();
-
-    // 1. Wallet z cache
-    let wallet = null;
-    let sepoliaStatus = null;
-
-    if (window.BaseCampTheme?.waitForWallet) {
-        try {
-            const cache = await window.BaseCampTheme.waitForWallet();
-            wallet = cache.wallet;
-            sepoliaStatus = cache.sepolia_status;
-        } catch (e) {}
+    // Počkáme na načtení dat z common.js
+    if (window.BaseCampTheme) {
+        await window.BaseCampTheme.ensureDataLoaded();
     }
-
-    if (!wallet) {
-      // hideLoadingOverlay();
-      showCompatibilityWarning('wallet');
-      return;
-    }
-
-    const span = document.getElementById('wallet-address');
-    if (span) span.textContent = `${wallet.slice(0,6)}...${wallet.slice(-4)}`;
-
-    // 2. Auto-grant check
-    if (sepoliaStatus === 'warning' || sepoliaStatus === 'error') {
-      console.log('Auto-granting progress...');
-      await grantFullPracticeProgress(wallet);
-      showCompatibilityWarning('chain');
-    }
-
-    // 3. Render Progress (z Cache)
-    renderProgressFromCache(wallet);
-
-  } catch (error) {
-    console.error('[LabMenu] Init error:', error);
-  } finally {
-    // hideLoadingOverlay();
-  }
+    renderPracticeMenu();
 });
 
-async function renderProgressFromCache(wallet) {
-    let data = window.BaseCampTheme?.getUserData();
+function renderPracticeMenu() {
+    if (!window.BaseCampTheme) return;
 
-    if (!data) {
-        await window.BaseCampTheme.initUserData(wallet);
-        data = window.BaseCampTheme.getUserData();
-    }
+    // 1. Zjistíme, jestli je prostředí rozbité (Farcaster/Sepolia issue)
+    const isDisabled = window.BaseCampTheme.isPracticeDisabled();
 
-    if (!data || !data.progress) return;
-    const progress = data.progress;
+    // 2. Načteme reálná data
+    const userData = window.BaseCampTheme.getUserData();
+    const progress = userData ? userData.progress : {};
 
-    const labs = ['faucet', 'send', 'receive', 'mint', 'launch'];
+    // DŮLEŽITÉ: Tady jsou správná ID elementů podle tvého kódu
+    const labs = [
+        { key: 'practice_launch', htmlId: 'item-launch' },
+        { key: 'practice_faucet', htmlId: 'item-faucet' },
+        { key: 'practice_receive', htmlId: 'item-receive' },
+        { key: 'practice_mint',   htmlId: 'item-mint' },
+        { key: 'practice_send',   htmlId: 'item-send' }
+    ];
+
     let completedCount = 0;
 
     labs.forEach(lab => {
-      if (progress[lab]) {
-        completedCount++;
-        const item = document.getElementById(`item-${lab}`);
-        if (item) item.classList.add('completed');
-      }
+        const card = document.getElementById(lab.htmlId);
+        // Zkusíme najít status ikonu uvnitř karty
+        const statusIcon = card?.querySelector('.status-icon') || card?.querySelector('.icon-state');
+        const subtitle = card?.querySelector('p') || card?.querySelector('.subtitle');
+
+        const isRealDone = progress[lab.key] === true;
+
+        // PODMÍNKA SPLNĚNÍ: Buď je hotovo v DB, nebo je prostředí nekompatibilní (darujeme to)
+        if (isRealDone || isDisabled) {
+            completedCount++;
+
+            if (card) card.classList.add('completed');
+
+            if (statusIcon) {
+                // Pokud je to darované, dáme žlutý warning, jinak zelenou fajfku
+                statusIcon.innerHTML = (isDisabled && !isRealDone) ? '⚠️' : '✅';
+            }
+
+            // Pokud darujeme progress, napíšeme to do popisku
+            if (isDisabled && !isRealDone && subtitle) {
+                subtitle.textContent = "Auto-completed (Device limitation)";
+                subtitle.style.color = "#eab308";
+                subtitle.style.fontWeight = "bold";
+            }
+        } else {
+            // Nesplněno
+            if (statusIcon) statusIcon.innerHTML = '➡️';
+        }
     });
 
-    const percent = Math.round((completedCount / labs.length) * 100);
-    const percentEl = document.getElementById('progress-percent');
-    const barEl = document.getElementById('progress-bar-fill');
+    // 3. Aktualizace velkého progress baru nahoře
+    updateProgressBar(completedCount, labs.length);
 
-    if (percentEl) percentEl.textContent = `${percent}%`;
-    if (barEl) barEl.style.width = `${percent}%`;
+    // 4. Zobrazení žlutého banneru nahoře, pokud jsme v omezeném režimu
+    if (isDisabled) {
+        showTopWarning();
+    }
 }
 
-async function grantFullPracticeProgress(wallet) {
-  if (!wallet) return;
-  const fields = ['send', 'receive', 'mint', 'launch'];
+function updateProgressBar(completed, total) {
+    const percent = Math.round((completed / total) * 100);
+    const barFill = document.getElementById('progress-bar-fill');
+    const barText = document.getElementById('progress-percent');
 
-  for (const field of fields) {
-      // Optimistic cache update
-      if (window.BaseCampTheme) window.BaseCampTheme.updateLocalProgress(field, true);
-
-      // DB update (no await to prevent blocking UI)
-      fetch(`${API_BASE}/api/database/update_field`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          wallet: wallet,
-          table_name: 'USER_PROGRESS',
-          field_name: field,
-          value: true
-        })
-      }).catch(e => console.warn('Auto-grant failed', field));
-  }
+    if (barFill) barFill.style.width = `${percent}%`;
+    if (barText) barText.textContent = `${percent}%`;
 }
 
-function showCompatibilityWarning(type) {
-    // ... tvůj existující kód pro Toast ...
-    // (zkopíruj si funkci showCompatibilityWarning z předchozí verze)
+function showTopWarning() {
+    const container = document.querySelector('.container') || document.body;
+    // Abychom to nevkládali dvakrát
+    if (document.getElementById('compatibility-warning')) return;
+
+    const warn = document.createElement('div');
+    warn.id = 'compatibility-warning';
+    warn.style.cssText = `
+        background: rgba(234, 179, 8, 0.15);
+        border: 1px solid #eab308;
+        color: #eab308;
+        padding: 15px;
+        margin: 15px;
+        border-radius: 12px;
+        font-size: 13px;
+        line-height: 1.4;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    `;
+
+    warn.innerHTML = `
+        <span style="font-size: 20px">⚠️</span>
+        <div>
+            <strong>Limited Functionality Detected</strong><br>
+            Your wallet doesn't fully support Base Sepolia testnet.
+            We have <strong>auto-completed</strong> the practice labs for you.
+        </div>
+    `;
+
+    // Vložíme hned na začátek kontejneru
+    container.prepend(warn);
 }
