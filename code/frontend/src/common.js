@@ -11,12 +11,6 @@ const API_URL = 'https://learn-base-backend.vercel.app';
   document.documentElement.setAttribute('data-theme', theme);
 })();
 
-// === 2. DETEKCE PROSTŘEDÍ ===
-function isFarcasterMiniApp() {
-  const ua = navigator.userAgent.toLowerCase();
-  return ua.includes('warpcast') || ua.includes('farcaster');
-}
-
 // === 3. HLAVNÍ LOGIKA ===
 window.BaseCampTheme = {
 
@@ -113,44 +107,6 @@ window.BaseCampTheme = {
       }
       return { wallet: null };
   },
-
-  // --- NOVÉ: VALIDACE SEPOLIA (Zpřísněná pro Farcaster) ---
-  validatePracticeCompatibility: async () => {
-    // 1. HARD CHECK: Pokud je to Farcaster, rovnou blokujeme Practice Lab
-    // Protože Farcaster sice umí switch, ale neumí transakce na Sepolii.
-    if (isFarcasterMiniApp()) {
-        console.warn("[Common] Farcaster detected -> Disabling Practice Lab (Sepolia TX issue)");
-        sessionStorage.setItem('practice_compatible', 'false');
-        return false;
-    }
-
-    // 2. CACHE CHECK: Pokud už jsme testovali, vrátíme výsledek
-    const cached = sessionStorage.getItem('practice_compatible');
-    if (cached) return cached === 'true';
-
-    // 3. STANDARD CHECK: Pro ostatní peněženky (Metamask, Coinbase Wallet app)
-    try {
-      const provider = window.ethereum;
-      if (!provider) throw new Error("No provider found");
-
-      await provider.request({
-        method: 'wallet_switchEthereumChain',
-        params: [{ chainId: '0x14a34' }], // Base Sepolia
-      });
-
-      sessionStorage.setItem('practice_compatible', 'true');
-      return true;
-
-    } catch (e) {
-      console.warn("[Common] Compatibility check failed:", e);
-      sessionStorage.setItem('practice_compatible', 'false');
-      return false;
-    }
-  },
-
-  isPracticeDisabled: () => {
-      return sessionStorage.getItem('practice_compatible') === 'false';
-  }
 };
 
 // Auto-start
