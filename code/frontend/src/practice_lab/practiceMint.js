@@ -102,45 +102,71 @@ window.mintNFT = async function () {
   try {
     if (mintBtn) { mintBtn.disabled = true; mintBtn.textContent = 'Minting...'; }
     statusDiv.style.display = 'block';
-    statusDiv.className = 'info-box'; // Při načítání modrá/zelená (info)
+    statusDiv.className = 'info-box';
     statusDiv.innerHTML = 'Preparing to mint...';
 
     const { BrowserProvider, Contract } = await import('https://esm.sh/ethers@6.9.0');
-    const provider = new BrowserProvider(ethProvider);
-    const network = await provider.getNetwork();
+
+    // 1. Zjistíme aktuální síť
+    let tempProvider = new BrowserProvider(ethProvider);
+    let network = await tempProvider.getNetwork();
     originalChainId = Number(network.chainId);
 
+    // 2. Pokud nejsme na Sepolii, přepneme a POČKÁME
     if (originalChainId !== BASE_SEPOLIA_CHAIN_ID) {
       statusDiv.innerHTML = 'Switching to Base Sepolia...';
       try {
         await ethProvider.request({
           method: 'wallet_switchEthereumChain',
-          params: [{ chainId: '0x14a34' }]
+          params: [{ chainId: '0x14a34' }] // 84532
         });
       } catch (e) {
-          // Add chain logic if needed
+         console.error("Switch error:", e);
+         // Zde by mohla být logika pro addEthereumChain, pokud ho walletka nezná
       }
-      await new Promise((r) => setTimeout(r, 1500));
+
+      // 3. Aktivní čekání na změnu sítě (Polling)
+      // Smart Walletky někdy potřebují chvilku, setTimeout(1500) je nespolehlivý
+      let attempts = 0;
+      while (attempts < 10) {
+        await new Promise(r => setTimeout(r, 1000)); // Čekej 1s
+        tempProvider = new BrowserProvider(ethProvider); // Refresh providera
+        network = await tempProvider.getNetwork();
+        if (Number(network.chainId) === BASE_SEPOLIA_CHAIN_ID) {
+            break; // Jsme tam!
+        }
+        attempts++;
+      }
+
+      if (Number(network.chainId) !== BASE_SEPOLIA_CHAIN_ID) {
+          throw new Error("Failed to switch network. Please switch to Base Sepolia manually.");
+      }
     }
 
+    // 4. Inicializace providera na správné síti
     const sepoliaProvider = new BrowserProvider(ethProvider);
     signer = await sepoliaProvider.getSigner();
     const userAddress = await signer.getAddress();
 
-    const balance = await sepoliaProvider.getBalance(userAddress);
-    /*if (balance === 0n) {
-        throw new Error("Insufficient Base Sepolia ETH");
-    }*/
-
     statusDiv.innerHTML = 'Confirm in wallet...';
     const contract = new Contract(CONTRACT_ADDRESS, ABI, signer);
-    // Gas limit fix pro estimateGas chybu
-    const tx = await contract.mintTo(userAddress, {gasLimit: 150000});
+
+    // 5. Odeslání transakce - ZKUSME BEZ GAS LIMITU
+    // Smart Wallet (Coinbase) si to lépe spočítá sama pro Sponsored Tx.
+    // Pokud by to házelo chybu, vrátíme tam limit dynamicky.
+    let tx;
+    try {
+        tx = await contract.mintTo(userAddress);
+    } catch (err) {
+        // Fallback: Pokud selže odhad gasu (např. paymaster issues), zkusíme konzervativní limit
+        console.warn("Gas estimate failed, trying manual limit...", err);
+        tx = await contract.mintTo(userAddress, { gasLimit: 200000 });
+    }
 
     statusDiv.innerHTML = 'Transaction submitted. Waiting...';
     await tx.wait(1);
 
-    // Získání Token ID
+    // --- Zbytek kódu pro zobrazení NFT ---
     let totalMinted = 'N/A';
     let newTokenId = null;
     try {
@@ -156,7 +182,6 @@ window.mintNFT = async function () {
 
     updateMintProgress(userAddress);
 
-    // ÚSPĚCH = info-box (zelená)
     statusDiv.className = 'info-box';
     statusDiv.innerHTML = `
       <strong>Mint successful!</strong><br>
@@ -173,30 +198,14 @@ window.mintNFT = async function () {
 
   } catch (error) {
     console.error("Mint error:", error);
-
-    // CHYBA = error-box (červená)
     statusDiv.className = 'error-box';
 
-    // Specifická hláška pro chybějící ETH
-    if (error.message.includes("action=\"estimateGas\"")) {
-       statusDiv.innerHTML = `
-         <strong>Insufficient Gas</strong><br>
-         You need Base Sepolia ETH to pay for the transaction fee.<br>
-         <a href="https://faucet.circle.com" target="_blank">Get ETH from Faucet</a>
-       `;
-    }
-    // Odmítnutí uživatelem
-    else if (error.message.includes("rejected") || error.code === "ACTION_REJECTED") {
+    if (error.message.includes("rejected") || error.code === "ACTION_REJECTED") {
         statusDiv.innerHTML = `Transaction rejected by user.`;
-    }
-    // Ostatní chyby
-    else {
-        // Zkrácení erroru, aby nebyl přes celou obrazovku
+    } else {
         const msg = error.message.length > 100 ? "Transaction failed" : error.message;
         statusDiv.innerHTML = `Mint failed: ${msg}`;
     }
-
-    if (originalChainId === BASE_MAINNET_CHAIN_ID) await switchToMainnet();
   } finally {
     if (mintBtn) { mintBtn.disabled = false; mintBtn.textContent = 'Mint NFT'; }
   }
