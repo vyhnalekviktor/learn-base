@@ -208,7 +208,7 @@ window.mintNFT = async function () {
         statusDiv.innerHTML = `Transaction rejected by user.`;
     } else {
         const msg = error.message.length > 100 ? "Transaction failed" : error.message;
-        statusDiv.innerHTML = `Mint failed: $error.message}`;
+        statusDiv.innerHTML = `Mint failed: ${error.message}`;
     }
   } finally {
     if (mintBtn) { mintBtn.disabled = false; mintBtn.textContent = 'Mint NFT'; }
