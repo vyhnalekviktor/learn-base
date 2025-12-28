@@ -542,6 +542,36 @@ button.accordion-header.completed .accordion-icon,
   margin-bottom: 4px;
 }
 
+/* ERROR BOX - Červený styl pro chyby */
+.error-box {
+  background: rgba(239, 68, 68, 0.1);
+  border-left: 3px solid #ef4444;
+  color: #fca5a5;
+  padding: 14px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  margin: 16px 0;
+  line-height: 1.6;
+}
+
+.error-box strong {
+  font-weight: 700;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.error-box a {
+  color: inherit;
+  text-decoration: underline;
+}
+
+/* Light mode verze */
+:root[data-theme="light"] .error-box {
+  background: #fee2e2;
+  color: #991b1b;
+  border-color: #ef4444;
+}
+
 /* STATUS MESSAGE */
 #receiveStatus {
   padding: 14px 16px;

@@ -107,12 +107,12 @@ window.mintNFT = async function () {
 
     const { BrowserProvider, Contract } = await import('https://esm.sh/ethers@6.9.0');
 
-    // 1. Zjistíme aktuální síť a Provider
+    // 1. Zjistíme aktuální síť
     let tempProvider = new BrowserProvider(ethProvider);
     let network = await tempProvider.getNetwork();
     originalChainId = Number(network.chainId);
 
-    // 2. Network Switch Logic (pokud není Sepolia)
+    // 2. Pokud nejsme na Sepolii, přepneme a POČKÁME
     if (originalChainId !== BASE_SEPOLIA_CHAIN_ID) {
       statusDiv.innerHTML = 'Switching to Base Sepolia...';
       try {
@@ -122,65 +122,53 @@ window.mintNFT = async function () {
         });
       } catch (e) {
          console.error("Switch error:", e);
+         // Zde by mohla být logika pro addEthereumChain, pokud ho walletka nezná
       }
 
-      // Polling na změnu sítě
+      // 3. Aktivní čekání na změnu sítě (Polling)
+      // Smart Walletky někdy potřebují chvilku, setTimeout(1500) je nespolehlivý
       let attempts = 0;
       while (attempts < 10) {
-        await new Promise(r => setTimeout(r, 1000));
-        tempProvider = new BrowserProvider(ethProvider);
+        await new Promise(r => setTimeout(r, 1000)); // Čekej 1s
+        tempProvider = new BrowserProvider(ethProvider); // Refresh providera
         network = await tempProvider.getNetwork();
-        if (Number(network.chainId) === BASE_SEPOLIA_CHAIN_ID) break;
+        if (Number(network.chainId) === BASE_SEPOLIA_CHAIN_ID) {
+            break; // Jsme tam!
+        }
         attempts++;
       }
 
       if (Number(network.chainId) !== BASE_SEPOLIA_CHAIN_ID) {
-          throw new Error("Failed to switch network. Please switch manually.");
+          throw new Error("Failed to switch network. Please switch to Base Sepolia manually.");
       }
     }
 
-    // 3. Setup signer a adresy
+    // 4. Inicializace providera na správné síti
     const sepoliaProvider = new BrowserProvider(ethProvider);
     signer = await sepoliaProvider.getSigner();
     const userAddress = await signer.getAddress();
-
-    // Debug log - uvidíš v konzoli, jestli je adresa správně
-    console.log("Minting for address:", userAddress);
+    const balance = await sepoliaProvider.getBalance(userAddress);
+    if (balance === 0n) {
+        throw new Error("Insufficient Base Sepolia ETH");
+    }
 
     statusDiv.innerHTML = 'Confirm in wallet...';
     const contract = new Contract(CONTRACT_ADDRESS, ABI, signer);
 
-    // =================================================================
-    // 5. ODESLÁNÍ TRANSAKCE (RAW METODA) - ZDE JE OPRAVA
-    // =================================================================
-    // Místo contract.mintTo() použijeme přímé volání, abychom obešli
-    // specifické validace ethers.js, které se hádají se Smart Wallet.
+    // 5. Odeslání transakce - ZKUSME BEZ GAS LIMITU
+    // Smart Wallet (Coinbase) si to lépe spočítá sama pro Sponsored Tx.
+    // Pokud by to házelo chybu, vrátíme tam limit dynamicky.
+    let tx;
+    try {
+        tx = await contract.mintTo(userAddress);
+    } catch (err) {
+        // Fallback: Pokud selže odhad gasu (např. paymaster issues), zkusíme konzervativní limit
+        console.warn("Gas estimate failed, trying manual limit...", err);
+        tx = await contract.mintTo(userAddress, { gasLimit: 200000 });
+    }
 
-    // A) Enkódujeme data (funkci a parametry)
-    const data = contract.interface.encodeFunctionData("mintTo", [userAddress]);
-
-    // B) Sestavíme request ručně
-    const txParams = {
-        to: CONTRACT_ADDRESS,
-        from: userAddress,
-        data: data,
-        chainId: '0x14a34' // Natvrdo Sepolia ID v hexu
-        // Nedáváme gasLimit, necháme walletku a paymastera, ať si to vyřeší
-    };
-
-    // C) Pošleme přímo přes providera
-    const txHash = await ethProvider.request({
-        method: 'eth_sendTransaction',
-        params: [txParams]
-    });
-
-    console.log("Tx Hash:", txHash);
     statusDiv.innerHTML = 'Transaction submitted. Waiting...';
-
-    // D) Čekání na potvrzení (Ethers v6 styl)
-    // Protože máme jen hash, musíme počkat na receipt
-    const receipt = await sepoliaProvider.waitForTransaction(txHash);
-    // =================================================================
+    await tx.wait(1);
 
     // --- Zbytek kódu pro zobrazení NFT ---
     let totalMinted = 'N/A';
@@ -188,7 +176,7 @@ window.mintNFT = async function () {
     try {
       const counter = await contract.counter();
       totalMinted = counter.toString();
-      newTokenId = totalMinted; // Pro jednoduchost bereme poslední (counter)
+      newTokenId = totalMinted;
     } catch (e) {}
 
     let nftImageHtml = '';
@@ -204,22 +192,22 @@ window.mintNFT = async function () {
       <strong>Total NFTs:</strong> ${totalMinted}<br>
       ${nftImageHtml}
       <br>
-      <button onclick="openSepoliaScanAddress('https://sepolia.basescan.org/tx/${txHash}')"
+      <button onclick="openSepoliaScanAddress('https://sepolia.basescan.org/tx/${tx.hash}')"
               style="margin-top: 12px; padding: 8px 16px; background: #0052FF; color: white; border: none; border-radius: 8px; cursor: pointer;">
         View on BaseScan
       </button>
     `;
 
-    // if (originalChainId === BASE_MAINNET_CHAIN_ID) await switchToMainnet();
+    if (originalChainId === BASE_MAINNET_CHAIN_ID) await switchToMainnet();
 
   } catch (error) {
     console.error("Mint error:", error);
     statusDiv.className = 'error-box';
 
-    if (error.message && (error.message.includes("rejected") || error.code === 4001)) {
+    if (error.message.includes("rejected") || error.code === "ACTION_REJECTED") {
         statusDiv.innerHTML = `Transaction rejected by user.`;
     } else {
-        const msg = error.message.length > 100 ? "Transaction failed (check console)" : error.message;
+        const msg = error.message.length > 100 ? "Transaction failed" : error.message;
         statusDiv.innerHTML = `Mint failed: ${msg}`;
     }
   } finally {
