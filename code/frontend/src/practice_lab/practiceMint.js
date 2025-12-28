@@ -1,5 +1,5 @@
 import { sdk } from 'https://esm.sh/@farcaster/miniapp-sdk';
-
+const { BrowserProvider, Contract, JsonRpcProvider } = await import('https://esm.sh/ethers@6.9.0');
 const API_BASE = "https://learn-base-backend.vercel.app";
 const CONTRACT_ADDRESS = '0x726107014C8F10d372D59882dDF126ea02c3c6d4';
 const BASE_SEPOLIA_CHAIN_ID = 84532;
@@ -155,20 +155,33 @@ window.mintNFT = async function () {
     statusDiv.innerHTML = 'Confirm in wallet...';
     const contract = new Contract(CONTRACT_ADDRESS, ABI, signer);
 
-    // 5. Odeslání transakce - ZKUSME BEZ GAS LIMITU
-    // Smart Wallet (Coinbase) si to lépe spočítá sama pro Sponsored Tx.
-    // Pokud by to házelo chybu, vrátíme tam limit dynamicky.
+    // ... předchozí kód (odeslání transakce) ...
     let tx;
     try {
         tx = await contract.mintTo(userAddress);
     } catch (err) {
-        // Fallback: Pokud selže odhad gasu (např. paymaster issues), zkusíme konzervativní limit
         console.warn("Gas estimate failed, trying manual limit...", err);
-        tx = await contract.mintTo(userAddress, { gasLimit: 200000 });
+        tx = await contract.mintTo(userAddress, { gasLimit: 300000 }); // Zvedneme limit pro jistotu
     }
 
-    statusDiv.innerHTML = 'Transaction submitted. Waiting...';
-    await tx.wait(1);
+    statusDiv.innerHTML = 'Transaction submitted. Waiting for confirmation...';
+
+    // --- OPRAVA PRO FARCASTER MINIAPP ---
+    // Místo abychom se ptali peněženky (která hází chybu),
+    // zeptáme se veřejného RPC, jestli je transakce hotová.
+
+    const publicProvider = new JsonRpcProvider('https://sepolia.base.org');
+
+    // Čekáme na potvrzení přes veřejný nod
+    // (null znamená, že nečekáme na konkrétní počet potvrzení, ale prostě až bude v bloku)
+    const receipt = await publicProvider.waitForTransaction(tx.hash);
+
+    if (receipt.status === 0) {
+        throw new Error("Transaction reverted on chain.");
+    }
+    // ------------------------------------
+
+    // ... pokračujeme dál k zobrazení NFT ...
 
     // --- Zbytek kódu pro zobrazení NFT ---
     let totalMinted = 'N/A';
