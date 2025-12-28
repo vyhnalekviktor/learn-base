@@ -89,15 +89,38 @@ window.sendTransaction = async function() {
     statusDiv.className = 'info-box';
     statusDiv.innerHTML = 'Preparing USDC payment...';
 
+    // 1. Převedeme 1 USDC na hex (USDC má 6 desetinných míst)
+    // 1 USDC = 1000000 (1 * 10^6)
+    const amountHex = "0xf4240"; // 1000000 v hexadecimální soustavě
+
+    // 2. Data pro transfer funkce (ERC20 transfer)
+    // Method ID: 0xa9059cbb
+    // Padding adresy a částky na 32 bytů
+    const recipientPadding = RECIPIENT_ADDRESS.slice(2).padStart(64, '0');
+    const amountPadding = amountHex.slice(2).padStart(64, '0');
+    const data = `0xa9059cbb${recipientPadding}${amountPadding}`;
+
+    // Adresa USDC kontraktu na Base Sepolia
+    const USDC_CONTRACT_ADDRESS = '0x036CbD53842c5426634e7929541eC2318f3dCF7e';
+
     statusDiv.innerHTML = 'Please confirm the payment in your wallet...';
-    const payment = await pay({
-      amount: AMOUNT_USDC,
-      to: RECIPIENT_ADDRESS,
-      testnet: true
+
+    // 3. Odeslání transakce přes nativní provider (Farcaster wallet)
+    const txHash = await ethProvider.request({
+      method: "eth_sendTransaction",
+      params: [
+        {
+          from: currentWallet,
+          to: USDC_CONTRACT_ADDRESS, // Voláme kontrakt USDC, ne příjemce přímo!
+          data: data, // Zde říkáme: "Pošli USDC na adresu RECIPIENT_ADDRESS"
+          value: "0x0", // Neposíláme ETH, ale tokeny
+        },
+      ],
     });
 
-    console.log('Payment sent!', payment);
+    console.log('Payment sent! Hash:', txHash);
 
+    // ... zbytek tvého kódu (practice-sent, progress, success hláška) ...
     if (currentWallet) {
       const okPractice = await callPracticeSent(currentWallet);
       const okProgress = await updatePracticeSendProgress(currentWallet);
@@ -109,38 +132,12 @@ window.sendTransaction = async function() {
       <strong>Payment Sent!</strong><br>
       Amount: ${AMOUNT_USDC} USDC<br>
       To: ${RECIPIENT_ADDRESS.substring(0, 6)}...${RECIPIENT_ADDRESS.substring(38)}<br><br>
-      <small>Payment successfully processed on Base Sepolia testnet</small><br>
+      <small>Transaction Hash: ${txHash.substring(0, 10)}...</small><br>
       <small>Check it in your wallet</small>
     `;
+
   } catch (error) {
-    console.error('Payment error:', error);
-
-    // Pro odmítnutí uživatelem nebo nedostatek prostředků necháme error box
-    if (error.message.includes('User rejected') || error.message.includes('rejected')) {
-      statusDiv.className = 'error-box';
-      statusDiv.innerHTML = 'Payment rejected by user';
-    } else if (error.message.includes('insufficient')) {
-      statusDiv.className = 'error-box';
-      statusDiv.innerHTML = 'Insufficient USDC balance. Get testnet USDC from Circle Faucet.';
-    } else {
-      // --- ZDE JE UPRAVENÁ ČÁST ---
-
-      // 1. Započítáme progres, i když transakce technicky selhala
-      if (currentWallet) {
-        console.log('Error encountered, bypassing and granting progress...');
-        await callPracticeSent(currentWallet);
-        await updatePracticeSendProgress(currentWallet);
-      }
-
-      // 2. Zobrazíme "Modal" / Hlášku o úspěchu (použijeme info-box pro zelený/modrý vzhled)
-      statusDiv.className = 'info-box';
-      statusDiv.style.display = 'block';
-      statusDiv.innerHTML = `
-        <strong>Notice:</strong><br>
-        Your wallet doesn't support Base Sepolia testnet.<br>
-        <strong>Progress granted for this section.</strong>
-      `;
-    }
+     // ... sem vlož ten tvůj nový catch blok, co jsme řešili předtím ...
   }
 };
 
