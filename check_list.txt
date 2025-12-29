@@ -1,0 +1,530 @@
+# Featured Checklist
+
+> Build high quality mini apps to get more distribution.
+
+Your app must meet all product, design, and technical guidelines outlined below. Meeting these guidelines is a prerequisite for featured placement, but **does not guarantee placement**. Base holds a very high bar for featured placement.
+
+<Note>
+  To submit your app for featured placement, first verify your mini app in the [Base Build dashboard](https://base.dev/), then fill out the [submission form](https://buildonbase.deform.cc/getstarted/).
+</Note>
+
+<Steps titleSize="h3">
+  <Step title="Authentication">
+    * In-app authentication stays within the Base app with no external redirects
+    * Wallet connection happens automatically
+    * No email or phone verification inside the app
+  </Step>
+
+  <Step title="Onboarding Flow">
+    * Explain the purpose of the app and how to get started, with clear onboarding instructions either on the home page or as a a pop-up window.
+    * App only requests essential personal information, with clear context
+    * Display user's avatar and username **(no 0x addresses)**
+  </Step>
+
+  <Step title="Base Compatibility">
+    * App is client-agnostic, with no hard-coded Farcaster text or links, or other client-specific behavior
+    * Transactions are sponsored
+  </Step>
+
+  <Step title="Layout">
+    * Call to actions are visible and centered on page
+    * App has a bottom navigation bar or side menu to easily access core flow
+    * All buttons are accessible and not cut off
+    * Navigation bar items have clear, understandable labels
+  </Step>
+
+  <Step title="Load Time">
+    * App loads within **3 seconds**
+
+    * In-app actions complete within **1 second**
+
+    * Loading indicators are shown during actions
+  </Step>
+
+  <Step title="Usability">
+    * App supports **light and dark modes** consistently
+    * App has minimum **44px touch targets**
+  </Step>
+
+  <Step title="App Metadata">
+    * App description is clear, concise, and user-focused
+    * App icon is **1024×1024 px**, PNG, **no transparency**, readable at small sizes
+    * App cover photo is **high quality**, does not contain Base logo or team photos, and is 1200×630px (1.91:1) dimensions, PNG/JPG.
+    * Include 3 screenshots that highlight key app functionality. Use portrait orientation with 1284x2778 dimensions.
+    * Subtitle should be descriptive and specific, and use sentence case capitalization with no punctuation at the end.
+  </Step>
+</Steps>
+
+## Next Steps
+
+<CardGroup>
+  <Card title="Product Guidelines" icon="lightbulb" href="/mini-apps/featured-guidelines/product-guidelines" />
+
+  <Card title="Design Guidelines" icon="brush" href="/mini-apps/featured-guidelines/design-guidelines" />
+
+  <Card title="Technical Guidelines" icon="wrench" href="/mini-apps/featured-guidelines/technical-guidelines" />
+
+  <Card title="Notification Guidelines" icon="bell" href="/mini-apps/featured-guidelines/notification-guidelines" />
+</CardGroup>
+
+
+-------------------------------------------------------------------------------------------
+
+# Product Guidelines
+
+## Load Time
+
+* Apps should load within **3 seconds**, and in-app actions should complete within **1 second**.
+* Always show a **loading indicator** when an action is in progress.
+
+## Onboarding Flow
+
+* When a user opens your mini app for the first time, they should see a brief, informative screen explaining what the mini app does and how to get started. Keep this limited to 3 screens, and use succinct language and images.
+
+
+  <div style={{ fontSize: 14, color: '#6b7280' }}><a href="https://www.boleromusic.com/" target="_blank" rel="noopener noreferrer">Example onboarding flow</a></div>
+</div>
+
+## User Information & Privacy
+
+* Only ask for personal information when absolutely necessary. Give users context and explain the value of using the app **before** asking for private information.
+* Always explain why the information is needed. Respect user privacy and data minimization principles.
+
+## User Profile
+
+* Show the user’s profile somewhere on the screen, and include their avatar and username used on the Base app
+* **Avoid showing 0x addresses in your mini app.**
+
+## App Description
+
+* Your mini app should have a clear, simple value proposition that makes sense to anyone.
+* Describe what your app does and why it matters in one sentence.
+* **Keep your messaging human, concise, and benefit-focused.**
+
+***Examples**:* “Earn and borrow on your terms”, “Create and share art that lives onchain”
+
+## App Cover Photo
+
+**Do’s ✅**
+
+* Your app’s visuals should make users want to click in and explore.
+* Include a high-quality cover image that feels trustworthy and engaging.
+* Ensure no typos or visual clutter in the image.
+
+**Don’ts ❌**
+
+* Include the Base logo in your cover photo.
+* Include photos of your team
+
+
+  <div style={{ fontSize: 14, color: '#6b7280' }}><a href="https://app.morpho.org/base/earn" target="_blank" rel="noopener noreferrer">Example cover photo</a></div>
+</div>
+
+## App Icon
+
+* **Design clear, recognizable icons:** Use bold, simple shapes and high contrast; avoid fine details so icons remain clear at **16×16px**.
+* **Follow icon specs**
+  * Size: **1024×1024px**
+  * Format: **PNG (no alpha transparency)**
+  * Defined via `iconUrl` in `farcaster.json`
+
+
+------------------------------------------------------------------------------------------
+
+# Design Guidelines
+
+> Build a mini app that is intuitive and delightful to use.
+
+### Display
+
+<Card img="https://mintcdn.com/base-a060aa97/uV3xTeqWsv_faIJP/images/miniapps/miniapp-design-spec.png?fit=max&auto=format&n=uV3xTeqWsv_faIJP&q=85&s=6d8aeeaf49876a9ed37420fc101c221f" data-og-width="1280" width="1280" data-og-height="816" height="816" data-path="images/miniapps/miniapp-design-spec.png" data-optimize="true" data-opv="3" srcset="https://mintcdn.com/base-a060aa97/uV3xTeqWsv_faIJP/images/miniapps/miniapp-design-spec.png?w=280&fit=max&auto=format&n=uV3xTeqWsv_faIJP&q=85&s=4eabe12b23a1e09c5a5f9a9a77dd8a67 280w, https://mintcdn.com/base-a060aa97/uV3xTeqWsv_faIJP/images/miniapps/miniapp-design-spec.png?w=560&fit=max&auto=format&n=uV3xTeqWsv_faIJP&q=85&s=2440bb595213f3df7b1ed8202d6947ae 560w, https://mintcdn.com/base-a060aa97/uV3xTeqWsv_faIJP/images/miniapps/miniapp-design-spec.png?w=840&fit=max&auto=format&n=uV3xTeqWsv_faIJP&q=85&s=68011cab2e96c17d8ccb9d133910daef 840w, https://mintcdn.com/base-a060aa97/uV3xTeqWsv_faIJP/images/miniapps/miniapp-design-spec.png?w=1100&fit=max&auto=format&n=uV3xTeqWsv_faIJP&q=85&s=7160082f8588a8e985f6570fdf3da295 1100w, https://mintcdn.com/base-a060aa97/uV3xTeqWsv_faIJP/images/miniapps/miniapp-design-spec.png?w=1650&fit=max&auto=format&n=uV3xTeqWsv_faIJP&q=85&s=980a56d6499ff2ca21ea2584943ea941 1650w, https://mintcdn.com/base-a060aa97/uV3xTeqWsv_faIJP/images/miniapps/miniapp-design-spec.png?w=2500&fit=max&auto=format&n=uV3xTeqWsv_faIJP&q=85&s=093c56eb7cf2050c21161d0ca05702c9 2500w">
+  Your [manifest configuration](/mini-apps/core-concepts/manifest) controls how your app appears across these surfaces. [See full specification](/images/miniapps/miniapp-design-spec.png).
+</Card>
+
+### Layout
+
+* Keep core actions visible near the top or middle of the screen — not hidden behind scrolls.
+* Limit the number of buttons. Make it obvious what users should do first.
+* Use clear primary calls to action (e.g., “Create”, “Start Game”, “Deposit”).
+* Design for **small viewports** and **portrait orientation.**
+* **Optimize for thumb reach and one-handed use.**
+
+### Navigation
+
+* Most mini apps should include a **bottom navigation bar**.
+
+* A side menu can also be an intuitive place to put settings and user profile information.
+
+* Always include **labels under icons** so users understand each tab.
+
+* Test on multiple device sizes to ensure buttons are not cut off.
+
+### Colors
+
+Use color to communicate clearly, express your brand, and create cohesive mini app experiences.
+
+### **Color Palette**
+
+* **Primary:** Brand color for CTAs and key interactions.
+* **Secondary:** Complements primary; use for accents or secondary actions.
+* **Neutral:** For text, backgrounds, and structure with strong contrast.
+
+### **Themes**
+
+* Support **light and dark modes**:
+* Maintain contrast and brand consistency.
+* Respect system preference but allow manual toggle.
+* Use smooth transitions between themes.
+* **💡Tip:** Use **semantic color tokens** (e.g., `--color-primary`, `--color-background`) with **light/dark theme overrides** for maintainability and flexibility.
+
+### Typography
+
+* Ensure the fonts you use are easy to read. Our team recommends **Inter.**
+* **Ensure sufficient contrast between text and background colors** to make reading easy under various lighting conditions.
+* **Stick to regular, bold, and italic as needed.** Decorative or script fonts should be reserved for accents, not body text.
+
+### Spacing
+
+* Groups related elements together.
+* Consistent spacing: Creates visual rhythm and predictability with consistent spacing.
+* Give content room to breathe with white space.
+* Avoid cramped layouts.
+* Base Unit: Start with a base spacing unit (typically **4px** or **8px**) and maintain consistency throughout:
+  * 4px base: More granular control, better for mobile.
+  * 8px base: Easier mental math, good for desktop.
+
+### Touch Interactions
+
+* Ensure all touch targets are at least **44px**.
+* Support common gestures (tap, swipe, pinch) where appropriate.
+* Don’t rely on **hover states** — they don’t exist on touch screens.
+
+
+------------------------------------------------------------------------------------------
+
+# Notification Guidelines
+
+> Well designed notifications re-engage users, driving retention, and highlight key moments
+
+Notifications will allow you to re-engage users who have saved your Mini App, driving retention and bringing users back at key moments like new content releases, achievements, or time-sensitive events.
+
+Focus on sending updates that are relevant, well-timed, and valuable. It’s important to balance how many notifications you send — too many can cause users to turn them off entirely.
+
+# Anatomy
+
+* Title
+  * Short, clear statement of feature or what’s happening
+  * Max length 32 characters
+* Body
+  * Supporting detail or call-to-action
+  * Max length 128 characters
+* targetURL
+  * URL to open when the user clicks the notification
+  * Max length 1024 characters.Must be on the same domain as the Mini App.
+
+# Best practices
+
+1. **Keep notifications short and clear**\
+   Each notification should be easy to scan. Use the title to state the key details, and keep the body text brief and focused on value. Users should know at a glance what is happening and why it matters.
+
+2. **Control frequency**\
+   Send notifications sparingly. Stay well below the enforced limit (1 every 30 seconds, maximum 100 per day) to avoid users from turning off notifications from your mini app. Focus on moments that truly benefit the user, and avoid sending multiple alerts close together.
+
+3. **Deliver at the right time**\
+   Timing shapes how notifications feel. Send them when they’re most relevant, such as after an event or during active hours. Avoid off-hours or interrupting while users are already in your mini app. Well-timed notifications feel helpful, not disruptive.
+
+4. **Measure and refine**\
+   Analytics reveal whether your notifications are working. High click-through rates show value, rising disabled rates mean you’re overwhelming users. Use these signals to adjust content, timing, or cadence so notifications remain useful.
+
+# Types of notifications
+
+Different mini apps use notifications in different ways. Choose the type that best fits your app’s purpose, and always keep the message relevant.
+
+* **Reminders** encourage users to return regularly
+  * “Your crops are ready to harvest!
+* **Events driven updates** highlight something new or time sensitive.
+  * “BTC is up 5% today! Check your portfolio”
+* **Feature announcements** showcase new functionality or opportunities
+  * Example: “New quest unlocked! More Coins are waiting for you!”
+* **Alerts/warnings** share urgent or critical information
+  * Example: “Your balance is low. Top up to keep trading”
+
+Not every message deserves to be a notification, here are some to avoid:
+
+* **Avoid overly generic nudges**. Messages with no clear value feel spammy, always explain why it matter to the user
+  * Example: “Open the app today!”
+* **Avoid unnecessary confirmations**. Notifications should only confirm meaningful or irreversible events like payments or shipments
+  * Example: “You liked a post”
+
+
+-------------------------------------------------------------------------------------------
+
+# Technical Guidelines
+
+> Ensure your mini app is built for the Base app
+
+## Complete Metadata
+
+Metadata includes your manifest and embed metadata. Complete, valid metadata is required for indexing, category placement, and high‑quality embeds.
+
+**Acceptance Criteria**
+
+* Manifest is publicly accessible at `/.well-known/farcaster.json`
+* Required fields are present and valid (`accountAssociation`, `frame`, `primaryCategory`, `tags`)
+* Images meet size/format constraints; text fields respect length limits
+
+**How to Implement**
+
+* Follow the [Manifest guide](/mini-apps/core-concepts/manifest)
+* Implement [embed metadata](/mini-apps/core-concepts/embeds-and-previews#implementation)
+
+<Note>
+  Validate your manifest using our preview tools at <a href="https://base.dev/preview">base.dev/preview</a>.
+</Note>
+
+## In-app Authentication
+
+Users must remain in the Base app throughout the authentication flow. Eliminate flows that bounce users out of the Base app.
+
+**Acceptance Criteria**
+
+* No external redirects
+* No email / phone verification
+* Users can explore before sign‑in when possible
+
+**How to Implement**
+
+* Follow the [Authentication guide](/mini-apps/core-concepts/authentication)
+* Prefer in‑app SIWF/Quick Auth or wallet auth;
+
+## Client-Agnostic
+
+There must be no client‑specific behaviors or wording that degrade the experience in the Base app. You must also ensure that you don't redirect the user to another client for functionality supported in the Base app.
+
+**Acceptance criteria**
+
+* Do not hardcode client‑specific URLs (e.g., Farcaster‑only links)
+* Use neutral language in UI (e.g. use "Share to Feed" instead of "Share to Farcaster")
+* Eliminate buttons that deeplink to other clients for features supported in the Base app
+
+**How to Implement**
+
+* Update all links according to the [Links](/mini-apps/technical-guides/links) guide
+* Review the [Base App Compatability](/mini-apps/troubleshooting/base-app-compatibility) guide for functionality not supported in the Base app. All other functionality must keep users in the Base app.
+
+## Sponsor Transactions
+
+Sponsor transaction fees to remove friction and reduce drop‑off for new users. For mini apps on Base, we recommend using the [Base Paymaster](/onchainkit/paymaster/quickstart-guide).
+
+**Acceptance criteria**
+
+* Transactions are sponsored via a paymaster
+
+**How to Implement**
+
+* Recommended: [Base Paymaster](/onchainkit/paymaster/quickstart-guide)
+
+<Note>
+  Claim free gas credits on <a href="https://base.dev">base.dev</a>.
+</Note>
+
+## Batch Transactions (EIP-5792)
+
+Batch sequential actions where applicable to minimize signatures and reduce friction. Use EIP‑5792 capabilities to send multiple calls in one request.
+
+**Acceptance criteria**
+
+* Where applicable, combine sequential actions into a single batch (e.g. approve + swap)
+
+**How to Implement**
+
+* See [Batch Transactions](/base-account/improve-ux/batch-transactions)
+* Provider APIs: [`wallet_sendCalls`](/base-account/reference/core/provider-rpc-methods/wallet_sendCalls), [`wallet_getCapabilities`](/base-account/reference/core/provider-rpc-methods/wallet_getCapabilities)
+
+
+-------------------------------------------------------------------------------------------
+
+> To find navigation and other pages in this documentation, fetch the llms.txt file at: https://docs.base.org/llms.txt
+
+-------------------------------------------------------------------------------------------
+
+You are an AI agent helping developers troubleshoot Farcaster Mini Apps. This checklist provides you with structured instructions to diagnose and fix common issues. Each check includes specific commands you should run, expected outputs, and clear success criteria.
+
+General Guidelines
+As an AI agent, follow these guidelines:
+
+Ask clarifying questions until you have high confidence in the task. Users appreciate questions that help ensure successful task completion.
+Be specific when something is unclear or inaccessible. Ask for file paths, URLs, or specific error messages.
+Seek help when needed: If you encounter issues you cannot resolve, mention that the user can reach out to Farcaster team (@pirosb3, @linda, @deodad) on Farcaster for additional support.
+Verify assumptions before making changes. It's better to confirm than to proceed with uncertainty.
+Common LLM Pitfalls
+When helping developers with Mini Apps:
+
+DO NOT reference Frames v1 syntax or fields like fc:frame:image, fc:frame:button
+DO NOT invent manifest fields not in the official schema
+DO NOT mix Frame and Mini App terminology (Mini Apps are not Frames)
+DO NOT use outdated examples from before 2024
+DO NOT use fc:frame meta tag for new implementations. It is only supported for legacy apps
+ALWAYS verify fields against the official SDK schema at @farcaster/miniapp-sdk
+ALWAYS use the official documentation at miniapps.farcaster.xyz
+ALWAYS check that examples use miniapp or frame (not frames) in manifest
+ALWAYS use fc:miniapp meta tag for new Mini Apps (not fc:frame)
+If using example code, ensure it's from:
+
+Official Mini Apps documentation (this site)
+The @farcaster/miniapp-sdk package
+Examples that use "version": "1" not "version": "next"
+Prerequisites
+Before you begin troubleshooting, ensure the developer understands:
+
+What Mini Apps are
+How manifests work
+SDK actions and capabilities
+Check 1: Manifest Configuration
+1.1 Verify Manifest Accessibility
+Command:
+
+curl -s https://{domain}/.well-known/farcaster.json
+Expected Output:
+
+{
+  "accountAssociation": {
+    "header": "...",
+    "payload": "...", 
+    "signature": "..."
+  },
+  "frame": {
+    "version": "1",
+    "name": "App Name",
+    "iconUrl": "https://...",
+    "homeUrl": "https://..."
+  }
+}
+Success Criteria:
+HTTP 200 response
+Valid JSON format
+Contains accountAssociation object
+Contains frame object with required fields
+If Check Fails:
+Manifest not found (404)
+Manifest exists but unsigned
+1.2 Validate Manifest Schema
+Valid Manifest Example:
+Example Manifest (Validated against current schema)
+{
+  "accountAssociation": {
+    "header": "eyJmaWQiOjEyMTUyLCJ0eXBlIjoiY3VzdG9keSIsImtleSI6IjB4MEJGNDVGOTY3RTkwZmZENjA2MzVkMUFDMTk1MDYyYTNBOUZjQzYyQiJ9",
+    "payload": "eyJkb21haW4iOiJ3d3cuYm91bnR5Y2FzdGVyLnh5eiJ9",
+    "signature": "MHhmMTUwMWRjZjRhM2U1NWE1ZjViNGQ5M2JlNGIxYjZiOGE0ZjcwYWQ5YTE1OTNmNDk1NzllNTA2YjJkZGZjYTBlMzI4ZmRiNDZmNmVjZmFhZTU4NjYwYzBiZDc4YjgzMzc2MDAzYTkxNzhkZGIyZGIyZmM5ZDYwYjU2YTlmYzdmMDFj"
+  },
+  "frame": {
+    "version": "1",
+    "name": "Bountycaster",
+    "iconUrl": "https://www.bountycaster.xyz/static/images/bounty/logo.png",
+    "homeUrl": "https://www.bountycaster.xyz",
+    "imageUrl": "https://www.bountycaster.xyz/static/images/bounty/logo.png",
+    "buttonTitle": "Open Bounty",
+    "splashImageUrl": "https://www.bountycaster.xyz/static/images/bounty/logo.png",
+    "splashBackgroundColor": "#FFFFFF"
+  }
+}
+1.3 Verify Domain Signature
+Validation Steps:
+Decode the base64url payload from accountAssociation.payload
+Extract the domain field
+Verify domain matches where manifest is hosted
+Example:
+
+// If hosted at www.example.com
+const payload = JSON.parse(atob(accountAssociation.payload));
+// payload.domain should be "www.example.com" (including subdomain)
+Important: The signed domain must match exactly, including subdomains.
+
+Check 2: Embed Metadata
+2.1 Verify Embed Tags on Entry Points
+What to check:
+Root URL of the mini app
+All shareable pages (products, profiles, content)
+Command:
+
+curl -s https://{domain}/{path} | grep -E 'fc:miniapp|fc:frame'
+Expected Output:
+
+<meta name="fc:miniapp" content='{"version":"1","imageUrl":"...","button":{...}}' />
+2.2 Validate Embed Structure
+For Next.js Applications:
+
+// app/layout.tsx or pages with generateMetadata
+import { Metadata } from 'next'
+ 
+const frame = {
+  version: "1",  // Not "next" - must be "1"
+  imageUrl: "https://example.com/og-image.png", // 3:2 aspect ratio
+  button: {
+    title: "Open App",  // Max 32 characters
+    action: {
+      type: "launch_frame",
+      name: "My Mini App",
+      url: "https://example.com",  // Optional, defaults to current URL
+      splashImageUrl: "https://example.com/icon.png", // 200x200px
+      splashBackgroundColor: "#f7f7f7"
+    }
+  }
+}
+ 
+export async function generateMetadata({ params }): Promise<Metadata> {
+  return {
+    title: "My Mini App",
+    openGraph: {
+      title: "My Mini App",
+      description: "Description here"
+    },
+    other: {
+      "fc:miniapp": JSON.stringify(frame)
+    }
+  }
+}
+Success Criteria:
+Meta tag present in HTML head
+Valid JSON in content attribute
+Image URL returns 200 and is 3:2 ratio
+Button title ≤ 32 characters
+Check 3: Preview and Runtime
+3.1 Test in Preview Tool
+URL Format:
+
+https://farcaster.xyz/~/developers/mini-apps/preview?url={encoded-mini-app-url}
+Example:
+
+# Encode your URL
+encoded_url=$(python3 -c "import urllib.parse; print(urllib.parse.quote('https://example.com/page'))")
+echo "https://farcaster.xyz/~/developers/mini-apps/preview?url=$encoded_url"
+3.2 Verify App Initialization
+Common Issues:
+App not loading (infinite splash screen)
+Tunnel URLs not working (ngrok, localtunnel)
+Post-Check Verification
+After making any changes, you should:
+
+Re-verify the manifest is deployed:
+
+curl -s https://{domain}/.well-known/farcaster.json | jq .
+Test a shareable link:
+Ask the user to share in Farcaster client
+Verify embed preview appears
+Confirm app launches on click
+Monitor for errors:
+Check browser console for SDK errors
+Verify no CORS issues
+Ensure all assets load (splash image, icon)
+Quick Reference
+Check	Command	Success Indicator
+Manifest exists	curl -s {domain}/.well-known/farcaster.json	HTTP 200, valid JSON
+Manifest signed	Decode payload, check domain	Domain matches hosting
+Embed present	curl -s {url} | grep fc:miniapp	Meta tag found
+Preview works	Open preview tool URL	App loads, no errors
+App ready	Check console logs	ready() called
+Related Documentation
+https://miniapps.farcaster.xyz/docs/getting-started
+https://miniapps.farcaster.xyz/docs/guides/publishing
+https://miniapps.farcaster.xyz/docs/sdk/actions/ready
