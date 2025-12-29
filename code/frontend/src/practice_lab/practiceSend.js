@@ -1,9 +1,11 @@
 import { sdk } from 'https://esm.sh/@farcaster/miniapp-sdk';
-import { pay } from 'https://esm.sh/@base-org/account';
+// Přidáme import ethers pro kontrolu sítě
+const { BrowserProvider } = await import('https://esm.sh/ethers@6.9.0');
 
 const API_BASE = "https://learn-base-backend.vercel.app";
 const RECIPIENT_ADDRESS = '0x5b9aCe009440c286E9A236f90118343fc61Ee48F';
 const AMOUNT_USDC = '1';
+const BASE_SEPOLIA_CHAIN_ID = 84532; // ID pro Base Sepolia
 
 let ethProvider = null;
 let currentWallet = null;
@@ -29,26 +31,21 @@ async function callPracticeSent(wallet) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ wallet }),
     });
-    if (!res.ok) {
-      let msg = "Unknown backend error";
-      try {
-        const err = await res.json();
-        msg = err.detail || JSON.stringify(err);
-      } catch (_) {}
-      console.error("practice-sent error:", msg);
-      return false;
-    }
+    if (!res.ok) return false;
     return true;
   } catch (e) {
-    console.error("practice-sent network error:", e);
+    console.error("practice-sent error:", e);
     return false;
   }
 }
 
 async function updatePracticeSendProgress(wallet) {
+  // 1. Optimistická aktualizace cache
   if (window.BaseCampTheme) {
       window.BaseCampTheme.updateLocalProgress('send', true);
   }
+
+  // 2. Aktualizace databáze
   const res = await fetch(`${API_BASE}/api/database/update_field`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -59,16 +56,7 @@ async function updatePracticeSendProgress(wallet) {
       value: true,
     }),
   });
-  if (!res.ok) {
-    let msg = "Unknown backend error";
-    try {
-      const err = await res.json();
-      msg = err.detail || JSON.stringify(err);
-    } catch (_) {}
-    console.error("update_field error:", msg);
-    return false;
-  }
-  return true;
+  return res.ok;
 }
 
 window.toggleAccordion = function(id) {
@@ -91,6 +79,39 @@ window.sendTransaction = async function() {
     statusDiv.style.display = 'block';
     statusDiv.className = 'info-box';
     statusDiv.innerHTML = 'Preparing USDC payment...';
+
+    if (!ethProvider) {
+        ethProvider = await sdk.wallet.ethProvider;
+    }
+
+    // === 1. KONTROLA A PŘEPNUTÍ SÍTĚ (NOVÉ) ===
+    let tempProvider = new BrowserProvider(ethProvider);
+    let network = await tempProvider.getNetwork();
+
+    if (Number(network.chainId) !== BASE_SEPOLIA_CHAIN_ID) {
+      statusDiv.innerHTML = 'Switching to Base Sepolia...';
+      try {
+        await ethProvider.request({
+          method: 'wallet_switchEthereumChain',
+          params: [{ chainId: '0x14a34' }] // 84532 v HEX
+        });
+      } catch (e) { console.error("Switch error:", e); }
+
+      // Chvilku počkáme, až se síť přepne
+      let attempts = 0;
+      while (attempts < 10) {
+        await new Promise(r => setTimeout(r, 1000));
+        tempProvider = new BrowserProvider(ethProvider);
+        network = await tempProvider.getNetwork();
+        if (Number(network.chainId) === BASE_SEPOLIA_CHAIN_ID) break;
+        attempts++;
+      }
+
+      if (Number(network.chainId) !== BASE_SEPOLIA_CHAIN_ID) {
+          throw new Error("Failed to switch network. Please switch manually to Base Sepolia.");
+      }
+    }
+    // === KONEC KONTROLY SÍTĚ ===
 
     // 1. Převedeme 1 USDC na hex (USDC má 6 desetinných míst)
     const amountHex = "0xf4240"; // 1000000
