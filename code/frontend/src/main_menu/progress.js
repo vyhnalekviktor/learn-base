@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   try {
     await sdk.actions.ready();
 
-    // 1. Získáme peněženku z common.js cache
+    // 1. Zkusíme získat peněženku z cache (common.js)
     let wallet = null;
     if (window.BaseCampTheme?.waitForWallet) {
         try {
@@ -26,15 +26,29 @@ document.addEventListener('DOMContentLoaded', async () => {
         } catch (e) { console.log('Wallet cache miss'); }
     }
 
+    // 2. FALLBACK: Pokud v cache není (přímý přístup), zkusíme SDK
     if (!wallet) {
-      console.warn('No wallet available');
+        try {
+            const accounts = await sdk.wallet.ethProvider.request({ method: 'eth_requestAccounts' });
+            if (accounts && accounts.length > 0) {
+                wallet = accounts[0];
+                sessionStorage.setItem('cached_wallet', wallet);
+            }
+        } catch (err) {
+            console.error("SDK fallback failed:", err);
+        }
+    }
+
+    if (!wallet) {
+      const mintBtn = document.getElementById('mintNftBtn');
+      if (mintBtn) mintBtn.textContent = "Wallet Connection Failed";
       return;
     }
 
     const span = document.getElementById('wallet-address');
     if (span) span.textContent = wallet;
 
-    // 2. Spustíme logiku
+    // 3. Spustíme logiku (čistě z cache)
     await loadPageLogic(wallet, sdk.wallet.ethProvider);
 
   } catch (error) {
@@ -42,13 +56,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 });
 
-// === 2. MAIN LOGIC ===
+// === 2. MAIN LOGIC (Pouze Cache) ===
 async function loadPageLogic(wallet, ethProvider) {
-    // A) Okamžitě vykreslíme progress bary z CACHE (aby to neproblikávalo)
-    const localData = window.BaseCampTheme?.getUserData() || { progress: {} };
+    // Načteme data z cache. Pokud tam nejsou, common.js je pravděpodobně teprve stahuje.
+    // Ale my neblokujeme. Pokud je cache prázdná, ukážeme zamčeno (uživatel si počká na refresh nebo další load).
+    const localData = window.BaseCampTheme?.getUserData() || { progress: {}, info: {} };
     const p = localData.progress || {};
+    const info = localData.info || {};
 
-    // Výpočet procent z cache
+    // Výpočet procent
     const theoryPercent = Math.round(([p.theory1, p.theory2, p.theory3, p.theory4, p.theory5].filter(Boolean).length / 5) * 100);
     const basePercent = Math.round(([p.faucet, p.send, p.receive, p.mint, p.launch].filter(Boolean).length / 5) * 100);
     const securityPercent = Math.round(([p.lab1, p.lab2, p.lab3, p.lab4, p.lab5].filter(Boolean).length / 5) * 100);
@@ -60,42 +76,11 @@ async function loadPageLogic(wallet, ethProvider) {
 
     const isLocalAllDone = (theoryPercent === 100 && basePercent === 100 && securityPercent === 100);
 
-    // B) Nastavíme NFT sekci do stavu "LOADING"
-    const mintBtn = document.getElementById('mintNftBtn');
-    if (mintBtn) {
-        mintBtn.disabled = true;
-        mintBtn.textContent = "Checking eligibility...";
-    }
+    // ZJISTÍME STAV POUZE Z CACHE
+    const isClaimed = info.claimed_nft === true;
 
-    // C) Asynchronně stáhneme status 'claimed_nft' z DB
-    try {
-        const dbRes = await fetch(`${API_BASE}/api/database/get-field`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                wallet: wallet,
-                table_name: "USER_INFO",
-                field_name: "claimed_nft"
-            })
-        });
-
-        let isClaimed = false;
-        if (dbRes.ok) {
-            const json = await dbRes.json();
-            // Pokud success=true a value existuje (true/1)
-            if (json.success && json.value) {
-                isClaimed = true;
-            }
-        }
-
-        // D) Rozhodneme o finálním stavu UI
-        updateNftUiState(isClaimed, isLocalAllDone, ethProvider, wallet);
-
-    } catch (e) {
-        console.error("Failed to check DB:", e);
-        // Fallback: Pokud selže DB, řídíme se jen cachem, ale raději necháme button zamčený nebo default
-        if (mintBtn) mintBtn.textContent = "Connection Error";
-    }
+    // Update tlačítek
+    updateNftUiState(isClaimed, isLocalAllDone, ethProvider, wallet);
 }
 
 function updateNftUiState(isClaimed, isLocalAllDone, ethProvider, wallet) {
@@ -106,7 +91,7 @@ function updateNftUiState(isClaimed, isLocalAllDone, ethProvider, wallet) {
     const ownedSection = document.getElementById('ownedNftSection');
 
     if (isClaimed) {
-        // --- 1. UŽ MÁ NFT (podle DB) ---
+        // --- 1. UŽ MÁ NFT (podle Cache) ---
         if (nftSection) { nftSection.classList.remove('locked'); nftSection.classList.add('claimed'); }
         if (nftBlockTitle) nftBlockTitle.textContent = 'Already claimed!';
         if (nftBlockContent) nftBlockContent.style.display = 'none';
@@ -116,7 +101,7 @@ function updateNftUiState(isClaimed, isLocalAllDone, ethProvider, wallet) {
             mintBtn.textContent = "NFT Claimed";
         }
     } else if (isLocalAllDone) {
-        // --- 2. SPLNIL VŠE A NEMÁ NFT -> MŮŽE MINTOVAT ---
+        // --- 2. MŮŽE MINTOVAT ---
         if (nftSection) nftSection.classList.remove('locked');
         if (mintBtn) {
             mintBtn.disabled = false;
@@ -151,7 +136,7 @@ async function handlePaidClaim(ethProvider, wallet) {
     const accounts = await ethProvider.request({ method: 'eth_requestAccounts' });
     const userWallet = accounts[0];
 
-    // 1. Check Network
+    // Check Network
     let chainId = await ethProvider.request({ method: 'eth_chainId' });
     if (chainId !== BASE_CHAIN_ID_HEX) {
          try {
@@ -172,7 +157,7 @@ async function handlePaidClaim(ethProvider, wallet) {
     const badgeIface = new ethers.Interface(['function mintWithUSDC() external']);
     const price = 2000000n; // 2 USDC
 
-    // 2. Approve
+    // 1. Approve
     mintBtn.textContent = "Confirm Approve...";
     const approveData = usdcIface.encodeFunctionData('approve', [NFT_CONTRACT, price]);
     await ethProvider.request({
@@ -180,11 +165,10 @@ async function handlePaidClaim(ethProvider, wallet) {
         params: [{ from: userWallet, to: USDC, data: approveData }],
     });
 
-    // Wait logic (Optimistic pause)
     mintBtn.textContent = "Waiting...";
     await new Promise(r => setTimeout(r, 2000));
 
-    // 3. Mint
+    // 2. Mint
     mintBtn.textContent = "Confirm Mint...";
     const mintData = badgeIface.encodeFunctionData('mintWithUSDC', []);
     const mintTx = await ethProvider.request({
@@ -192,8 +176,7 @@ async function handlePaidClaim(ethProvider, wallet) {
         params: [{ from: userWallet, to: NFT_CONTRACT, data: mintData }],
     });
 
-    // 4. Update UI (Success state)
-    // ZDE UŽ NEVOLÁME DB WRITE (řeší backend), JEN UI
+    // 3. Update UI OKAMŽITĚ
     const nftSection = document.getElementById('nftSection');
     const nftBlockTitle = document.getElementById('nftBlockTitle');
     const nftBlockContent = document.getElementById('nftBlockContent');
@@ -207,14 +190,28 @@ async function handlePaidClaim(ethProvider, wallet) {
     mintBtn.textContent = 'NFT Claimed!';
     mintBtn.classList.remove('pulse');
 
-    // Aktualizujeme i lokální cache, aby to po refresh hned naskočilo jako claimed
-    // (Předpokládáme, že backend to zapíše, tak si to předběžně poznačíme i u sebe)
-    if (window.BaseCampTheme && window.BaseCampTheme.userData) {
-          if (!window.BaseCampTheme.userData.info) window.BaseCampTheme.userData.info = {};
-          window.BaseCampTheme.userData.info.claimed_nft = true;
-          // Volitelně updatni storage, pokud to common.js neudělá automaticky
-          sessionStorage.setItem('user_data_cache', JSON.stringify(window.BaseCampTheme.userData));
-    }
+    // 4. Update CACHE a DB
+    try {
+        // A) Update Cache (přes novou funkci v common.js)
+        if (window.BaseCampTheme?.updateLocalInfo) {
+            window.BaseCampTheme.updateLocalInfo('claimed_nft', true);
+            console.log("Cache updated: claimed_nft = true");
+        }
+
+        // B) Update DB (USER_INFO)
+        await fetch(`${API_BASE}/api/database/update_field`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              wallet: wallet,
+              table_name: 'USER_INFO',
+              field_name: 'claimed_nft',
+              value: true
+            })
+        });
+        console.log("DB Updated Successfully");
+
+    } catch (e) { console.error("Save failed", e); }
 
     // Success Modal
     showModal('success', `
@@ -258,13 +255,10 @@ function injectModalStyles() {
             width: 100%; padding: 12px; background: #334155; color: white; border: none;
             border-radius: 12px; font-weight: 600; cursor: pointer; font-size: 16px;
         }
-
         .modal-success .modal-title { color: #22c55e; }
         .modal-success .modal-btn { background: #22c55e; color: #022c22; }
-
         .modal-danger .modal-title { color: #ef4444; }
         .modal-danger .modal-btn { background: #ef4444; color: white; }
-
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes scaleUp { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
     `;
