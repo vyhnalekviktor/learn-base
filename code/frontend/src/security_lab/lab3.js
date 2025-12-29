@@ -210,7 +210,7 @@ function showTransactionUI(runButton) {
             updateLabProgress(currentWallet).catch(err => console.error("Save failed:", err));
 
             setTimeout(() => {
-                showModal("success", "EXCELLENT!<br><br>You verified the recipient (Artist) and amount before paying.<br>Always double-check what you sign.");
+                showModal("success", "Lab 3 COMPLETE!<br>You verified the recipient (Artist) and amount before paying.<br>Always double-check what you sign.");
             }, 800);
         } else {
             statusArea.innerHTML = `<span style="color: #ef4444;">✕ Rejected by user</span>`;
@@ -219,7 +219,7 @@ function showTransactionUI(runButton) {
             triggerBtn.style.opacity = "1";
 
             setTimeout(() => {
-                showModal("warning", "You rejected the payment.<br><br>This is safe, but to complete the lab, please verify and confirm the transaction simulation.");
+                showModal("warning", "You rejected the payment.<br>To complete the lab, please verify and confirm the transaction simulation.");
             }, 800);
         }
     }, 1000);
@@ -244,7 +244,7 @@ document.addEventListener("DOMContentLoaded", function () {
       scamBtn.onclick = (e) => {
           e.preventDefault();
           if(transactionCompleted) showModal("success", "Lab already completed!");
-          else showModal("warning", "Please run the simulation first.");
+          else showModal("warning", "Why is it a scam?");
       }
   }
 

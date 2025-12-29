@@ -113,7 +113,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         if (!currentWallet) { showModal("warning", "Please connect your wallet first!"); return; }
 
         updateLabProgress(currentWallet).catch(err => console.error("Save failed:", err));
-          showModal("success", "CONGRATS! Lab 2 COMPLETE!<br>High APY + 100% Sell Tax is a clear Honeypot signal.<br>Always verify the contract address before trading.");
+          showModal("success", "Lab 2 COMPLETE!<br>High APY + 100% Sell Tax is a clear Honeypot signal.<br>Always verify the contract address before trading.");
       });
   }
 

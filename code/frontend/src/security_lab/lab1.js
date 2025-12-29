@@ -125,7 +125,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // Fire and forget progress update
             updateLabProgress(currentWallet).catch(err => console.error("Save failed:", err));
-            showModal('success', "CONGRATS! Lab 1 COMPLETE!<br><br>Never share seed phrase or private key with anybody!");
+            showModal('success', "Lab 1 COMPLETE!<br>Never share seed phrase or private key with anybody!");
         });
     }
 

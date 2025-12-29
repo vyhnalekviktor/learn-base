@@ -294,8 +294,7 @@ function showFakeDEXDemo(runButton) {
 }
 
 // === INIT ===
-document.addEventListener("DOMContentLoaded", async () => {
-    await initWallet();
+document.addEventListener("DOMContentLoaded", function () {
     injectStyles();
 
     const scamButton = document.querySelector(".scam-warning-btn");
@@ -307,6 +306,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             showFakeDEXDemo(runButton);
         });
     }
+    initWallet();
 
     if (scamButton) {
         scamButton.addEventListener("click", async (e) => {
