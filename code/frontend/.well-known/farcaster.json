@@ -24,7 +24,8 @@
     "author.display_name": "vikiase.base.eth",
     "buttonTitle": "Start learning",
     "noindex": true,
-    "imageUrl": "https://learn-base-mu.vercel.app/images/basecamp-hero-og-v1.png"
+    "imageUrl": "https://learn-base-mu.vercel.app/images/basecamp-hero-og-v1.png",
+    "castShareUrl": "https://learn-base-mu.vercel.app/"
   }
 }
 
