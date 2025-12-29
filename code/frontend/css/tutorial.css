@@ -884,3 +884,109 @@ footer strong {
 .bonus-section strong {
   color: var(--text-primary);
 }
+
+/* modal */
+
+.custom-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(5px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    animation: fadeIn 0.3s ease;
+}
+
+.custom-modal-content {
+    background: var(--bg-card); /* Použije barvu karty podle tématu */
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    width: 90%;
+    max-width: 400px;
+    padding: 0;
+    overflow: hidden;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    animation: scaleUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    text-align: center;
+    font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
+}
+
+.modal-header {
+    padding: 24px 24px 10px;
+}
+
+.modal-title {
+    font-size: 20px;
+    font-weight: 800;
+    margin: 0;
+    /* Barva se určí podle typu (success/danger) níže */
+}
+
+.modal-body {
+    padding: 10px 24px 24px;
+    color: var(--text-secondary);
+    font-size: 15px;
+    line-height: 1.5;
+}
+
+.modal-footer {
+    padding: 16px;
+    background: var(--bg-hover);
+    border-top: 1px solid var(--border);
+}
+
+
+.modal-btn {
+    background: var(--bg-card);
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+    padding: 12px 0;
+    width: 100%;
+    border-radius: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 16px;
+}
+
+.modal-btn:hover {
+    transform: translateY(-1px);
+    filter: brightness(1.1);
+}
+
+.modal-btn:active {
+    transform: scale(0.98);
+}
+
+.modal-success .modal-title { color: #22c55e; }
+.modal-success .modal-btn {
+    background: #22c55e;
+    color: #022c22;
+    border: none;
+}
+
+.modal-danger .modal-title { color: #ef4444; }
+.modal-danger .modal-btn {
+    background: #ef4444;
+    color: white;
+    border: none;
+}
+
+.modal-warning .modal-title { color: #eab308; }
+.modal-warning .modal-btn {
+    background: #eab308;
+    color: black;
+    border: none;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes scaleUp {
+    from { transform: scale(0.9); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
