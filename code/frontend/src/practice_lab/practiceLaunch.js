@@ -166,7 +166,7 @@ window.launchToken = async function (tokenName) {
           <p style="margin: 5px 0;"><strong>Name:</strong> ${cleanName}</p>
           <p style="margin: 5px 0;"><strong>Symbol:</strong> ${symbol}</p>
           <p style="margin: 5px 0;"><strong>Supply:</strong> 1,000,000</p>
-          <p style="margin: 5px 0;"><strong>Address:</strong> <code style="font-size: 11px; word-break: break-all; color: #94a3b8;">${shortAddress}</code></p>
+          <p style="margin: 5px 0;"><strong>Address:</strong> <code style="word-break: break-all; color: #94a3b8;">${shortAddress}</code></p>
       </div>
       <button onclick="openSepoliaScanAddress('https://sepolia.basescan.org/address/${tokenAddress}')" style="width: 100%; padding: 12px; background: #0052FF; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">View on BaseScan</button>
     `);
