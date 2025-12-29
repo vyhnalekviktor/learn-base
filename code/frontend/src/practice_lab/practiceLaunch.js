@@ -14,7 +14,9 @@ const API_BASE = "https://learn-base-backend.vercel.app";
 // Globální proměnná
 let ethProvider = null;
 
+// === 1. INIT ===
 document.addEventListener('DOMContentLoaded', async () => {
+  injectStyles(); // Aktivujeme styly pro modal
   try {
     ethProvider = await sdk.wallet.ethProvider;
     await sdk.actions.ready();
@@ -53,15 +55,54 @@ async function updatePracticeLaunchProgress(wallet) {
   return res.ok;
 }
 
+// === 2. STYLY PRO MODAL ===
+function injectStyles() {
+    const style = document.createElement('style');
+    style.innerHTML = `
+        .custom-modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(8px);
+            display: flex; align-items: center; justify-content: center; z-index: 10000;
+            animation: fadeIn 0.3s ease;
+        }
+        .custom-modal-content {
+            background: #0f172a; border: 1px solid #334155; border-radius: 24px;
+            width: 90%; max-width: 400px; padding: 0; overflow: hidden;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+            animation: scaleUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            text-align: center; font-family: -apple-system, sans-serif;
+        }
+        .modal-header { padding: 24px 24px 10px; }
+        .modal-title { font-size: 20px; font-weight: 700; color: white; margin: 0; }
+        .modal-body { padding: 10px 24px 24px; color: #cbd5e1; font-size: 15px; line-height: 1.5; }
+        .modal-footer { padding: 16px; background: #1e293b; border-top: 1px solid #334155; }
+        .modal-btn {
+            background: #334155; color: white; border: none; padding: 12px 0; width: 100%;
+            border-radius: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; font-size: 16px;
+        }
+
+        .modal-success .modal-btn { background: #22c55e; color: #022c22; }
+        .modal-success .modal-title { color: #22c55e; }
+
+        .modal-danger .modal-btn { background: #ef4444; color: white; }
+        .modal-danger .modal-title { color: #ef4444; }
+
+        .modal-warning .modal-btn { background: #eab308; color: black; }
+        .modal-warning .modal-title { color: #eab308; }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes scaleUp { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    `;
+    document.head.appendChild(style);
+}
+
+// === 3. LOGIKA LAUNCH TOKEN ===
 window.launchToken = async function (tokenName) {
   const statusDiv = document.getElementById("launchStatus");
   const launchBtn = document.getElementById("launchTokenBtn");
   if (!statusDiv) return;
 
   if (!tokenName || tokenName.trim().length < 3) {
-    statusDiv.style.display = "block";
-    statusDiv.className = "error-box";
-    statusDiv.innerHTML = "<p>Name too short (min 3 chars).</p>";
+    showModal('warning', "Token name is too short (min 3 chars).");
     return;
   }
 
@@ -70,9 +111,11 @@ window.launchToken = async function (tokenName) {
 
   try {
     if (launchBtn) { launchBtn.disabled = true; launchBtn.textContent = "Launching..."; }
+
+    // Zobrazíme loading ve statusDiv (aby uživatel věděl, co se děje na pozadí)
     statusDiv.style.display = "block";
     statusDiv.className = "info-box";
-    statusDiv.innerHTML = `Launching ${tokenName}...`;
+    statusDiv.innerHTML = `Preparing ${tokenName}...`;
 
     // 1. ZÁCHRANA: Načtení providera
     if (!ethProvider) {
@@ -81,7 +124,7 @@ window.launchToken = async function (tokenName) {
     }
     if (!ethProvider) throw new Error("Wallet not connected. Please reload.");
 
-    // 2. KONTROLA SÍTĚ (Zkopírováno z Mintu, aby to nepadalo na Mainnetu)
+    // 2. KONTROLA SÍTĚ
     let tempProvider = new BrowserProvider(ethProvider);
     let network = await tempProvider.getNetwork();
 
@@ -114,11 +157,10 @@ window.launchToken = async function (tokenName) {
     const signer = await walletProvider.getSigner();
     const wallet = await signer.getAddress();
 
-    statusDiv.innerHTML += "<p>Confirm in wallet...</p>";
+    statusDiv.innerHTML = "Please confirm transaction in your wallet...";
     const factory = new Contract(FACTORY_ADDRESS, FACTORY_ABI, signer);
 
-    // 4. ODESLÁNÍ (WRITE) - S VYSOKÝM GAS LIMITEM
-    // Deploy tokenu je drahý, dáváme 3M gas limit pro jistotu
+    // 4. ODESLÁNÍ (WRITE)
     let tx;
     try {
         tx = await factory.createToken(cleanName, symbol, 1000000, { gasLimit: 3000000 });
@@ -129,20 +171,16 @@ window.launchToken = async function (tokenName) {
 
     statusDiv.innerHTML = "Transaction submitted. Waiting for confirmation...";
 
-    // 5. ČEKÁNÍ (READ) - HYBRIDNÍ PROVIDER (Fix chyby 4200)
+    // 5. ČEKÁNÍ (READ)
     const publicProvider = new JsonRpcProvider('https://sepolia.base.org');
-
-    // Čekáme na účtenku z veřejného uzlu
     const receipt = await publicProvider.waitForTransaction(tx.hash);
 
     if (!receipt || receipt.status === 0) {
         throw new Error("Transaction reverted on chain.");
     }
 
-    // 6. PARSOVÁNÍ LOGŮ (Získání adresy nového tokenu)
+    // 6. PARSOVÁNÍ LOGŮ
     let tokenAddress = null;
-
-    // K parsování logů nepotřebujeme signera, stačí Interface z kontraktu
     if (receipt.logs) {
       for (const log of receipt.logs) {
         try {
@@ -175,22 +213,52 @@ window.launchToken = async function (tokenName) {
 
     await updatePracticeLaunchProgress(wallet);
 
-    statusDiv.className = "success-box";
-    statusDiv.innerHTML = `
-      <p><strong>Token Launched!</strong></p>
-      <p><strong>${cleanName}</strong> (${symbol})</p>
-      <p>Supply: 1,000,000</p>
-      <p>Contract: <code>${tokenAddress.slice(0,6)}...${tokenAddress.slice(-4)}</code></p>
-      <button onclick="openSepoliaScanAddress('https://sepolia.basescan.org/address/${tokenAddress}')" style="margin-top:10px; padding: 8px 16px; background: #0052FF; color: white; border: none; border-radius: 8px; cursor: pointer;">View on BaseScan</button>
-    `;
+    // Skryjeme statusDiv a ukážeme modal
+    statusDiv.style.display = "none";
+
+    showModal('success', `
+      <div style="text-align: left; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; margin-bottom: 15px;">
+          <p style="margin: 5px 0;"><strong>Name:</strong> ${cleanName}</p>
+          <p style="margin: 5px 0;"><strong>Symbol:</strong> ${symbol}</p>
+          <p style="margin: 5px 0;"><strong>Supply:</strong> 1,000,000</p>
+          <p style="margin: 5px 0;"><strong>Address:</strong> <br><code style="font-size: 11px; word-break: break-all; color: #94a3b8;">${tokenAddress}</code></p>
+      </div>
+      <button onclick="openSepoliaScanAddress('https://sepolia.basescan.org/address/${tokenAddress}')" style="width: 100%; padding: 12px; background: #0052FF; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">View on BaseScan</button>
+    `);
 
   } catch (error) {
     console.error("Launch error:", error);
-    statusDiv.className = "error-box";
-    statusDiv.innerHTML = `Launch failed: ${error.message}`;
+    statusDiv.style.display = "none"; // Skryjeme loading
+    showModal('danger', `Launch failed:<br>${error.message}`);
   } finally {
     if (launchBtn) { launchBtn.disabled = false; launchBtn.textContent = "🚀 Launch Token"; }
   }
+}
+
+// === 4. MODAL UTILS ===
+function showModal(type, msg) {
+    const overlay = document.createElement('div');
+    overlay.className = 'custom-modal-overlay';
+
+    let title = 'NOTICE';
+    let modalClass = 'modal-warning';
+
+    if (type === 'success') { title = 'TOKEN LAUNCHED!'; modalClass = 'modal-success'; }
+    else if (type === 'danger') { title = 'LAUNCH FAILED'; modalClass = 'modal-danger'; }
+
+    overlay.innerHTML = `
+        <div class="custom-modal-content ${modalClass}">
+            <div class="modal-header">
+                <h3 class="modal-title">${title}</h3>
+            </div>
+            <div class="modal-body">${msg}</div>
+            <div class="modal-footer">
+                <button class="modal-btn" onclick="this.closest('.custom-modal-overlay').remove()">Close</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
 }
 
 window.openSepoliaScanAddress = (addr) => sdk.actions.openUrl(addr);
