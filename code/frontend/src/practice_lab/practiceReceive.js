@@ -3,13 +3,13 @@ import { sdk } from 'https://esm.sh/@farcaster/miniapp-sdk';
 const API_BASE = "https://learn-base-backend.vercel.app";
 let ethProvider = null;
 
+// === 1. INIT ===
 document.addEventListener('DOMContentLoaded', async () => {
+  // injectStyles() JSME ODSTRANILI - STYLY JSOU V tutorial.css
   try {
     ethProvider = await sdk.wallet.ethProvider;
     await sdk.actions.ready();
-  } catch (error) {
-    console.error('Init error:', error);
-  }
+  } catch (error) { console.error('Init error:', error); }
 });
 
 window.toggleAccordion = function(id) {
@@ -44,55 +44,77 @@ async function updateReceiveProgress(wallet) {
   return res.ok;
 }
 
+// === 2. LOGIKA RECEIVE ===
 window.requestTestUSDC = async function() {
   const walletInput = document.getElementById('walletInput');
   const statusDiv = document.getElementById('receiveStatus');
   const receiveBtn = document.getElementById('receiveBtn');
-
   const address = walletInput.value.trim();
 
+  // Validace adresy - chyba do modalu
   if (!address || !address.startsWith('0x') || address.length !== 42) {
-    statusDiv.style.display = 'block';
-    statusDiv.className = 'error-box';
-    statusDiv.innerHTML = 'Invalid wallet address.';
+    showModal('danger', 'Invalid wallet address.');
     return;
   }
 
   try {
     receiveBtn.disabled = true;
+
     statusDiv.style.display = 'block';
     statusDiv.className = 'info-box';
     statusDiv.innerHTML = 'Asking your friend to send you USDC...';
 
     const response = await fetch('https://learn-base-backend.vercel.app/api/testnet/send-test', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ wallet: address }),
     });
 
     const result = await response.json();
 
-    if (!response.ok || !result.success) {
-      throw new Error(result.msg || result.detail || 'Failed to send USDC');
-    }
+    if (!response.ok || !result.success) throw new Error(result.msg || result.detail || 'Failed to send USDC');
 
-    // Update progress
     updateReceiveProgress(address);
 
-    statusDiv.className = 'info-box';
-    statusDiv.innerHTML = `
+    statusDiv.style.display = 'none';
+
+    showModal('success', `
         <strong>Payment Received!</strong><br><br>
         Your friend sent you <strong>1 USDC</strong> on Base Sepolia!<br>
-        <small style="color: #666;">Transaction should appear in 10–30s</small>
-    `;
+        <small style="color: #94a3b8;">Transaction should appear in 10–30s</small>
+    `);
 
   } catch (error) {
-    statusDiv.className = 'error-box';
-    statusDiv.innerHTML = error.message || 'Failed to send USDC.';
+    statusDiv.style.display = 'none';
+    showModal('danger', error.message || 'Failed to send USDC.');
   } finally {
     receiveBtn.disabled = false;
   }
 };
+
+// === 3. MODAL UTILS ===
+function showModal(type, msg) {
+    const old = document.querySelector('.custom-modal-overlay');
+    if (old) old.remove();
+
+    const overlay = document.createElement('div');
+    overlay.className = 'custom-modal-overlay';
+
+    let title = 'NOTICE';
+    let modalClass = 'modal-warning';
+
+    if (type === 'success') { title = 'GREAT JOB!'; modalClass = 'modal-success'; }
+    else if (type === 'danger') { title = 'ERROR'; modalClass = 'modal-danger'; }
+
+    overlay.innerHTML = `
+        <div class="custom-modal-content ${modalClass}">
+            <div class="modal-header"><h3 class="modal-title">${title}</h3></div>
+            <div class="modal-body">${msg}</div>
+            <div class="modal-footer"><button class="modal-btn" onclick="this.closest('.custom-modal-overlay').remove()">Got it</button></div>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+}
 
 window.openSepoliaScan = () => sdk.actions.openUrl("https://sepolia.basescan.org");
 window.openBaseScan = () => sdk.actions.openUrl("https://basescan.org");
