@@ -90,12 +90,9 @@ window.sendTransaction = async function() {
     statusDiv.innerHTML = 'Preparing USDC payment...';
 
     // 1. Převedeme 1 USDC na hex (USDC má 6 desetinných míst)
-    // 1 USDC = 1000000 (1 * 10^6)
-    const amountHex = "0xf4240"; // 1000000 v hexadecimální soustavě
+    const amountHex = "0xf4240"; // 1000000
 
     // 2. Data pro transfer funkce (ERC20 transfer)
-    // Method ID: 0xa9059cbb
-    // Padding adresy a částky na 32 bytů
     const recipientPadding = RECIPIENT_ADDRESS.slice(2).padStart(64, '0');
     const amountPadding = amountHex.slice(2).padStart(64, '0');
     const data = `0xa9059cbb${recipientPadding}${amountPadding}`;
@@ -105,41 +102,67 @@ window.sendTransaction = async function() {
 
     statusDiv.innerHTML = 'Please confirm the payment in your wallet...';
 
-    // 3. Odeslání transakce přes nativní provider (Farcaster wallet)
+    // 3. Odeslání transakce přes nativní provider
     const txHash = await ethProvider.request({
       method: "eth_sendTransaction",
       params: [
         {
           from: currentWallet,
-          to: USDC_CONTRACT_ADDRESS, // Voláme kontrakt USDC, ne příjemce přímo!
-          data: data, // Zde říkáme: "Pošli USDC na adresu RECIPIENT_ADDRESS"
-          value: "0x0", // Neposíláme ETH, ale tokeny
+          to: USDC_CONTRACT_ADDRESS,
+          data: data,
+          value: "0x0",
         },
       ],
     });
 
     console.log('Payment sent! Hash:', txHash);
 
-    // ... zbytek tvého kódu (practice-sent, progress, success hláška) ...
     if (currentWallet) {
-      const okPractice = await callPracticeSent(currentWallet);
-      const okProgress = await updatePracticeSendProgress(currentWallet);
-      console.log('practice-sent:', okPractice, 'progress send:', okProgress);
+      await callPracticeSent(currentWallet);
+      await updatePracticeSendProgress(currentWallet);
     }
 
-    statusDiv.className = 'info-box';
-    statusDiv.innerHTML = `
-      <strong>Payment Sent!</strong><br>
+    // Skryjeme statusDiv a ukážeme modal
+    statusDiv.style.display = 'none';
+
+    showModal('success', `
+      <strong>Payment Sent!</strong><br><br>
       Amount: ${AMOUNT_USDC} USDC<br>
       To: ${RECIPIENT_ADDRESS.substring(0, 6)}...${RECIPIENT_ADDRESS.substring(38)}<br><br>
-      <small>Transaction Hash: ${txHash.substring(0, 10)}...</small><br>
-      <small>Check it in your wallet</small>
-    `;
+      <small style="color:#94a3b8">Tx: ${txHash.substring(0, 10)}...</small>
+    `);
 
   } catch (error) {
-     // ... sem vlož ten tvůj nový catch blok, co jsme řešili předtím ...
+     statusDiv.style.display = 'none';
+     const msg = (error && error.message) ? error.message : "Unknown error";
+     showModal('danger', `Transaction failed:<br>${msg.length > 100 ? "Check console for details" : msg}`);
   }
 };
+
+// === MODAL UTILS ===
+function showModal(type, msg) {
+    const old = document.querySelector('.custom-modal-overlay');
+    if (old) old.remove();
+
+    const overlay = document.createElement('div');
+    overlay.className = 'custom-modal-overlay';
+
+    let title = 'NOTICE';
+    let modalClass = 'modal-warning';
+
+    if (type === 'success') { title = 'PAYMENT SENT!'; modalClass = 'modal-success'; }
+    else if (type === 'danger') { title = 'PAYMENT FAILED'; modalClass = 'modal-danger'; }
+
+    overlay.innerHTML = `
+        <div class="custom-modal-content ${modalClass}">
+            <div class="modal-header"><h3 class="modal-title">${title}</h3></div>
+            <div class="modal-body">${msg}</div>
+            <div class="modal-footer"><button class="modal-btn" onclick="this.closest('.custom-modal-overlay').remove()">Got it</button></div>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+}
 
 function openBridgeBase() {
   sdk.actions.openUrl("https://bridge.base.org");
