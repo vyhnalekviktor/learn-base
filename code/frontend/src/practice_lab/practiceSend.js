@@ -46,6 +46,9 @@ async function callPracticeSent(wallet) {
 }
 
 async function updatePracticeSendProgress(wallet) {
+  if (window.BaseCampTheme) {
+      window.BaseCampTheme.updateLocalProgress('send', true);
+  }
   const res = await fetch(`${API_BASE}/api/database/update_field`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
