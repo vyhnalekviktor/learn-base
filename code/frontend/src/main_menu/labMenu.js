@@ -1,5 +1,4 @@
 document.addEventListener('DOMContentLoaded', async () => {
-    // Počkáme na načtení dat z common.js
     if (window.BaseCampTheme) {
         await window.BaseCampTheme.ensureDataLoaded();
     }
@@ -10,37 +9,32 @@ function renderPracticeMenu() {
     if (!window.BaseCampTheme) return;
     const isDisabled = false;
 
-    // 2. Načteme reálná data
     const userData = window.BaseCampTheme.getUserData();
     const progress = userData ? userData.progress : {};
 
-    // DŮLEŽITÉ: Tady jsou správná ID elementů podle tvého kódu
     const labs = [
-        { key: 'practice_launch', htmlId: 'item-launch' },
-        { key: 'practice_faucet', htmlId: 'item-faucet' },
-        { key: 'practice_receive', htmlId: 'item-receive' },
-        { key: 'practice_mint',   htmlId: 'item-mint' },
-        { key: 'practice_send',   htmlId: 'item-send' }
+        { key: 'launch', htmlId: 'item-launch' },
+        { key: 'faucet', htmlId: 'item-faucet' },
+        { key: 'receive', htmlId: 'item-receive' },
+        { key: 'mint',   htmlId: 'item-mint' },
+        { key: 'send',   htmlId: 'item-send' }
     ];
 
     let completedCount = 0;
 
     labs.forEach(lab => {
         const card = document.getElementById(lab.htmlId);
-        // Zkusíme najít status ikonu uvnitř karty
         const statusIcon = card?.querySelector('.status-icon') || card?.querySelector('.icon-state');
         const subtitle = card?.querySelector('p') || card?.querySelector('.subtitle');
 
         const isRealDone = progress[lab.key] === true;
 
-        // PODMÍNKA SPLNĚNÍ: Buď je hotovo v DB, nebo je prostředí nekompatibilní (darujeme to)
         if (isRealDone || isDisabled) {
             completedCount++;
 
             if (card) card.classList.add('completed');
 
             if (statusIcon) {
-                // Pokud je to darované, dáme žlutý warning, jinak zelenou fajfku
                 statusIcon.innerHTML = (isDisabled && !isRealDone) ? '⚠️' : '✅';
             }
 
