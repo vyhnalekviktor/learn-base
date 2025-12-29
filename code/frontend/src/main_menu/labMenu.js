@@ -8,9 +8,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 function renderPracticeMenu() {
     if (!window.BaseCampTheme) return;
-
-    // 1. Zjistíme, jestli je prostředí rozbité (Farcaster/Sepolia issue)
-    const isDisabled = window.BaseCampTheme.isPracticeDisabled();
+    const isDisabled = false;
 
     // 2. Načteme reálná data
     const userData = window.BaseCampTheme.getUserData();
