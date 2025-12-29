@@ -4,10 +4,13 @@
 <script type="module" src="src/common.js"></script>
     <script>
     (function() {
-        // Podíváme se, jestli už máme peněženku v paměti
+      const savedTheme = localStorage.getItem('theme');
+      const prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
+      const theme = savedTheme || (prefersLight ? 'light' : 'dark');
+      document.documentElement.setAttribute('data-theme', theme);
+    })();
+    (function() {
         const wallet = sessionStorage.getItem('cached_wallet');
-
-        // Pokud ano, přidáme styl, který okamžitě skryje loader
         if (wallet) {
             const style = document.createElement('style');
             style.innerHTML = '#global-loader { display: none !important; }';
