@@ -197,8 +197,8 @@ window.evaluateAnswers = async function () {
   });
 
   if (isAllCorrect) {
-    if (currentWallet) await updateLabProgress(currentWallet);
-    showModal("success", "PERFECT! You mastered the security basics.<br><br>You are ready to stay safe on Base.");
+    if (currentWallet) updateLabProgress(currentWallet).catch(err => console.error("Save failed:", err));
+    showModal("success", "CONGRATS! Lab 4 COMPLETE!<br> You have mastered logins!");
   } else {
     showModal("danger", "Some answers are wrong.<br><br>Please review the explanations below and try to understand why.");
   }

@@ -98,14 +98,10 @@ document.addEventListener('DOMContentLoaded', async function() {
                 return;
             }
 
-            const success = await updateLabProgress(currentWallet);
-            if (success) {
-                showModal('success',
+            updateLabProgress(currentWallet).catch(err => console.error("Save failed:", err));
+            showModal('success',
                 "CONGRATS! Lab 1 COMPLETE!\n\n" +
                 "Never share seed phrase or private key with anybody!");
-            } else {
-                showModal('danger', 'Failed to save progress.');
-            }
         });
     }
 

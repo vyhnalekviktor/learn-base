@@ -228,7 +228,7 @@ function showTransactionUI(runButton) {
             triggerBtn.style.color = "white";
             triggerBtn.style.opacity = "1";
             transactionCompleted = true;
-            await updateLabProgress(currentWallet);
+            updateLabProgress(currentWallet).catch(err => console.error("Save failed:", err));
 
             setTimeout(() => {
                 showModal("success", "EXCELLENT!<br><br>You verified the recipient (Artist) and amount before paying.<br>Always double-check what you sign.");

@@ -297,12 +297,8 @@ document.addEventListener("DOMContentLoaded", async () => {
                 showModal("warning", "Please connect your wallet first!");
                 return;
             }
-            const success = await updateLabProgress(currentWallet);
-            if (success) {
-                showModal("success", "CORRECT!<br><br>You identified the <strong>Fake Price</strong> and <strong>Unverified Contract</strong>.<br>Lab 5 Complete!");
-            } else {
-                showModal("danger", "Failed to save progress.");
-            }
+            updateLabProgress(currentWallet).catch(err => console.error("Save failed:", err));
+            showModal("success", "CONGRATS! Lab 5 COMPLETE!<br>You identified the <strong>Fake Price</strong> and <strong>Unverified Contract</strong>.");
         });
     }
 });
