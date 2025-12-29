@@ -8,12 +8,14 @@ let transactionCompleted = false;
 async function initWallet() {
   try {
     await sdk.actions.ready();
+    // 1. Cache
     if (window.BaseCampTheme?.waitForWallet) {
         try {
             const cache = await window.BaseCampTheme.waitForWallet();
             if (cache.wallet) currentWallet = cache.wallet;
         } catch (e) {}
     }
+    // 2. Session
     if (!currentWallet) {
         currentWallet = sessionStorage.getItem('cached_wallet');
         if (!currentWallet) {
@@ -36,11 +38,11 @@ async function updateLabProgress(wallet) {
   return res.ok;
 }
 
-// === 2. STYLES ===
+// === 2. STYLES (Sjednocené Modaly + Wallet Popup z Lab 3) ===
 function injectStyles() {
     const style = document.createElement('style');
     style.innerHTML = `
-        /* MODAL STYLES */
+        /* --- STANDARD MODAL STYLES (Sjednoceno) --- */
         .custom-modal-overlay {
             position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(8px);
             display: flex; align-items: center; justify-content: center; z-index: 10000;
@@ -51,20 +53,25 @@ function injectStyles() {
             width: 90%; max-width: 400px; padding: 0; overflow: hidden;
             box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
             animation: scaleUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-            text-align: center;
+            text-align: center; font-family: -apple-system, sans-serif;
         }
         .modal-header { padding: 24px 24px 10px; }
-        .modal-icon { font-size: 40px; margin-bottom: 10px; display: block; }
         .modal-title { font-size: 20px; font-weight: 700; color: white; margin: 0; }
         .modal-body { padding: 10px 24px 24px; color: #cbd5e1; font-size: 15px; line-height: 1.5; }
         .modal-footer { padding: 16px; background: #1e293b; border-top: 1px solid #334155; }
-        .modal-btn { background: #334155; color: white; border: none; padding: 12px 0; width: 100%; border-radius: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; font-size: 16px; }
+        .modal-btn {
+            background: #334155; color: white; border: none; padding: 12px 0; width: 100%;
+            border-radius: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; font-size: 16px;
+        }
+
         .modal-success .modal-btn { background: #22c55e; color: #022c22; }
         .modal-success .modal-title { color: #22c55e; }
+        .modal-danger .modal-btn { background: #ef4444; color: white; }
+        .modal-danger .modal-title { color: #ef4444; }
         .modal-warning .modal-btn { background: #eab308; color: black; }
         .modal-warning .modal-title { color: #eab308; }
 
-        /* WALLET POPUP STYLES */
+        /* --- WALLET POPUP STYLES (Specifické pro Lab 3) --- */
         .wallet-overlay {
             position: fixed; inset: 0; background: rgba(0,0,0,0.5);
             display: flex; align-items: flex-end; justify-content: center; z-index: 9999;
@@ -81,20 +88,16 @@ function injectStyles() {
         .w-header { background: #f3f4f6; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e5e7eb; }
         .w-network { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: #374151; background: #e5e7eb; padding: 4px 8px; border-radius: 12px; }
         .w-dot { width: 8px; height: 8px; background: #0052ff; border-radius: 50%; }
-
         .w-body { padding: 20px; }
         .w-origin { text-align: center; margin-bottom: 20px; }
         .w-domain { font-weight: 600; font-size: 16px; margin-bottom: 4px; }
         .w-verified { color: #059669; font-size: 12px; background: #d1fae5; padding: 2px 8px; border-radius: 10px; display: inline-block; }
-
         .w-action { text-align: center; margin-bottom: 24px; }
         .w-amount { font-size: 32px; font-weight: 800; color: #111827; }
-
         .w-details { background: #f9fafb; border-radius: 12px; padding: 12px; font-size: 14px; }
         .w-row { display: flex; justify-content: space-between; margin-bottom: 8px; color: #6b7280; }
         .w-val { color: #111827; font-weight: 500; }
         .w-address { font-family: monospace; background: #e5e7eb; padding: 2px 6px; border-radius: 4px; font-size: 13px; }
-
         .w-footer { padding: 16px; display: flex; gap: 12px; border-top: 1px solid #f3f4f6; }
         .w-btn { flex: 1; padding: 14px; border-radius: 12px; font-weight: 600; cursor: pointer; border: none; font-size: 16px; }
         .w-btn-reject { background: #f3f4f6; color: #374151; }
@@ -119,46 +122,29 @@ function openWalletPopup({ amount, symbol }) {
         <div class="w-network"><div class="w-dot"></div> Base Mainnet</div>
         <div style="font-size: 12px; color: #6b7280;">${shortWallet}</div>
       </div>
-
       <div class="w-body">
         <div class="w-origin">
             <div style="font-size: 40px; margin-bottom: 10px;">🎨</div>
             <div class="w-domain">rare-art.xyz</div>
             <div class="w-verified">✓ Verified App</div>
         </div>
-
         <div class="w-action">
             <div style="color: #6b7280; font-size: 14px; margin-bottom: 4px;">Send Payment</div>
             <div class="w-amount">- ${amount} ${symbol}</div>
         </div>
-
         <div class="w-details">
-            <div class="w-row">
-                <span>To:</span>
-                <span class="w-val">The Artist</span>
-            </div>
-            <div class="w-row" style="margin-bottom: 12px;">
-                <span>Address:</span>
-                <span class="w-address">0xArt...Coll</span>
-            </div>
-            <div class="w-row">
-                <span>Network Fee</span>
-                <span class="w-val">0.00004 ETH <span style="color:#9ca3af">($0.15)</span></span>
-            </div>
-            <div class="w-row">
-                <span>Total Cost</span>
-                <span class="w-val">$1.15</span>
-            </div>
+            <div class="w-row"><span>To:</span><span class="w-val">The Artist</span></div>
+            <div class="w-row" style="margin-bottom: 12px;"><span>Address:</span><span class="w-address">0xArt...Coll</span></div>
+            <div class="w-row"><span>Network Fee</span><span class="w-val">0.00004 ETH <span style="color:#9ca3af">($0.15)</span></span></div>
+            <div class="w-row"><span>Total Cost</span><span class="w-val">$1.15</span></div>
         </div>
       </div>
-
       <div class="w-footer">
         <button class="w-btn w-btn-reject" id="w-reject">Reject</button>
         <button class="w-btn w-btn-confirm" id="w-confirm">Pay</button>
       </div>
     </div>
   `;
-
   document.body.appendChild(overlay);
 
   return new Promise(resolve => {
@@ -175,7 +161,6 @@ function showTransactionUI(runButton) {
 
   trySection.innerHTML = `
     <div style="background: #1e293b; border-radius: 16px; padding: 24px; text-align: center; border: 1px solid #334155; max-width: 400px; margin: 0 auto;">
-
         <div style="background: #0f172a; border-radius: 12px; overflow: hidden; margin-bottom: 20px; position: relative;">
             <div style="height: 200px; background: linear-gradient(135deg, #6366f1, #a855f7); display: flex; align-items: center; justify-content: center;">
                 <span style="font-size: 60px;">🌌</span>
@@ -185,21 +170,17 @@ function showTransactionUI(runButton) {
                 <p style="color: #94a3b8; font-size: 14px; margin: 0;">Created by <strong>VisualArtist.eth</strong></p>
             </div>
         </div>
-
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; color: #cbd5e1; font-size: 14px;">
             <span>Price:</span>
             <span style="font-weight: bold; color: white; font-size: 18px;">1.00 USDC</span>
         </div>
-
         <div id="tx-status-area" style="display:none; margin-bottom: 20px; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px;">
             <div style="display:inline-block; width: 20px; height: 20px; border: 2px solid rgba(255,255,255,0.2); border-top-color: #0052ff; border-radius: 50%; animation: spin 1s linear infinite; vertical-align: middle; margin-right: 8px;"></div>
             <span style="color: #cbd5e1; font-size: 14px;">Waiting for signature...</span>
         </div>
-
         <button id="trigger-btn" style="width: 100%; padding: 16px; background: white; color: #0f172a; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 16px; transition: all 0.2s;">
             Buy Now
         </button>
-
         <p style="color: #64748b; font-size: 12px; margin-top: 15px;">
             Simulated transaction. No real funds needed.
         </p>
@@ -211,13 +192,11 @@ function showTransactionUI(runButton) {
   const statusArea = document.getElementById("tx-status-area");
 
   triggerBtn.addEventListener("click", async () => {
-    // 1. DApp UI Update
     triggerBtn.style.opacity = "0.5";
     triggerBtn.disabled = true;
     triggerBtn.textContent = "Check Wallet...";
     statusArea.style.display = "block";
 
-    // 2. Open Wallet Popup (Delay for realism)
     setTimeout(async () => {
         const confirmed = await openWalletPopup({ amount: "1.00", symbol: "USDC" });
 
@@ -247,9 +226,8 @@ function showTransactionUI(runButton) {
   });
 }
 
-// === MAIN LISTENER ===
-document.addEventListener("DOMContentLoaded", async () => {
-  await initWallet();
+// === MAIN LISTENER (OPRAVENO: Ihned aktivní) ===
+document.addEventListener("DOMContentLoaded", function () {
   injectStyles();
 
   const runBtn = document.querySelector(".cta-button");
@@ -269,18 +247,21 @@ document.addEventListener("DOMContentLoaded", async () => {
           else showModal("warning", "Please run the simulation first.");
       }
   }
+
+  // Wallet až nakonec, aby neblokoval UI
+  initWallet();
 });
 
-// === MODAL UTILS ===
+// === MODAL UTILS (Bez Emoji v hlavičce) ===
 function showModal(type, msg) {
     const overlay = document.createElement('div');
     overlay.className = 'custom-modal-overlay';
 
-    let icon = '', title = '', modalClass = '';
+    let title = 'NOTICE';
+    let modalClass = 'modal-warning';
 
-    if (type === 'success') { icon = ''; title = 'GREAT JOB!'; modalClass = 'modal-success'; }
-    else if (type === 'danger') { icon = '🛑'; title = 'WATCH OUT!'; modalClass = 'modal-danger'; }
-    else { icon = '⚠️'; title = 'NOTICE'; modalClass = 'modal-warning'; }
+    if (type === 'success') { title = 'GREAT JOB!'; modalClass = 'modal-success'; }
+    else if (type === 'danger') { title = 'WATCH OUT!'; modalClass = 'modal-danger'; }
 
     overlay.innerHTML = `
         <div class="custom-modal-content ${modalClass}">

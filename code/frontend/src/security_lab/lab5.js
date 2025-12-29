@@ -69,7 +69,7 @@ function injectStyles() {
         .badge-risk { background: rgba(239,68,68,0.2); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); }
         .badge-verified { background: rgba(34,197,94,0.2); color: #22c55e; border: 1px solid rgba(34,197,94,0.3); }
 
-        /* CHART AREA (NEW) */
+        /* CHART AREA */
         .dex-chart {
             height: 100px; margin-bottom: 15px; border-radius: 12px;
             background: linear-gradient(180deg, rgba(30,41,59,0.3) 0%, rgba(15,23,42,0) 100%);
@@ -120,19 +120,39 @@ function injectStyles() {
         /* COMPARISON LABEL */
         .vs-label { text-align: center; color: #64748b; font-weight: bold; font-size: 14px; margin: -10px 0; text-transform: uppercase; letter-spacing: 2px; }
 
-        /* MODALS */
-        .custom-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(5px); z-index: 10000; display: flex; align-items: center; justify-content: center; animation: fadeIn 0.2s; }
-        .custom-modal-content { background: #0f172a; width: 90%; max-width: 400px; border-radius: 24px; border: 1px solid #334155; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.5); animation: popIn 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
-        .modal-header { padding: 20px; text-align: center; background: #1e293b; border-bottom: 1px solid #334155; }
-        .modal-body { padding: 24px; color: #cbd5e1; line-height: 1.6; font-size: 15px; text-align: center; }
+        /* --- UNIFIED MODAL STYLES (MATCHING LAB 4) --- */
+        .custom-modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(8px);
+            display: flex; align-items: center; justify-content: center; z-index: 10000;
+            animation: fadeIn 0.3s ease;
+        }
+        .custom-modal-content {
+            background: #0f172a; border: 1px solid #334155; border-radius: 24px;
+            width: 90%; max-width: 400px; padding: 0; overflow: hidden;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+            animation: scaleUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            text-align: center; font-family: -apple-system, sans-serif;
+        }
+        .modal-header { padding: 24px 24px 10px; }
+        .modal-title { font-size: 20px; font-weight: 700; color: white; margin: 0; }
+        .modal-body { padding: 10px 24px 24px; color: #cbd5e1; font-size: 15px; line-height: 1.5; }
         .modal-footer { padding: 16px; background: #1e293b; border-top: 1px solid #334155; }
-        .modal-btn { width: 100%; padding: 14px; border-radius: 12px; border: none; font-weight: 700; cursor: pointer; background: #334155; color: white; }
-        .modal-danger .modal-header h3 { color: #ef4444; margin: 0; }
-        .modal-success .modal-header h3 { color: #22c55e; margin: 0; }
-        .modal-warning .modal-header h3 { color: #eab308; margin: 0; }
+        .modal-btn {
+            background: #334155; color: white; border: none; padding: 12px 0; width: 100%;
+            border-radius: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; font-size: 16px;
+        }
 
-        @keyframes fadeIn { from{opacity:0} to{opacity:1} }
-        @keyframes popIn { from{transform:scale(0.9);opacity:0} to{transform:scale(1);opacity:1} }
+        .modal-success .modal-btn { background: #22c55e; color: #022c22; }
+        .modal-success .modal-title { color: #22c55e; }
+
+        .modal-danger .modal-btn { background: #ef4444; color: white; }
+        .modal-danger .modal-title { color: #ef4444; }
+
+        .modal-warning .modal-btn { background: #eab308; color: black; }
+        .modal-warning .modal-title { color: #eab308; }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes scaleUp { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
     `;
     document.head.appendChild(style);
 }
@@ -264,10 +284,8 @@ function showFakeDEXDemo(runButton) {
         </div>
     `;
 
-    // Interactivity
     document.getElementById("scam-btn").addEventListener("click", () => {
         showModal("danger",
-            "STOP! 🛑<br><br>" +
             "<strong>1. Price Trap:</strong> The chart shows a fake 'crash' to $2,000. Real market is $3,200.<br><br>" +
             "<strong>2. Fake Token:</strong> The 'USDC' contract is unverified. You might be approving a malicious contract.<br><br>" +
             "Always check the URL and Contract Address."
@@ -303,7 +321,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 });
 
-// === MODAL UTILS ===
+// === MODAL UTILS (Unified with Lab 4) ===
 function showModal(type, msg) {
     const overlay = document.createElement('div');
     overlay.className = 'custom-modal-overlay';
@@ -312,17 +330,19 @@ function showModal(type, msg) {
     let modalClass = 'modal-warning';
 
     if (type === 'success') { title = 'GREAT JOB!'; modalClass = 'modal-success'; }
-    if (type === 'danger') { title = 'WARNING!'; modalClass = 'modal-danger'; }
+    else if (type === 'danger') { title = 'WATCH OUT!'; modalClass = 'modal-danger'; }
 
     overlay.innerHTML = `
         <div class="custom-modal-content ${modalClass}">
-            <div class="modal-header"><h3>${title}</h3></div>
+            <div class="modal-header">
+                <h3 class="modal-title">${title}</h3>
+            </div>
             <div class="modal-body">${msg}</div>
             <div class="modal-footer">
-                <button class="modal-btn" onclick="this.closest('.custom-modal-overlay').remove()">Close</button>
+                <button class="modal-btn" onclick="this.closest('.custom-modal-overlay').remove()">Got it</button>
             </div>
         </div>
     `;
     document.body.appendChild(overlay);
-    overlay.addEventListener('click', (e) => { if(e.target === overlay) overlay.remove(); });
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
 }

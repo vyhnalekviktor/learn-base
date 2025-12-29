@@ -251,20 +251,16 @@ function showModal(type, msg) {
     const overlay = document.createElement('div');
     overlay.className = 'custom-modal-overlay';
 
-    let icon = '';
     let title = '';
     let modalClass = '';
 
     if (type === 'success') {
-        icon = '✅';
         title = 'GREAT JOB!';
         modalClass = 'modal-success';
     } else if (type === 'danger') {
-        icon = '🛑';
         title = 'WATCH OUT!';
         modalClass = 'modal-danger';
     } else {
-        icon = '⚠️';
         title = 'ATTENTION';
         modalClass = 'modal-warning';
     }
@@ -272,7 +268,6 @@ function showModal(type, msg) {
     overlay.innerHTML = `
         <div class="custom-modal-content ${modalClass}">
             <div class="modal-header">
-                <span class="modal-icon">${icon}</span>
                 <h3 class="modal-title">${title}</h3>
             </div>
             <div class="modal-body">

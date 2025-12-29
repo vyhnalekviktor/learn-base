@@ -2,7 +2,7 @@ import { sdk } from "https://esm.sh/@farcaster/miniapp-sdk";
 const API_BASE = "https://learn-base-backend.vercel.app";
 let currentWallet = null;
 
-// ZMĚNA: Robustní načtení peněženky přes common.js cache
+// === 1. WALLET INIT ===
 async function initWallet() {
   try {
     console.log("Lab 1 init...");
@@ -14,7 +14,6 @@ async function initWallet() {
             const cache = await window.BaseCampTheme.waitForWallet();
             if (cache.wallet) {
                 currentWallet = cache.wallet;
-                console.log('✅ Lab 1: Wallet from cache:', currentWallet);
                 updateUI(currentWallet);
                 return;
             }
@@ -25,13 +24,11 @@ async function initWallet() {
     const sessionWallet = sessionStorage.getItem('cached_wallet');
     if (sessionWallet) {
         currentWallet = sessionWallet;
-        console.log('✅ Lab 1: Wallet from session:', currentWallet);
         updateUI(currentWallet);
         return;
     }
 
     // 3. Fallback: SDK request
-    console.log('🔄 Lab 1: Fetching wallet from SDK...');
     const ethProvider = await sdk.wallet.ethProvider;
     const accounts = await ethProvider.request({ method: "eth_requestAccounts" });
 
@@ -40,12 +37,9 @@ async function initWallet() {
     if (currentWallet) {
         sessionStorage.setItem('cached_wallet', currentWallet);
         updateUI(currentWallet);
-    } else {
-        console.warn("⚠️ Lab 1: No wallet found");
     }
-
   } catch (error) {
-    console.error("❌ Lab 1 init error:", error);
+    console.error("Lab 1 init error:", error);
   }
 }
 
@@ -55,17 +49,8 @@ function updateUI(wallet) {
 }
 
 async function updateLabProgress(wallet) {
-  if (!wallet) {
-    console.error("NO WALLET - cannot call API");
-    return false;
-  }
-
-  // 1. OPTIMISTIC UPDATE (Hned)
-  if (window.BaseCampTheme) {
-      window.BaseCampTheme.updateLocalProgress('lab1', true);
-  }
-
-  // 2. DB UPDATE (Pozadí)
+  if (!wallet) return false;
+  if (window.BaseCampTheme) window.BaseCampTheme.updateLocalProgress('lab1', true);
   const res = await fetch(`${API_BASE}/api/database/update_field`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -76,20 +61,60 @@ async function updateLabProgress(wallet) {
       value: true,
     }),
   });
-
-  if (!res.ok) return false;
-  return true;
+  return res.ok;
 }
 
-document.addEventListener('DOMContentLoaded', async function() {
-    console.log('Lab 1 loaded');
-    await initWallet();
+// === 2. STYLES (Sjednoceno s Lab 2 - 5) ===
+function injectStyles() {
+    const style = document.createElement('style');
+    style.innerHTML = `
+        /* MODAL STYLES */
+        .custom-modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(8px);
+            display: flex; align-items: center; justify-content: center; z-index: 10000;
+            animation: fadeIn 0.3s ease;
+        }
+        .custom-modal-content {
+            background: #0f172a; border: 1px solid #334155; border-radius: 24px;
+            width: 90%; max-width: 400px; padding: 0; overflow: hidden;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+            animation: scaleUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            text-align: center; font-family: -apple-system, sans-serif;
+        }
+        .modal-header { padding: 24px 24px 10px; }
+        .modal-title { font-size: 20px; font-weight: 700; color: white; margin: 0; }
+        .modal-body { padding: 10px 24px 24px; color: #cbd5e1; font-size: 15px; line-height: 1.5; }
+        .modal-footer { padding: 16px; background: #1e293b; border-top: 1px solid #334155; }
+        .modal-btn {
+            background: #334155; color: white; border: none; padding: 12px 0; width: 100%;
+            border-radius: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; font-size: 16px;
+        }
+
+        .modal-success .modal-btn { background: #22c55e; color: #022c22; }
+        .modal-success .modal-title { color: #22c55e; }
+
+        .modal-danger .modal-btn { background: #ef4444; color: white; }
+        .modal-danger .modal-title { color: #ef4444; }
+
+        .modal-warning .modal-btn { background: #eab308; color: black; }
+        .modal-warning .modal-title { color: #eab308; }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes scaleUp { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    `;
+    document.head.appendChild(style);
+}
+
+// === 3. MAIN LOGIC ===
+document.addEventListener('DOMContentLoaded', function() {
+    // 1. Aktivujeme styly a UI hned
+    injectStyles();
 
     const scamButton = document.querySelector('.scam-warning-btn');
     const runButton = document.querySelector('.cta-button');
 
     if (scamButton) {
-        scamButton.addEventListener('click', async function(e) {
+        scamButton.addEventListener('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
 
@@ -98,10 +123,9 @@ document.addEventListener('DOMContentLoaded', async function() {
                 return;
             }
 
+            // Fire and forget progress update
             updateLabProgress(currentWallet).catch(err => console.error("Save failed:", err));
-            showModal('success',
-                "CONGRATS! Lab 1 COMPLETE!\n\n" +
-                "Never share seed phrase or private key with anybody!");
+            showModal('success', "CONGRATS! Lab 1 COMPLETE!<br><br>Never share seed phrase or private key with anybody!");
         });
     }
 
@@ -113,6 +137,10 @@ document.addEventListener('DOMContentLoaded', async function() {
         });
     }
 
+    // 2. Načteme wallet na pozadí
+    initWallet();
+
+    // --- Demo Logic ---
     function showScamDemo() {
         runButton.style.display = 'none';
         const trySection = document.querySelector('.try-section');
@@ -139,41 +167,12 @@ document.addEventListener('DOMContentLoaded', async function() {
             if(seedInput) {
                 seedInput.addEventListener('input', function() {
                     if (this.value.trim().length > 0) {
-                        showModal('danger', 'NEVER enter your seed phrase anywhere!\nYour wallet could be DRAINED instantly!');
+                        showModal('danger', 'NEVER enter your seed phrase anywhere!<br>Your wallet could be DRAINED instantly!');
                         this.value = '';
                     }
                 });
             }
         }, 100);
-    }
-
-    function showModal(type, message) {
-        const oldModal = document.querySelector('.custom-modal');
-        if (oldModal) oldModal.remove();
-
-        const modal = document.createElement('div');
-        modal.className = `custom-modal modal-${type}`;
-        modal.innerHTML = `
-            <div class="modal-content">
-                <div class="modal-${type}-header">
-                    <h3>${type === 'success' ? 'SUCCESS' : type === 'danger' ? 'DANGER' : 'WARNING'}</h3>
-                </div>
-                <div class="modal-body" style="color: black;">
-                    <p>${message.replace(/\n/g, '<br>')}</p>
-                </div>
-                <div class="modal-footer">
-                    <button class="modal-close-btn">OK</button>
-                </div>
-            </div>
-        `;
-        document.body.appendChild(modal);
-
-        const closeBtn = modal.querySelector('.modal-close-btn');
-        if(closeBtn) closeBtn.onclick = () => modal.remove();
-
-        modal.addEventListener('click', function(e) {
-            if (e.target === modal) modal.remove();
-        });
     }
 
     window.showSeedInput = function() {
@@ -187,6 +186,32 @@ document.addEventListener('DOMContentLoaded', async function() {
             showModal('warning', 'Please enter your seed phrase to claim 500 BASE tokens!');
             return;
         }
-        showModal('success', 'LAB 1 COMPLETE!\n\nYou understood the SCAM mechanics perfectly!\n\nKey lesson: NEVER enter seed phrase anywhere!');
+        showModal('success', 'LAB 1 COMPLETE!<br><br>You understood the SCAM mechanics perfectly!<br><br>Key lesson: NEVER enter seed phrase anywhere!');
     };
 });
+
+// === MODAL UTILS (Sjednocené) ===
+function showModal(type, msg) {
+    const overlay = document.createElement('div');
+    overlay.className = 'custom-modal-overlay';
+
+    let title = 'NOTICE';
+    let modalClass = 'modal-warning';
+
+    if (type === 'success') { title = 'GREAT JOB!'; modalClass = 'modal-success'; }
+    else if (type === 'danger') { title = 'WATCH OUT!'; modalClass = 'modal-danger'; }
+
+    overlay.innerHTML = `
+        <div class="custom-modal-content ${modalClass}">
+            <div class="modal-header">
+                <h3 class="modal-title">${title}</h3>
+            </div>
+            <div class="modal-body">${msg}</div>
+            <div class="modal-footer">
+                <button class="modal-btn" onclick="this.closest('.custom-modal-overlay').remove()">Got it</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+}

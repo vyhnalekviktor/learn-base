@@ -42,20 +42,116 @@ async function updateLabProgress(wallet) {
   return res.ok;
 }
 
-// === 2. STYLES (Quiz + Modals) ===
+// === 2. STYLES (Ultra-Stable Layout) ===
 function injectStyles() {
   const style = document.createElement("style");
   style.textContent = `
-    /* QUIZ STYLES */
-    .quiz-card { background: #1e293b; padding: 20px; border-radius: 12px; margin-top: 20px; color: white; border:1px solid #334155; }
-    .quiz-row { padding: 15px; border-bottom: 1px solid #334155; }
+    /* vynutíme box-sizing pro všechno uvnitř */
+    .quiz-card * {
+        box-sizing: border-box;
+    }
+
+    /* QUIZ CONTAINER */
+    .quiz-card {
+        background: #1e293b;
+        padding: 24px;
+        border-radius: 20px;
+        margin: 20px auto;
+        color: white;
+        border: 1px solid #334155;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+
+        /* KLÍČOVÉ PRO ROZTAŽENÍ: */
+        width: 100%;           /* Zabere všechno místo */
+        max-width: 480px;      /* Ale ne víc než 480px */
+        display: block;        /* Ujistíme se, že je to blok */
+    }
+
+    /* ROWS */
+    .quiz-row {
+        padding: 20px 0;
+        border-bottom: 1px solid #334155;
+        width: 100%;
+    }
     .quiz-row:last-child { border-bottom: none; }
-    .quiz-question { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; font-weight:600; }
-    .quiz-explanation { font-size:13px; color:#cbd5e1; margin-top:8px; display:none; padding:8px; background:#0f172a; border-radius:6px; line-height:1.4; }
-    .quiz-row.correct .quiz-explanation { display:block; border-left:3px solid #22c55e; }
-    .quiz-row.wrong .quiz-explanation { display:block; border-left:3px solid #ef4444; }
-    .quiz-options { display: flex; gap: 15px; }
-    .quiz-options label { cursor: pointer; display: flex; align-items: center; gap: 5px; font-size:14px; }
+
+    /* QUESTION TEXT */
+    .quiz-question-text {
+        font-size: 16px;
+        font-weight: 600;
+        margin-bottom: 15px;
+        display: block;
+        color: #f8fafc;
+        width: 100%;
+    }
+
+    /* BUTTON GRID */
+    .quiz-options {
+        display: grid;
+        grid-template-columns: 1fr 1fr; /* 50% - 50% */
+        gap: 12px;
+        width: 100%;
+    }
+
+    /* OPTION BUTTONS */
+    .option-label {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 14px 10px;
+        background: #0f172a;
+        border: 2px solid #334155;
+        border-radius: 12px;
+        cursor: pointer;
+        font-weight: 700;
+        font-size: 15px;
+        color: #94a3b8;
+        transition: all 0.2s ease;
+        text-align: center;
+        position: relative;
+        width: 100%; /* Roztáhne se do plné šířky buňky gridu */
+        user-select: none;
+    }
+
+    /* HIDE RADIO */
+    .option-label input {
+        position: absolute;
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+    /* CHECKED STATES */
+    .option-label:has(input[value="safe"]:checked) {
+        background: rgba(34, 197, 94, 0.15);
+        border-color: #22c55e;
+        color: #22c55e;
+        box-shadow: 0 0 15px rgba(34, 197, 94, 0.1);
+    }
+
+    .option-label:has(input[value="scam"]:checked) {
+        background: rgba(239, 68, 68, 0.15);
+        border-color: #ef4444;
+        color: #ef4444;
+        box-shadow: 0 0 15px rgba(239, 68, 68, 0.1);
+    }
+
+    /* EXPLANATION BOX */
+    .quiz-explanation {
+        font-size: 14px;
+        color: #cbd5e1;
+        margin-top: 15px;
+        display: none;
+        padding: 15px;
+        background: #0f172a;
+        border-radius: 10px;
+        line-height: 1.5;
+        width: 100%;
+        word-break: break-word; /* Zabrání přetečení dlouhých slov */
+    }
+
+    .quiz-row.correct .quiz-explanation { display: block; border-left: 4px solid #22c55e; }
+    .quiz-row.wrong .quiz-explanation { display: block; border-left: 4px solid #ef4444; }
 
     /* MODAL STYLES */
     .custom-modal-overlay {
@@ -68,10 +164,9 @@ function injectStyles() {
         width: 90%; max-width: 400px; padding: 0; overflow: hidden;
         box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
         animation: scaleUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-        text-align: center;
+        text-align: center; font-family: -apple-system, sans-serif;
     }
     .modal-header { padding: 24px 24px 10px; }
-    .modal-icon { font-size: 40px; margin-bottom: 10px; display: block; }
     .modal-title { font-size: 20px; font-weight: 700; color: white; margin: 0; }
     .modal-body { padding: 10px 24px 24px; color: #cbd5e1; font-size: 15px; line-height: 1.5; }
     .modal-footer { padding: 16px; background: #1e293b; border-top: 1px solid #334155; }
@@ -79,10 +174,13 @@ function injectStyles() {
         background: #334155; color: white; border: none; padding: 12px 0; width: 100%;
         border-radius: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; font-size: 16px;
     }
+
     .modal-success .modal-btn { background: #22c55e; color: #022c22; }
     .modal-success .modal-title { color: #22c55e; }
+
     .modal-danger .modal-btn { background: #ef4444; color: white; }
     .modal-danger .modal-title { color: #ef4444; }
+
     .modal-warning .modal-btn { background: #eab308; color: black; }
     .modal-warning .modal-title { color: #eab308; }
 
@@ -113,14 +211,14 @@ const QUESTIONS = [
     },
     {
         id: 'backup-file',
-        text: 'Email asking to download "Backup"',
+        text: 'Site asks to upload "Backup File"',
         correct: 'scam',
-        explain: "🛑 Correct! Never download attachments from unknown crypto emails. Likely malware."
+        explain: "🛑 Correct! Your Backup File (Keystore) contains your private keys. Never upload it to unknown sites."
     }
 ];
 
-document.addEventListener("DOMContentLoaded", async function () {
-  await initWallet();
+// === 3. MAIN LISTENER ===
+document.addEventListener("DOMContentLoaded", function () {
   injectStyles();
 
   const runButton = document.querySelector(".cta-button");
@@ -130,6 +228,8 @@ document.addEventListener("DOMContentLoaded", async function () {
       renderQuizCard(runButton);
     });
   }
+
+  initWallet();
 });
 
 function renderQuizCard(runButton) {
@@ -139,12 +239,16 @@ function renderQuizCard(runButton) {
 
   const rowsHtml = QUESTIONS.map(q => `
     <div class="quiz-row" data-id="${q.id}">
-        <div class="quiz-question">
-            <span>${q.text}</span>
-            <div class="quiz-options">
-                <label><input type="radio" name="${q.id}" value="safe"> SAFE</label>
-                <label><input type="radio" name="${q.id}" value="scam"> SCAM</label>
-            </div>
+        <span class="quiz-question-text">${q.text}</span>
+        <div class="quiz-options">
+            <label class="option-label">
+                <input type="radio" name="${q.id}" value="safe">
+                SAFE
+            </label>
+            <label class="option-label">
+                <input type="radio" name="${q.id}" value="scam">
+                SCAM
+            </label>
         </div>
         <div class="quiz-explanation"></div>
     </div>
@@ -154,18 +258,16 @@ function renderQuizCard(runButton) {
     <div class="quiz-card">
       <h3 style="margin:0 0 20px 0; color:#60a5fa; text-align:center;">Safe or Scam?</h3>
       <div class="quiz-table">${rowsHtml}</div>
-      <button class="primary-btn" onclick="evaluateAnswers()" style="margin-top:20px; width:100%; background:#0052ff; padding:12px; border-radius:8px; border:none; color:white; font-weight:bold; cursor:pointer;">Evaluate Answers</button>
+      <button class="primary-btn" onclick="evaluateAnswers()" style="margin-top:25px; width:100%; background:#0052ff; padding:14px; border-radius:12px; border:none; color:white; font-weight:bold; cursor:pointer; font-size:16px;">Evaluate Answers</button>
     </div>
   `;
 }
 
 window.evaluateAnswers = async function () {
   const rows = document.querySelectorAll(".quiz-row");
-  const answers = {};
   let isAllCorrect = true;
   let allAnswered = true;
 
-  // 1. Check if all answered
   rows.forEach((row) => {
     const checked = row.querySelector('input[type="radio"]:checked');
     if (!checked) allAnswered = false;
@@ -176,7 +278,6 @@ window.evaluateAnswers = async function () {
     return;
   }
 
-  // 2. Evaluate
   rows.forEach((row) => {
     const id = row.dataset.id;
     const checked = row.querySelector('input[type="radio"]:checked');
@@ -191,7 +292,7 @@ window.evaluateAnswers = async function () {
         explanationEl.innerHTML = questionData.explain;
     } else {
         row.classList.add("wrong");
-        explanationEl.innerHTML = "❌ Incorrect. <br>" + questionData.explain.replace("✅ Correct!", "").replace("🛑 Correct!", "");
+        explanationEl.innerHTML = "Incorrect. <br>" + questionData.explain.replace("Correct!", "").replace("Correct!", "");
         isAllCorrect = false;
     }
   });
@@ -204,21 +305,19 @@ window.evaluateAnswers = async function () {
   }
 };
 
-// === MODAL UTILS ===
 function showModal(type, msg) {
     const overlay = document.createElement('div');
     overlay.className = 'custom-modal-overlay';
 
-    let icon = '', title = '', modalClass = '';
+    let title = 'NOTICE';
+    let modalClass = 'modal-warning';
 
-    if (type === 'success') { icon = '✅'; title = 'GREAT JOB!'; modalClass = 'modal-success'; }
-    else if (type === 'danger') { icon = '🛑'; title = 'WATCH OUT!'; modalClass = 'modal-danger'; }
-    else { icon = '⚠️'; title = 'NOTICE'; modalClass = 'modal-warning'; }
+    if (type === 'success') { title = 'GREAT JOB!'; modalClass = 'modal-success'; }
+    else if (type === 'danger') { title = 'WATCH OUT!'; modalClass = 'modal-danger'; }
 
     overlay.innerHTML = `
         <div class="custom-modal-content ${modalClass}">
             <div class="modal-header">
-                <span class="modal-icon">${icon}</span>
                 <h3 class="modal-title">${title}</h3>
             </div>
             <div class="modal-body">${msg}</div>
