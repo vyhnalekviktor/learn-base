@@ -1,131 +1,192 @@
 import sdk from 'https://esm.sh/@farcaster/miniapp-sdk';
 
 const API_BASE = 'https://learn-base-backend.vercel.app';
-const BASE_CHAIN_ID_HEX = '0x2105'; // Base Mainnet
+const BASE_CHAIN_ID_HEX = '0x2105'; // Base Mainnet (8453)
 
-// Adresy pro Mint za poplatek (pokud bys to chtěl v budoucnu zapnout)
+// Adresy
 const NFT_CONTRACT = '0xE0F8cb7B89DB4619B21526AC70786444dd9d2f0f';
 const USDC = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913';
 
-// Používáme DOMContentLoaded pro rychlý start
+// Načteme Ethers
+const { ethers } = await import('https://esm.sh/ethers@6.9.0');
+
+// === 1. INIT ===
 document.addEventListener('DOMContentLoaded', async () => {
+  console.log("🚀 Progress page initializing...");
+  injectModalStyles();
+
+  // Okamžitě skryjeme loadery
+  document.querySelectorAll('.loading-indicator').forEach(el => el.style.display = 'none');
+
   try {
     await sdk.actions.ready();
 
-    // 1. Získáme peněženku z common.js cache
+    // 1. ZÍSKÁNÍ PENĚŽENKY
     let wallet = null;
-    if (window.BaseCampTheme?.waitForWallet) {
-        try {
-            const cache = await window.BaseCampTheme.waitForWallet();
-            wallet = cache.wallet;
-        } catch (e) {
-            console.log('Wallet cache miss');
+
+    // a) Zkusíme cache (localStorage)
+    const cachedWallet = localStorage.getItem('cached_wallet');
+    if (cachedWallet) wallet = cachedWallet;
+
+    // b) Ověříme přes SDK (pro jistotu)
+    try {
+        const accounts = await sdk.wallet.ethProvider.request({ method: 'eth_requestAccounts' });
+        if (accounts && accounts.length > 0) {
+            wallet = accounts[0];
+            localStorage.setItem('cached_wallet', wallet);
         }
+    } catch (err) {
+        console.warn("SDK check skipped, using cache");
     }
 
     if (!wallet) {
-      console.warn('No wallet available');
+      console.warn('No wallet available.');
+      const mintBtn = document.getElementById('mintNftBtn');
+      if (mintBtn) {
+          mintBtn.textContent = "Connect Wallet Failed";
+          mintBtn.disabled = true;
+      }
       return;
     }
 
     const span = document.getElementById('wallet-address');
     if (span) span.textContent = wallet;
 
-    // 2. Načteme data (Z CACHE - bleskové)
-    await loadProgressFromCache(wallet, sdk.wallet.ethProvider);
+    // 2. DATA SYNC (Podmíněný)
+    if (window.BaseCampTheme && window.BaseCampTheme.initUserData) {
+        const hasCache = localStorage.getItem('user_data_cache');
+        if (!hasCache || cachedWallet !== wallet) {
+            console.log("🔄 Cache miss. Fetching from DB...");
+            await window.BaseCampTheme.initUserData(wallet);
+        }
+    }
+
+    // 3. SPUŠTĚNÍ LOGIKY (Progress + DB Check)
+    await loadPageLogic(wallet, sdk.wallet.ethProvider);
 
   } catch (error) {
-    console.error('Load error:', error);
+    console.error('CRITICAL INIT ERROR:', error);
+    const mintBtn = document.getElementById('mintNftBtn');
+    if (mintBtn) mintBtn.textContent = "App Error (Check Console)";
   }
 });
 
-async function loadProgressFromCache(wallet, ethProvider) {
-    // A) Zkusíme data z lokální cache (která se aktualizuje v labech)
-    let data = window.BaseCampTheme?.getUserData();
+// === 2. HLAVNÍ LOGIKA UI ===
+async function loadPageLogic(wallet, ethProvider) {
+    console.log("🎨 Rendering page logic...");
 
-    // B) Pokud data nejsou (např. hard refresh), stáhneme je
-    if (!data) {
-        console.log('Cache miss, fetching data...');
-        await window.BaseCampTheme.initUserData(wallet);
-        data = window.BaseCampTheme.getUserData();
+    // A) VYKRESLENÍ GRAFŮ Z LOKÁLNÍ CACHE
+    const localData = getSafeUserData();
+    const p = localData.progress;
+
+    const theoryPercent = Math.round(([p.theory1, p.theory2, p.theory3, p.theory4, p.theory5].filter(Boolean).length / 5) * 100);
+    const basePercent = Math.round(([p.faucet, p.send, p.receive, p.mint, p.launch].filter(Boolean).length / 5) * 100);
+    const securityPercent = Math.round(([p.lab1, p.lab2, p.lab3, p.lab4, p.lab5].filter(Boolean).length / 5) * 100);
+
+    updateBar('theory', theoryPercent);
+    updateBar('baseLab', basePercent);
+    updateBar('security', securityPercent);
+
+    const isLocalAllDone = (theoryPercent === 100 && basePercent === 100 && securityPercent === 100);
+
+    // B) LOGIKA TLAČÍTKA
+    const mintBtn = document.getElementById('mintNftBtn');
+    const nftSection = document.getElementById('nftSection');
+
+    // Defaultní stav: Zamčeno
+    if (mintBtn) {
+        mintBtn.disabled = true;
+        mintBtn.textContent = "Complete all lessons first";
     }
 
-    if (!data || !data.progress) {
-        console.warn('No user data found');
+    // Pokud nemáme splněno lokálně, končíme (zůstane zamčeno)
+    if (!isLocalAllDone) {
         return;
     }
 
-    const { info, progress } = data;
-    const p = progress; // Zkratka
+    // C) POKUD JE SPLNĚNO -> LOADING & DB CHECK
+    if (mintBtn) {
+        mintBtn.textContent = "Checking status..."; // Loading stav
+    }
 
-    // --- 1. VYKRESLENÍ GRAFŮ ---
+    let isClaimed = false;
 
-    // Theory (5 lekcí)
-    const theoryParts = [p.theory1, p.theory2, p.theory3, p.theory4, p.theory5];
-    const theoryPercent = Math.round((theoryParts.filter(Boolean).length / 5) * 100);
-    updateBar('theory', theoryPercent);
+    try {
+        console.log("🔍 Checking DB for claimed_nft...");
+        const dbRes = await fetch(`${API_BASE}/api/database/get-field`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                wallet: wallet,
+                table_name: "USER_INFO",
+                field_name: "claimed_nft"
+            })
+        });
 
-    // Practice (5 úkolů - VČETNĚ FAUCETU!)
-    const baseParts = [p.faucet, p.send, p.receive, p.mint, p.launch];
-    const basePercent = Math.round((baseParts.filter(Boolean).length / 5) * 100);
-    updateBar('baseLab', basePercent);
+        if (dbRes.ok) {
+            const json = await dbRes.json();
+            // Pokud DB vrátí true, znamená to, že uživatel už NFT má
+            if (json.success && json.value === true) {
+                isClaimed = true;
+                console.log("✅ DB confirms: NFT already claimed.");
+            } else {
+                console.log("✨ DB confirms: NFT NOT claimed yet.");
+            }
+        }
+    } catch (e) {
+        console.error("DB Check failed:", e);
+        if (mintBtn) mintBtn.textContent = "Connection Error";
+        return;
+    }
 
-    // Security (5 labů)
-    const securityParts = [p.lab1, p.lab2, p.lab3, p.lab4, p.lab5];
-    const securityPercent = Math.round((securityParts.filter(Boolean).length / 5) * 100);
-    updateBar('security', securityPercent);
+    // D) FINÁLNÍ UPDATE UI PODLE DB
+    updateNftUiState(isClaimed, true, ethProvider, wallet); // true = isLocalAllDone
+}
 
-    // --- 2. VÝPOČET OPRÁVNĚNÍ K MINTU (TADY JE ZMĚNA) ---
+// Pomocná funkce
+function getSafeUserData() {
+    let data = { progress: {}, info: {} };
+    try {
+        if (window.BaseCampTheme && window.BaseCampTheme.getUserData) {
+            data = window.BaseCampTheme.getUserData() || data;
+        } else {
+            const raw = localStorage.getItem('user_data_cache');
+            if (raw) data = JSON.parse(raw);
+        }
+        if (!data.progress) data.progress = {};
+        if (!data.info) data.info = {};
+    } catch (e) { console.error("Data parse error", e); }
+    return data;
+}
 
-    // Zkontrolujeme, jestli je VŠECHNO hotové (Client-side check)
-    const allTheoryDone = theoryParts.every(val => val === true);
-    const allPracticeDone = baseParts.every(val => val === true);
-    const allSecurityDone = securityParts.every(val => val === true);
-
-    const isEligibleToMint = allTheoryDone && allPracticeDone && allSecurityDone;
-
-    // Info o tom, jestli už uživatel NFT má (z databáze)
-    const claimedNft = info && info.claimed_nft === true;
-
-    // --- 3. AKTUALIZACE UI ---
+function updateNftUiState(isClaimed, isLocalAllDone, ethProvider, wallet) {
     const nftSection = document.getElementById('nftSection');
     const nftBlockTitle = document.getElementById('nftBlockTitle');
     const nftBlockContent = document.getElementById('nftBlockContent');
     const mintBtn = document.getElementById('mintNftBtn');
     const ownedSection = document.getElementById('ownedNftSection');
 
-    if (claimedNft) {
-      // UŽ MÁ NFT
-      if (nftSection) {
-        nftSection.classList.remove('locked');
-        nftSection.classList.add('claimed');
-      }
-      if (nftBlockTitle) nftBlockTitle.textContent = 'Already claimed!';
-      if (nftBlockContent) nftBlockContent.style.display = 'none';
-      if (ownedSection) ownedSection.style.display = 'block';
-
-    } else if (isEligibleToMint) {
-      // NEMÁ NFT, ALE SPLNIL VŠECHNO -> ODEMKNOUT
-      if (nftSection) nftSection.classList.remove('locked');
-      if (mintBtn) {
-          mintBtn.disabled = false;
-          mintBtn.classList.add('pulse'); // Přidáme efekt, aby to lákalo
-          mintBtn.textContent = "Mint Completion NFT";
-
-          // Připojíme klikací akci
-          mintBtn.onclick = async () => {
-            await handlePaidClaim(ethProvider, wallet);
-          };
-      }
-    } else {
-      // NESPLNIL VŠECHNO
-      if (mintBtn) {
-          mintBtn.disabled = true;
-          // Můžeme uživateli napovědět, co mu chybí
-          if (!allTheoryDone) mintBtn.textContent = "Finish Theory First";
-          else if (!allPracticeDone) mintBtn.textContent = "Finish Practice Labs";
-          else if (!allSecurityDone) mintBtn.textContent = "Finish Security Labs";
-      }
+    if (isClaimed) {
+        // --- 1. UŽ MÁ NFT (podle DB) ---
+        if (nftSection) { nftSection.classList.remove('locked'); nftSection.classList.add('claimed'); }
+        if (nftBlockTitle) nftBlockTitle.textContent = 'Already claimed!';
+        if (nftBlockContent) nftBlockContent.style.display = 'none';
+        if (ownedSection) ownedSection.style.display = 'block';
+        if (mintBtn) {
+            mintBtn.disabled = true;
+            mintBtn.textContent = "NFT Claimed";
+        }
+    } else if (isLocalAllDone) {
+        // --- 2. NEMÁ NFT, ALE MŮŽE MINTOVAT ---
+        if (nftSection) nftSection.classList.remove('locked');
+        if (mintBtn) {
+            mintBtn.disabled = false;
+            mintBtn.textContent = "Mint Completion NFT";
+            mintBtn.classList.add('pulse');
+            mintBtn.onclick = async () => {
+                await handlePaidClaim(ethProvider, wallet);
+            };
+        }
     }
 }
 
@@ -136,8 +197,7 @@ function updateBar(prefix, percent) {
     if (text) text.textContent = `${percent}%`;
 }
 
-// Funkce pro mintování (vyžaduje reálné prostředky na Mainnetu, pokud to tak chceš)
-// Pokud to má být jen "jako", upravíme to. Ale v kódu máš logiku pro USDC approve.
+// === 3. HANDLE MINT ===
 async function handlePaidClaim(ethProvider, wallet) {
   const mintBtn = document.getElementById('mintNftBtn');
 
@@ -146,7 +206,7 @@ async function handlePaidClaim(ethProvider, wallet) {
     const accounts = await ethProvider.request({ method: 'eth_requestAccounts' });
     const userWallet = accounts[0];
 
-    // 1. Kontrola Sítě (Base Mainnet)
+    // Check Network
     let chainId = await ethProvider.request({ method: 'eth_chainId' });
     if (chainId !== BASE_CHAIN_ID_HEX) {
          try {
@@ -155,76 +215,143 @@ async function handlePaidClaim(ethProvider, wallet) {
                 params: [{ chainId: BASE_CHAIN_ID_HEX }],
             });
          } catch (e) {
-             alert("Please switch to Base Mainnet manually.");
+             showModal('danger', "Please switch to Base Mainnet manually.");
              return;
          }
     }
 
-    // Změna textu tlačítka
     mintBtn.textContent = "Processing...";
     mintBtn.disabled = true;
 
     const usdcIface = new ethers.Interface(['function approve(address spender, uint256 amount) external returns (bool)']);
     const badgeIface = new ethers.Interface(['function mintWithUSDC() external']);
-    const price = 2000000n; // 2 USDC (6 decimals)
+    const price = 2000000n; // 2 USDC
 
-    // 2. Approve USDC
+    // 1. Approve
+    mintBtn.textContent = "Confirm Approve...";
     const approveData = usdcIface.encodeFunctionData('approve', [NFT_CONTRACT, price]);
     await ethProvider.request({
         method: 'eth_sendTransaction',
         params: [{ from: userWallet, to: USDC, data: approveData }],
     });
 
-    // Malá pauza
+    mintBtn.textContent = "Waiting...";
     await new Promise(r => setTimeout(r, 2000));
 
-    // 3. Mint NFT
+    // 2. Mint
+    mintBtn.textContent = "Confirm Mint...";
     const mintData = badgeIface.encodeFunctionData('mintWithUSDC', []);
     const mintTx = await ethProvider.request({
         method: 'eth_sendTransaction',
         params: [{ from: userWallet, to: NFT_CONTRACT, data: mintData }],
     });
 
-    // 4. Update UI po úspěchu
+    // 3. Update UI OKAMŽITĚ (Vizuální zpětná vazba)
     const nftSection = document.getElementById('nftSection');
     const nftBlockTitle = document.getElementById('nftBlockTitle');
     const nftBlockContent = document.getElementById('nftBlockContent');
     const ownedSection = document.getElementById('ownedNftSection');
 
-    if (nftSection) {
-      nftSection.classList.remove('locked');
-      nftSection.classList.add('claimed');
-    }
+    if (nftSection) { nftSection.classList.remove('locked'); nftSection.classList.add('claimed'); }
     if (nftBlockTitle) nftBlockTitle.textContent = 'Already claimed!';
     if (nftBlockContent) nftBlockContent.style.display = 'none';
     if (ownedSection) ownedSection.style.display = 'block';
 
     mintBtn.textContent = 'NFT Claimed!';
+    mintBtn.classList.remove('pulse');
 
-    // 5. Zápis do DB a Cache
+    // 4. Update POUZE DB (Cache necháváme být, jak jsi chtěl)
     try {
-      if (window.BaseCampTheme) window.BaseCampTheme.updateLocalProgress('claimed_nft', true);
+        console.log("💾 Updating DB only...");
+        await fetch(`${API_BASE}/api/database/update_field`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              wallet: wallet,
+              table_name: 'USER_INFO',
+              field_name: 'claimed_nft',
+              value: true
+            })
+        });
+        console.log("✅ DB Updated successfully.");
 
-      await fetch(`${API_BASE}/api/database/update_field`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          wallet: wallet,
-          table_name: 'USER_INFO',
-          field_name: 'claimed_nft',
-          value: true
-        })
-      });
-    } catch (error) {
-      console.error('Update claimed_nft error:', error);
-    }
+    } catch (e) { console.error("Save failed", e); }
 
-    alert(`NFT Minted Successfully! Tx: ${mintTx}`);
+    // Success Modal
+    showModal('success', `
+        <strong>Congratulations!</strong><br>
+        You have officially completed BaseCamp.<br><br>
+        <button onclick="window.open('https://basescan.org/tx/${mintTx}', '_blank')"
+                style="width: 100%; padding: 12px; background: #0052FF; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">
+            View Transaction
+        </button>
+    `);
 
   } catch (e) {
     console.error(e);
-    alert('Mint failed: ' + (e.message || e));
+    showModal('danger', 'Mint failed: ' + (e.message || "User rejected transaction"));
     mintBtn.disabled = false;
     mintBtn.textContent = "Mint Completion NFT";
   }
+}
+
+// === 4. MODAL UTILS ===
+function injectModalStyles() {
+    if (document.getElementById('progress-modal-styles')) return;
+    const style = document.createElement('style');
+    style.id = 'progress-modal-styles';
+    style.innerHTML = `
+        .custom-modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(8px);
+            display: flex; align-items: center; justify-content: center; z-index: 99999; animation: fadeIn 0.3s ease;
+        }
+        .custom-modal-content {
+            background: #0f172a; border: 1px solid #334155; border-radius: 24px;
+            width: 90%; max-width: 400px; padding: 0; overflow: hidden;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); text-align: center; font-family: sans-serif;
+            animation: scaleUp 0.3s ease;
+        }
+        .modal-header { padding: 20px; border-bottom: 1px solid #334155; }
+        .modal-title { margin: 0; font-size: 20px; font-weight: 700; color: white; }
+        .modal-body { padding: 24px; color: #cbd5e1; font-size: 16px; line-height: 1.5; }
+        .modal-footer { padding: 16px; background: #1e293b; border-top: 1px solid #334155; }
+        .modal-btn {
+            width: 100%; padding: 12px; background: #334155; color: white; border: none;
+            border-radius: 12px; font-weight: 600; cursor: pointer; font-size: 16px;
+        }
+        .modal-success .modal-title { color: #22c55e; }
+        .modal-success .modal-btn { background: #22c55e; color: #022c22; }
+        .modal-danger .modal-title { color: #ef4444; }
+        .modal-danger .modal-btn { background: #ef4444; color: white; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes scaleUp { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    `;
+    document.head.appendChild(style);
+}
+
+function showModal(type, msg) {
+    const existing = document.querySelector('.custom-modal-overlay');
+    if (existing) existing.remove();
+
+    const overlay = document.createElement('div');
+    overlay.className = 'custom-modal-overlay';
+
+    let title = 'NOTICE';
+    let modalClass = 'modal-warning';
+
+    if (type === 'success') { title = 'SUCCESS!'; modalClass = 'modal-success'; }
+    else if (type === 'danger') { title = 'ERROR'; modalClass = 'modal-danger'; }
+
+    overlay.innerHTML = `
+        <div class="custom-modal-content ${modalClass}">
+            <div class="modal-header">
+                <h3 class="modal-title">${title}</h3>
+            </div>
+            <div class="modal-body">${msg}</div>
+            <div class="modal-footer">
+                <button class="modal-btn" onclick="this.closest('.custom-modal-overlay').remove()">Close</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(overlay);
 }
