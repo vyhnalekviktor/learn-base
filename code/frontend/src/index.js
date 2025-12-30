@@ -165,6 +165,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
     }
 
+    //// ... předchozí kód (Theme Toggle atd.) ...
+
     // F. Theme Toggle
     const themeBtn = document.getElementById('themeToggle');
     if (themeBtn) {
@@ -173,6 +175,42 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (window.BaseCampTheme) window.BaseCampTheme.toggleTheme();
         });
     }
+
+    // === H. DEBUG SESSION STORAGE (NOVÉ) ===
+    setTimeout(() => {
+        console.log("🔍 --- STORAGE DEBUG (po 2s) ---");
+
+        // 1. Zkontrolovat Wallet
+        const w = sessionStorage.getItem('cached_wallet');
+        if (w) {
+            console.log("✅ Wallet v Cache:", w);
+        } else {
+            console.error("❌ Wallet v Cache CHYBÍ!");
+        }
+
+        // 2. Zkontrolovat Data
+        const rawData = sessionStorage.getItem('user_data_cache');
+        if (rawData) {
+            console.log("✅ Data Cache EXISTUJE");
+            try {
+                const parsed = JSON.parse(rawData);
+                console.log("📊 Progress Keys:", Object.keys(parsed.progress || {}));
+                console.log("📊 Progress Values:", parsed.progress);
+
+                // Rychlý test, jestli je tam 'true' nebo '1'
+                const sampleKey = Object.keys(parsed.progress)[0];
+                if (sampleKey) {
+                    const val = parsed.progress[sampleKey];
+                    console.log(`🧐 Typ hodnoty pro '${sampleKey}':`, typeof val, val);
+                }
+            } catch (e) {
+                console.error("❌ Data Cache je poškozený JSON");
+            }
+        } else {
+            console.error("❌ Data Cache je PRÁZDNÁ (Backend nestihl odpovědět nebo selhal)");
+        }
+        console.log("-----------------------------");
+    }, 2000); // Čekáme 2s, než doběhne fetch
 
   } catch (error) {
     console.error("[Index] Critical Error:", error);
