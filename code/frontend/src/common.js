@@ -25,16 +25,29 @@ window.BaseCampTheme = {
   initUserData: async (wallet) => {
     if (!wallet) return;
     try {
-      const res = await fetch(`${API_URL}/api/database/get-user-data?wallet_address=${wallet}`);
+      // OPRAVA: Backend vyžaduje POST request na endpoint /api/database/get-user
+      const res = await fetch(`${API_URL}/api/database/get-user`, {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ wallet: wallet })
+      });
+
       if (res.ok) {
         const data = await res.json();
+
+        // Backend vrací { success: true, info: {...}, progress: {...} }
         const cacheObj = {
           info: data.info || {},
           progress: data.progress || {},
           timestamp: Date.now()
         };
+
         sessionStorage.setItem('user_data_cache', JSON.stringify(cacheObj));
         window.BaseCampTheme.refreshUI();
+      } else {
+          console.error('[Common] Server error:', res.status);
       }
     } catch (e) {
       console.error('[Common] Failed to fetch user data:', e);
