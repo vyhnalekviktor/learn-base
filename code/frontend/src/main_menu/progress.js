@@ -4,8 +4,7 @@ const API_BASE = 'https://learn-base-backend.vercel.app';
 const BASE_CHAIN_ID_HEX = '0x2105'; // Base Mainnet
 
 // Adresy pro Mint za poplatek (pokud bys to chtěl v budoucnu zapnout)
-//const NFT_CONTRACT = '0xE0F8cb7B89DB4619B21526AC70786444dd9d2f0f';
-const NFT_CONTRACT = '0xBe47EC43e45e23d873a8D5fEC3c7223486E03777' //FAKE
+const NFT_CONTRACT = '0xE0F8cb7B89DB4619B21526AC70786444dd9d2f0f';
 const USDC = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913';
 
 // Používáme DOMContentLoaded pro rychlý start
