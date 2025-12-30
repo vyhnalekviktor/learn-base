@@ -135,8 +135,8 @@ function openWalletPopup({ amount, symbol }) {
         <div class="w-details">
             <div class="w-row"><span>To:</span><span class="w-val">The Artist</span></div>
             <div class="w-row" style="margin-bottom: 12px;"><span>Address:</span><span class="w-address">0xArt...Coll</span></div>
-            <div class="w-row"><span>Network Fee</span><span class="w-val">0.00004 ETH <span style="color:#9ca3af">($0.15)</span></span></div>
-            <div class="w-row"><span>Total Cost</span><span class="w-val">$1.15</span></div>
+            <div class="w-row"><span>Network Fee</span><span class="w-val">< 0.000001 ETH</span></div>
+            <div class="w-row"><span>Total Cost</span><span class="w-val">$1.000001</span></div>
         </div>
       </div>
       <div class="w-footer">
