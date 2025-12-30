@@ -25,7 +25,7 @@ window.BaseCampTheme = {
   initUserData: async (wallet) => {
     if (!wallet) return;
     try {
-      const res = await fetch(`${API_URL}/api/database/get-user-data?wallet_address=${wallet}`);
+      const res = await fetch(`${API_URL}/api/database/get-user-data?wallet_address=${wallet}&_t=${Date.now()}`);
       if (res.ok) {
         const data = await res.json();
         const cacheObj = {
