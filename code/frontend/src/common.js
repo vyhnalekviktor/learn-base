@@ -55,6 +55,14 @@ window.BaseCampTheme = {
     window.BaseCampTheme.refreshUI();
   },
 
+  updateLocalInfo: (field, value) => {
+    const raw = sessionStorage.getItem('user_data_cache');
+    let data = raw ? JSON.parse(raw) : { progress: {}, info: {} };
+    if (!data.info) data.info = {};
+    data.info[field] = value;
+    sessionStorage.setItem('user_data_cache', JSON.stringify(data));
+    window.BaseCampTheme.refreshUI();
+  },
   // --- UI REFRESH ---
   refreshUI: () => {
     const data = window.BaseCampTheme.getUserData();
