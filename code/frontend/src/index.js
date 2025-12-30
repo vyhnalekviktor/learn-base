@@ -113,64 +113,30 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.warn("Failed to load context:", err);
     }
 
-    // V souboru index.js
-
-    // C. Získání Peněženky & Detekce Session
+    // C. Získání Peněženky
     let wallet = sessionStorage.getItem('cached_wallet');
-    const isSessionInit = sessionStorage.getItem('session_initialized');
-    let shouldSync = !isSessionInit; // Pokud není flag, musíme synchronizovat (nová session)
 
-    try {
-        // VŽDY se zeptáme SDK na aktuální peněženku (je to rychlé a lokální)
-        const ethProvider = sdk.wallet.ethProvider;
-        if (ethProvider) {
+    if (!wallet) {
+      try {
+          const ethProvider = sdk.wallet.ethProvider;
+          if (ethProvider) {
              const accounts = await ethProvider.request({ method: "eth_requestAccounts" });
-             const currentWallet = accounts && accounts[0] ? accounts[0] : null;
+             wallet = accounts && accounts[0] ? accounts[0] : null;
 
-             // Pokud se peněženka liší od té v cache (nebo v cache nebyla), musíme synchronizovat
-             if (currentWallet && currentWallet !== wallet) {
-                 console.log("[Index] Wallet changed or new detected:", currentWallet);
-                 wallet = currentWallet;
+             // DŮLEŽITÉ: Uložit OKAMŽITĚ do cache, aby to common.js viděl na podstránkách
+             if (wallet) {
                  sessionStorage.setItem('cached_wallet', wallet);
-                 shouldSync = true; // Změna peněženky = vynutit sync
+                 console.log("[Index] Wallet cached immediately:", wallet);
              }
-        }
-    } catch (err) {
-        console.warn("Wallet connection check failed:", err);
+          }
+      } catch (err) {
+          console.warn("Wallet connection failed:", err);
+      }
     }
 
     // D. Rozhodování (Wallet vs Guest)
     if (wallet) {
-      console.log(`[Index] User: ${wallet} | Sync needed: ${shouldSync}`);
-
-      // Skrytí adresy
-      const span = document.getElementById("wallet-address");
-      if (span) span.style.display = 'none';
-
-      // POKUD je to nová session nebo změna peněženky -> VYNUTIT DB SYNC
-      if (shouldSync) {
-          // 1. Init User na Backendu
-          const isNewUser = await initUserOnBackend(wallet);
-          if (isNewUser) showWelcomeModal();
-
-          // 2. Stáhnout čerstvá data z DB
-          if (window.BaseCampTheme && window.BaseCampTheme.initUserData) {
-              await window.BaseCampTheme.initUserData(wallet);
-          }
-
-          // Nastavíme flag, že session je inicializovaná
-          // Při příštím načtení indexu (pokud nezavřeš tab) se použije cache
-          sessionStorage.setItem('session_initialized', 'true');
-      } else {
-          // POKUD běží session a peněženka sedí -> Použijeme data z cache (rychlé načtení)
-          if (window.BaseCampTheme && window.BaseCampTheme.ensureDataLoaded) {
-              window.BaseCampTheme.ensureDataLoaded();
-          }
-      }
-
-    } else {
-      setGuestMode();
-    }ca
+      console.log("[Index] Wallet connected:", wallet);
 
       // Skrytí adresy (pro Featured status)
       const span = document.getElementById("wallet-address");
