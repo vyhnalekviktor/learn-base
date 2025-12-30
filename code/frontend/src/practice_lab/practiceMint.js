@@ -69,8 +69,10 @@ async function buildNftImageHtml(tokenId) {
     const jsonStr = atob(base64Json);
     const meta = JSON.parse(jsonStr);
     if (!meta.image) return '';
-    return `<div style="margin-top: 16px;"><div style="margin-bottom: 8px; font-weight: 600;">This is your NFT</div><img src="${meta.image}" alt="Your NFT" style="max-width: 100%; border-radius: 12px; border: 1px solid rgba(255,255,255,0.15);" /></div>`;
-  } catch (e) { return ''; }
+return `<div style="margin-top: 16px; text-align: center;">
+    <div style="margin-bottom: 8px; font-weight: 600;">This is your NFT</div>
+    <img src="${meta.image}" alt="Your NFT" style="width: 150px; height: auto; border-radius: 12px; border: 1px solid rgba(255,255,255,0.15); display: block; margin: 0 auto;" />
+</div>`;  } catch (e) { return ''; }
 }
 
 window.mintNFT = async function () {
