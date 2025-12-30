@@ -195,25 +195,25 @@ const QUESTIONS = [
         id: 'wallet-connect',
         text: 'Website asks to "Connect Wallet"',
         correct: 'safe',
-        explain: "Correct! Connecting wallet (read-only) is standard. Just verify what you sign afterwards."
+        explain: "Connecting wallet (read-only) is standard. Just verify what you sign afterwards."
     },
     {
         id: 'seed-phrase',
         text: 'Support asks for "Seed Phrase"',
         correct: 'scam',
-        explain: "Correct! Support will NEVER ask for your seed phrase. This gives them full access to steal funds."
+        explain: "Support will NEVER ask for your seed phrase. This gives them full access to steal funds."
     },
     {
         id: 'private-key',
         text: 'App asks for "Private Key" to fix bug',
         correct: 'scam',
-        explain: "Correct! Private keys should never leave your wallet. Legitimate dApps don't need them."
+        explain: "Private keys should never leave your wallet. Legitimate dApps don't need them."
     },
     {
         id: 'backup-file',
         text: 'Site asks to upload "Backup File"',
         correct: 'scam',
-        explain: "Correct! Your Backup File (Keystore) contains your private keys. Never upload it to unknown sites."
+        explain: "Your Backup File (Keystore) contains your private keys. Never upload it to unknown sites."
     }
 ];
 
@@ -292,7 +292,7 @@ window.evaluateAnswers = async function () {
         explanationEl.innerHTML = questionData.explain;
     } else {
         row.classList.add("wrong");
-        explanationEl.innerHTML = "Incorrect. <br>" + questionData.explain.replace("Correct!", "").replace("Correct!", "");
+        explanationEl.innerHTML = "" + questionData.explain.replace("", "").replace("", "");
         isAllCorrect = false;
     }
   });
