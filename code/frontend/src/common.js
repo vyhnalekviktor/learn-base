@@ -50,7 +50,8 @@ window.BaseCampTheme = {
     const raw = sessionStorage.getItem('user_data_cache');
     let data = raw ? JSON.parse(raw) : { progress: {}, info: {} };
     if (!data.progress) data.progress = {};
-    data.progress[field] = value;
+    if (field==="claimed_nft") data.info[field] = value;
+    else data.progress[field] = value;
     sessionStorage.setItem('user_data_cache', JSON.stringify(data));
     window.BaseCampTheme.refreshUI();
   },
