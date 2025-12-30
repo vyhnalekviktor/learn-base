@@ -557,3 +557,91 @@ html[data-theme="dark"] .theme-toggle-knob {
 .theme-toggle:hover {
     opacity: 0.9;
 }
+
+/* =========================================
+   CUSTOM MODAL STYLES (Global)
+   ========================================= */
+
+.custom-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.75); /* Tmavé pozadí vždy */
+    backdrop-filter: blur(4px);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    animation: fadeIn 0.2s ease-out;
+}
+
+.custom-modal-content {
+    background: var(--bg-card);      /* Automaticky mění barvu dle tématu */
+    color: var(--text-primary);      /* Automaticky mění barvu textu */
+    border: 1px solid var(--border); /* Jemný rámeček dle tématu */
+    width: 100%;
+    max-width: 360px;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    text-align: center;
+}
+
+.modal-header {
+    padding: 20px 20px 10px;
+}
+
+.modal-title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.modal-body {
+    padding: 10px 24px 24px;
+    font-size: 15px;
+    line-height: 1.5;
+    color: var(--text-secondary); /* Šedý text */
+    word-break: break-word;       /* Aby dlouhé hashe nerozbily okno */
+}
+
+.modal-footer {
+    padding: 16px;
+    background: var(--bg-hover);  /* Mírně jiný odstín než tělo karty */
+    border-top: 1px solid var(--border);
+}
+
+.modal-btn {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 15px;
+    cursor: pointer;
+    transition: transform 0.1s, background 0.2s;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+}
+
+.modal-btn:hover {
+    background: var(--bg-hover);
+}
+
+.modal-btn:active {
+    transform: scale(0.98);
+}
+
+/* Status Colors (Univerzální pro oba režimy) */
+.modal-success .modal-title { color: #22c55e; } /* Zelená */
+.modal-danger .modal-title { color: #ef4444; }  /* Červená */
+.modal-warning .modal-title { color: #eab308; } /* Žlutá */
+
+/* Animations */
+@keyframes slideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
