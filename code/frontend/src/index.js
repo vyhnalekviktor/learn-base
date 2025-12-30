@@ -2,7 +2,7 @@ import { sdk } from "https://esm.sh/@farcaster/miniapp-sdk";
 
 const API_BASE = "https://learn-base-backend.vercel.app";
 
-// === 1. DEBUG LOGGER (Pro jistotu na mobilu) ===
+// === 1. DEBUG LOGGER ===
 (function initDebug() {
     const outputDiv = document.getElementById('debug-output');
     if (!outputDiv) return;
@@ -25,7 +25,7 @@ const API_BASE = "https://learn-base-backend.vercel.app";
     console.error = function(...args) { originalError.apply(console, args); logToScreen('error', args); };
 })();
 
-// === 2. LOADER ===
+// === 2. HELPERY ===
 function hideLoader() {
   const loader = document.getElementById('global-loader');
   if (loader) {
@@ -34,7 +34,9 @@ function hideLoader() {
   }
 }
 
-// === 3. GUEST MODE (Odemkne UI, když není peněženka) ===
+// === 3. FUNKCE PRO UI (Guest, Modal, Backend) ===
+
+// Nastaví UI pro nepřihlášeného uživatele
 function setGuestMode() {
     console.log("[Index] Activating Guest Mode");
     const nameEl = document.getElementById("user-name");
@@ -45,13 +47,13 @@ function setGuestMode() {
     }
     if (fidEl && fidEl.textContent === "") fidEl.textContent = "Not connected";
 
-    // Řekneme common.js, ať vypne loading bary
+    // Vypneme loading bary v common.js (pokud je načtený)
     if (window.BaseCampTheme && window.BaseCampTheme.resetProgressUI) {
         window.BaseCampTheme.resetProgressUI();
     }
 }
 
-// === 4. BACKEND INIT ===
+// Inicializace uživatele na backendu
 async function initUserOnBackend(wallet) {
   try {
     const res = await fetch(`${API_BASE}/api/database/init-user`, {
@@ -59,7 +61,6 @@ async function initUserOnBackend(wallet) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ wallet }),
     });
-    // Vrátí true, pokud byl uživatel právě vytvořen (pro Welcome Modal)
     if (res.ok) {
         const data = await res.json();
         return data.created === true;
@@ -71,7 +72,7 @@ async function initUserOnBackend(wallet) {
   }
 }
 
-// === 5. WELCOME MODAL ===
+// Zobrazení Welcome modalu
 function showWelcomeModal() {
   if (document.getElementById('welcome-modal-overlay')) return;
   const overlay = document.createElement("div");
@@ -85,13 +86,15 @@ function showWelcomeModal() {
   document.getElementById('closeWelcome').onclick = () => { overlay.style.opacity = '0'; setTimeout(() => overlay.remove(), 300); };
 }
 
-// === MAIN LOGIC ===
+// === 4. HLAVNÍ LOGIKA ===
 document.addEventListener('DOMContentLoaded', async () => {
   try {
+    console.log("🚀 Index initializing...");
+
     // A. Init SDK
     await sdk.actions.ready();
 
-    // B. Načtení profilu (Hned, nečekáme na wallet)
+    // B. Načtení profilu (Avatar, Jméno) - VRÁCENO ZPĚT
     try {
         const context = await sdk.context;
         if (context && context.user) {
@@ -113,32 +116,25 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.warn("Failed to load context:", err);
     }
 
-    // C. Získání Peněženky
-    let wallet = sessionStorage.getItem('cached_wallet');
+    // C. Získání Peněženky (VŽDY Z SDK)
+    let wallet = null;
+    try {
+        const ethProvider = sdk.wallet.ethProvider;
+        const accounts = await ethProvider.request({ method: "eth_requestAccounts" });
+        wallet = accounts && accounts[0] ? accounts[0] : null;
 
-    if (!wallet) {
-      try {
-          const ethProvider = sdk.wallet.ethProvider;
-          if (ethProvider) {
-             const accounts = await ethProvider.request({ method: "eth_requestAccounts" });
-             wallet = accounts && accounts[0] ? accounts[0] : null;
-
-             // DŮLEŽITÉ: Uložit OKAMŽITĚ do cache, aby to common.js viděl na podstránkách
-             if (wallet) {
-                 sessionStorage.setItem('cached_wallet', wallet);
-                 console.log("[Index] Wallet cached immediately:", wallet);
-             }
-          }
-      } catch (err) {
-          console.warn("Wallet connection failed:", err);
-      }
+        if (wallet) {
+             console.log("✅ Wallet connected:", wallet);
+             // Uložíme do localStorage pro common.js a podstránky
+             localStorage.setItem('cached_wallet', wallet);
+        }
+    } catch (err) {
+        console.warn("Wallet connection failed:", err);
     }
 
-    // D. Rozhodování (Wallet vs Guest)
+    // D. Logika po připojení
     if (wallet) {
-      console.log("[Index] Wallet connected:", wallet);
-
-      // Skrytí adresy (pro Featured status)
+      // Skrytí adresy
       const span = document.getElementById("wallet-address");
       if (span) span.style.display = 'none';
 
@@ -146,17 +142,30 @@ document.addEventListener('DOMContentLoaded', async () => {
       const isNewUser = await initUserOnBackend(wallet);
       if (isNewUser) showWelcomeModal();
 
-      // 2. Stáhnout data do cache (Common.js)
+      // 2. VYNUCENÉ STAŽENÍ DAT Z DB (Oprava pro nové okno)
+      // Tady se vždy zavolá DB a aktualizuje se localStorage
       if (window.BaseCampTheme && window.BaseCampTheme.initUserData) {
-          window.BaseCampTheme.initUserData(wallet);
+          console.log("🔄 Index loaded: Force syncing data from DB...");
+          await window.BaseCampTheme.initUserData(wallet);
       }
 
     } else {
-      // Žádná peněženka -> Guest Mode (vypne loading)
+      // Žádná peněženka -> Guest Mode
       setGuestMode();
     }
 
-    // E. Footer Link
+    // E. Setup UI Eventů
+    setupUiEvents();
+
+  } catch (error) {
+    console.error("[Index] Critical Error:", error);
+    setGuestMode();
+  } finally {
+    hideLoader();
+  }
+});
+
+function setupUiEvents() {
     const footerLink = document.getElementById('farcaster-link');
     if (footerLink) {
       footerLink.addEventListener('click', (e) => {
@@ -165,7 +174,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
     }
 
-    // F. Theme Toggle
     const themeBtn = document.getElementById('themeToggle');
     if (themeBtn) {
         themeBtn.addEventListener('click', (e) => {
@@ -173,12 +181,4 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (window.BaseCampTheme) window.BaseCampTheme.toggleTheme();
         });
     }
-
-  } catch (error) {
-    console.error("[Index] Critical Error:", error);
-    setGuestMode(); // Fallback
-  } finally {
-    // G. VŽDY SCHOVAT LOADER
-    hideLoader();
-  }
-});
+}
