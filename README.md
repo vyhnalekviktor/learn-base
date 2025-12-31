@@ -1,8 +1,20 @@
+<p align="center">
+  <img src="code/frontend/images/icon.png" width="120" alt="BaseCamp Logo">
+</p>
+
 # BaseCamp - Learn Base Blockchain
 
 BaseCamp is an interactive MiniApp for learning blockchain on Base (Ethereum L2). Complete hands-on labs to earn an NFT completion badge!
 Read theory, try your first test operations and then test yourself for scam recognition.
 You can complete all the steps for free!!
+
+## Screenshots
+
+<p align="center">
+  <img src="screenshots/screenshot1.png" width="30%" alt="Practice Lab">
+  <img src="screenshots/screenshot2.png" width="30%" alt="Security Lab">
+  <img src="screenshots/screenshot3.png" width="30%" alt="Menu">
+</p>
 
 ## Features
 
@@ -34,13 +46,8 @@ User can send USDC on mainnet to the creator as a "Thank You" in the section 'Su
 ## How to run?
 #### 1. Use the Base app for interacting with miniApps as it is designed (recommended)
 #### 2. Visit https://learn-base-mu.vercel.app/
- - design might be bad (like really bad), it is optimalized for mobile phone as an app.
- - frontend is hosted here, but the functionality is worse, because you cannot connect your wallet.
- - no progress bars --> no NFT reward
- - theory is the same
- - practice lab is read only
- - security lab works, but cannot save progress, so a warning pops up
- - support a creator does not work
+- does not work as intended
+- I am still working on good demo outside of miniApp
 
 ## Tech Stack
   - Frontend: HTML/CSS/JavaScript + Farcaster MiniApp SDK
