@@ -645,3 +645,50 @@ html[data-theme="dark"] .theme-toggle-knob {
     from { transform: translateY(20px); opacity: 0; }
     to { transform: translateY(0); opacity: 1; }
 }
+
+/* Vylepšení pro Share tlačítko v modalu */
+.share-btn-container {
+    margin-top: 16px;
+    display: flex;
+    justify-content: center;
+}
+
+.share-btn {
+    background-color: #0052FF; /* Base Blue */
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 999px;
+    font-weight: 600;
+    font-size: 15px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px; /* Mezera mezi ikonou a textem */
+    transition: transform 0.1s ease, background-color 0.2s;
+    width: 100%; /* Na mobilu přes celou šířku modalu */
+    justify-content: center;
+}
+
+.share-btn:hover {
+    background-color: #0045d8;
+}
+
+.share-btn:active {
+    transform: scale(0.98);
+}
+
+/* Styl pro obrázek v modalu */
+.modal-nft-image {
+    width: 100%;
+    max-width: 240px;
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    display: block;
+    margin: 0 auto 12px auto;
+}
+
+/* Úprava pro text v modalu, aby byl centrovaný */
+.modal-text-center {
+    text-align: center;
+}

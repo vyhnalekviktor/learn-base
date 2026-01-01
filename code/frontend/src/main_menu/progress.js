@@ -76,20 +76,36 @@ async function loadProgressFromCache(wallet, ethProvider) {
     const ownedSection = document.getElementById('ownedNftSection');
 
     if (claimedNft) {
+      // Skryjeme sekci pro mintování
       if (nftSection) {
         nftSection.classList.remove('locked');
         nftSection.classList.add('claimed');
       }
       if (nftBlockTitle) nftBlockTitle.textContent = 'Already claimed!';
       if (nftBlockContent) nftBlockContent.style.display = 'none';
-      if (ownedSection) ownedSection.style.display = 'block';
 
-      // ZDE: Zobrazení tlačítka i pro vracející se uživatele
-      const shareBtn = document.getElementById('shareBtn');
-      if (shareBtn) {
-          shareBtn.style.display = 'block';
-          shareBtn.onclick = shareSuccess;
+      // Zobrazíme sekci "Your NFT" na stránce (jako statický prvek)
+      if (ownedSection) {
+          ownedSection.style.display = 'block';
+          // I tady na stránce chceme to hezké tlačítko
+          const pageShareBtn = document.getElementById('shareBtn');
+          if (pageShareBtn) {
+            pageShareBtn.style.display = 'inline-flex';
+            pageShareBtn.className = 'share-btn'; // Aplikujeme nový styl
+            pageShareBtn.innerHTML = `
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
+                    <polyline points="16 6 12 2 8 6"></polyline>
+                    <line x1="12" y1="2" x2="12" y2="15"></line>
+                </svg>
+                Share to Feed
+            `;
+            pageShareBtn.onclick = shareSuccess;
+          }
       }
+
+      // === ZDE: AUTOMATICKY OTEVŘÍT MODAL PŘI VSTUPU ===
+      showNftModal();
 
     } else if (isEligibleToMint) {
       if (nftSection) nftSection.classList.remove('locked');
@@ -117,6 +133,41 @@ function updateBar(prefix, percent) {
     if (bar) bar.style.width = `${percent}%`;
     if (text) text.textContent = `${percent}%`;
 }
+
+// === SPECIÁLNÍ MODAL PRO NFT A SHARE ===
+function showNftModal() {
+    // HTML obsah modalu
+    const content = `
+        <div class="modal-text-center">
+            <img src="../../images/nft1.png" alt="Your NFT" class="modal-nft-image">
+            <h3 style="margin-bottom: 8px;">You are a Graduate!</h3>
+            <p style="color: #666; margin-bottom: 20px; font-size: 14px;">
+                Congratulations on completing the BaseCamp curriculum.
+                Show off your badge to the world!
+            </p>
+            <div class="share-btn-container">
+                <button id="modalShareBtn" class="share-btn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
+                        <polyline points="16 6 12 2 8 6"></polyline>
+                        <line x1="12" y1="2" x2="12" y2="15"></line>
+                    </svg>
+                    Share to Feed
+                </button>
+            </div>
+        </div>
+    `;
+
+    // Použijeme existující showModal funkci s typem 'success'
+    showModal('success', content);
+
+    // Musíme znovu navázat event listener na tlačítko uvnitř modalu, protože jsme ho právě vytvořili dynamicky
+    setTimeout(() => {
+        const btn = document.getElementById('modalShareBtn');
+        if (btn) btn.onclick = shareSuccess;
+    }, 100);
+}
+
 
 // === HANDLER PRO MINT (S MODALY) ===
 async function handlePaidClaim(ethProvider, wallet) {
@@ -176,16 +227,19 @@ async function handlePaidClaim(ethProvider, wallet) {
     }
     if (nftBlockTitle) nftBlockTitle.textContent = 'Already claimed!';
     if (nftBlockContent) nftBlockContent.style.display = 'none';
-    if (ownedSection) ownedSection.style.display = 'block';
+
+    // Zobrazit sekci na pozadí
+    if (ownedSection) {
+        ownedSection.style.display = 'block';
+        const pageShareBtn = document.getElementById('shareBtn');
+        if (pageShareBtn) {
+             pageShareBtn.style.display = 'inline-flex';
+             pageShareBtn.className = 'share-btn';
+             pageShareBtn.onclick = shareSuccess;
+        }
+    }
 
     mintBtn.textContent = 'NFT Claimed!';
-
-    // Zobrazení tlačítka pro sdílení po úspěšném mintu
-    const shareBtn = document.getElementById('shareBtn');
-    if (shareBtn) {
-        shareBtn.style.display = 'block';
-        shareBtn.onclick = shareSuccess;
-    }
 
     // 5. DB Update
     try {
@@ -205,22 +259,12 @@ async function handlePaidClaim(ethProvider, wallet) {
       console.error('Update claimed_nft error:', error);
     }
 
-    // === SUCCESS MODAL ===
-    showModal('success', `
-        <strong>NFT Minted Successfully!</strong><br><br>
-        Transaction Hash:<br>
-        <span style="font-size:11px; color:#888;">${mintTx.slice(0, 10)}...${mintTx.slice(-8)}</span>
-        <br><br>
-        <button onclick="window.openExplorer('https://basescan.org/tx/${mintTx}')"
-              class="modal-btn" style="background: #0052FF; color: white; border: none;">
-        View on BaseScan
-      </button>
-    `);
+    // === ZMĚNA: Místo textového modalu ukážeme rovnou NFT modal ===
+    showNftModal();
 
   } catch (e) {
     console.error(e);
     const msg = (e.message || e).toString();
-    // === ERROR MODAL ===
     showModal('danger', `Mint failed:<br>${msg.length > 80 ? "Transaction failed / rejected" : msg}`);
     mintBtn.disabled = false;
     mintBtn.textContent = "Mint Completion NFT";
@@ -229,13 +273,11 @@ async function handlePaidClaim(ethProvider, wallet) {
 
 // === POMOCNÉ FUNKCE PRO MODALY ===
 
-// Funkce volaná z tlačítka v Modalu
 window.openExplorer = (url) => {
     sdk.actions.openUrl(url);
 };
 
 function showModal(type, msg) {
-    // Odstranit starý, pokud existuje
     const old = document.querySelector('.custom-modal-overlay');
     if (old) old.remove();
 
@@ -246,14 +288,14 @@ function showModal(type, msg) {
     let modalClass = 'modal-warning';
 
     if (type === 'success') {
-        title = 'CONGRATULATIONS!';
+        title = 'CONGRATULATIONS!'; // Pro NFT modal to sedí
         modalClass = 'modal-success';
     } else if (type === 'danger') {
         title = 'ERROR';
         modalClass = 'modal-danger';
     }
 
-    // HTML struktura odpovídá stylům v landing.css
+    // Umožníme vložení HTML do body
     overlay.innerHTML = `
         <div class="custom-modal-content ${modalClass}">
             <div class="modal-header">
@@ -270,35 +312,40 @@ function showModal(type, msg) {
 
     document.body.appendChild(overlay);
 
-    // Kliknutí mimo zavře modal
     overlay.addEventListener('click', (e) => {
         if (e.target === overlay) overlay.remove();
     });
 }
 
-// === FUNKCE PRO SDÍLENÍ (Client-Agnostic) ===
+// === FUNKCE PRO SDÍLENÍ (MODALS ONLY, NO ALERT) ===
 async function shareSuccess() {
     const shareData = {
         title: 'BaseCamp Graduate',
         text: 'I just completed the BaseCamp curriculum and minted my graduation NFT! 🏕️🎓 \n\nStart your journey too:',
-        url: 'https://learnbase.quest' // Tvoje nová doména
+        url: 'https://learnbase.quest'
     };
 
-    // 1. Zkusíme nativní sdílení (funguje na mobilech v Base App i Warpcastu)
+    // 1. Nativní sdílení
     if (navigator.share) {
         try {
             await navigator.share(shareData);
-            console.log('Shared successfully');
             return;
         } catch (err) {
             console.log('Share canceled or failed:', err);
         }
     }
 
-    // 2. Fallback pro desktop (zkopírování do schránky)
+    // 2. Fallback - Kopírování do schránky (BEZ ALERTU)
     try {
         await navigator.clipboard.writeText(`${shareData.text} ${shareData.url}`);
-        alert('Text copied to clipboard! Share it on your feed.');
+
+        showModal('success', `
+            <div style="text-align: center;">
+                <p><strong>Link copied to clipboard!</strong></p>
+                <p style="margin-top: 8px; font-size: 13px;">You can now paste it manually to your feed.</p>
+            </div>
+        `);
+
     } catch (err) {
         console.error('Failed to copy:', err);
     }
