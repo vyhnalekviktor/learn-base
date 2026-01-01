@@ -326,13 +326,11 @@ function showModal(type, msg) {
 }
 
 function shareSuccess() {
-    const nftImageUrl = 'https://learnbase.quest/images/nft1.png';
     const appUrl = 'https://learnbase.quest';
+    const shareUrl = 'https://learnbase.quest/images/share_success.png';
 
     sdk.actions.composeCast({
-        // Text lákající ostatní
-        text: 'Just leveled up my onchain knowledge! 🧠⚡️\n\nI completed the BaseCamp curriculum - from theory to real practice. The best place to start your journey on Base.\n\nStart learning here:',
-
-        embeds: [nftImageUrl, appUrl]
+        text: 'gm Base! 🔵\n\nJust leveled up my onchain skills. If you are a beginner looking for a safe, hands-on start, BaseCamp is the way.\n\nStart your journey here: 👇',
+        embeds: [shareUrl, appUrl]
     });
 }
