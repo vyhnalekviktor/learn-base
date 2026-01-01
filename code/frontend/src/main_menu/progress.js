@@ -84,6 +84,13 @@ async function loadProgressFromCache(wallet, ethProvider) {
       if (nftBlockContent) nftBlockContent.style.display = 'none';
       if (ownedSection) ownedSection.style.display = 'block';
 
+      // ZDE: Zobrazení tlačítka i pro vracející se uživatele
+      const shareBtn = document.getElementById('shareBtn');
+      if (shareBtn) {
+          shareBtn.style.display = 'block';
+          shareBtn.onclick = shareSuccess;
+      }
+
     } else if (isEligibleToMint) {
       if (nftSection) nftSection.classList.remove('locked');
       if (mintBtn) {
@@ -129,7 +136,6 @@ async function handlePaidClaim(ethProvider, wallet) {
                 params: [{ chainId: BASE_CHAIN_ID_HEX }],
             });
          } catch (e) {
-             // Nahrazen alert za modal
              showModal('danger', "Please switch to Base Mainnet manually in your wallet.");
              return;
          }
@@ -174,6 +180,13 @@ async function handlePaidClaim(ethProvider, wallet) {
 
     mintBtn.textContent = 'NFT Claimed!';
 
+    // Zobrazení tlačítka pro sdílení po úspěšném mintu
+    const shareBtn = document.getElementById('shareBtn');
+    if (shareBtn) {
+        shareBtn.style.display = 'block';
+        shareBtn.onclick = shareSuccess;
+    }
+
     // 5. DB Update
     try {
       if (window.BaseCampTheme) window.BaseCampTheme.updateLocalProgress('claimed_nft', true);
@@ -192,7 +205,7 @@ async function handlePaidClaim(ethProvider, wallet) {
       console.error('Update claimed_nft error:', error);
     }
 
-    // === SUCCESS MODAL (Místo alertu) ===
+    // === SUCCESS MODAL ===
     showModal('success', `
         <strong>NFT Minted Successfully!</strong><br><br>
         Transaction Hash:<br>
@@ -207,7 +220,7 @@ async function handlePaidClaim(ethProvider, wallet) {
   } catch (e) {
     console.error(e);
     const msg = (e.message || e).toString();
-    // === ERROR MODAL (Místo alertu) ===
+    // === ERROR MODAL ===
     showModal('danger', `Mint failed:<br>${msg.length > 80 ? "Transaction failed / rejected" : msg}`);
     mintBtn.disabled = false;
     mintBtn.textContent = "Mint Completion NFT";
@@ -261,4 +274,32 @@ function showModal(type, msg) {
     overlay.addEventListener('click', (e) => {
         if (e.target === overlay) overlay.remove();
     });
+}
+
+// === FUNKCE PRO SDÍLENÍ (Client-Agnostic) ===
+async function shareSuccess() {
+    const shareData = {
+        title: 'BaseCamp Graduate',
+        text: 'I just completed the BaseCamp curriculum and minted my graduation NFT! 🏕️🎓 \n\nStart your journey too:',
+        url: 'https://learnbase.quest' // Tvoje nová doména
+    };
+
+    // 1. Zkusíme nativní sdílení (funguje na mobilech v Base App i Warpcastu)
+    if (navigator.share) {
+        try {
+            await navigator.share(shareData);
+            console.log('Shared successfully');
+            return;
+        } catch (err) {
+            console.log('Share canceled or failed:', err);
+        }
+    }
+
+    // 2. Fallback pro desktop (zkopírování do schránky)
+    try {
+        await navigator.clipboard.writeText(`${shareData.text} ${shareData.url}`);
+        alert('Text copied to clipboard! Share it on your feed.');
+    } catch (err) {
+        console.error('Failed to copy:', err);
+    }
 }
