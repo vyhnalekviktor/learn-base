@@ -9,6 +9,7 @@ const USDC = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913';
 
 document.addEventListener('DOMContentLoaded', async () => {
   try {
+    // Inicializace SDK
     await sdk.actions.ready();
 
     let wallet = null;
@@ -84,14 +85,15 @@ async function loadProgressFromCache(wallet, ethProvider) {
       if (nftBlockTitle) nftBlockTitle.textContent = 'Already claimed!';
       if (nftBlockContent) nftBlockContent.style.display = 'none';
 
-      // Zobrazíme sekci "Your NFT" na stránce (jako statický prvek)
+      // Zobrazíme sekci "Your NFT"
       if (ownedSection) {
           ownedSection.style.display = 'block';
-          // I tady na stránce chceme to hezké tlačítko
+
           const pageShareBtn = document.getElementById('shareBtn');
           if (pageShareBtn) {
             pageShareBtn.style.display = 'inline-flex';
-            pageShareBtn.className = 'share-btn'; // Aplikujeme nový styl
+            pageShareBtn.className = 'share-btn';
+            // SVG ikona
             pageShareBtn.innerHTML = `
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
@@ -100,11 +102,13 @@ async function loadProgressFromCache(wallet, ethProvider) {
                 </svg>
                 Share to Feed
             `;
+            // ZDE JE OPRAVA: Voláme novou funkci pro Farcaster Compose
             pageShareBtn.onclick = shareSuccess;
           }
       }
 
-      // === ZDE: AUTOMATICKY OTEVŘÍT MODAL PŘI VSTUPU ===
+      // Automaticky otevřít modal při vstupu, pokud už má hotovo
+      // (Můžete to zakomentovat, pokud to má vyskočit jen ihned po mintu)
       showNftModal();
 
     } else if (isEligibleToMint) {
@@ -136,7 +140,6 @@ function updateBar(prefix, percent) {
 
 // === SPECIÁLNÍ MODAL PRO NFT A SHARE ===
 function showNftModal() {
-    // HTML obsah modalu
     const content = `
         <div class="modal-text-center">
             <img src="../../images/nft1.png" alt="Your NFT" class="modal-nft-image">
@@ -158,10 +161,9 @@ function showNftModal() {
         </div>
     `;
 
-    // Použijeme existující showModal funkci s typem 'success'
     showModal('success', content);
 
-    // Musíme znovu navázat event listener na tlačítko uvnitř modalu, protože jsme ho právě vytvořili dynamicky
+    // Navázání eventu na tlačítko v modalu
     setTimeout(() => {
         const btn = document.getElementById('modalShareBtn');
         if (btn) btn.onclick = shareSuccess;
@@ -169,7 +171,7 @@ function showNftModal() {
 }
 
 
-// === HANDLER PRO MINT (S MODALY) ===
+// === HANDLER PRO MINT ===
 async function handlePaidClaim(ethProvider, wallet) {
   const mintBtn = document.getElementById('mintNftBtn');
 
@@ -228,7 +230,6 @@ async function handlePaidClaim(ethProvider, wallet) {
     if (nftBlockTitle) nftBlockTitle.textContent = 'Already claimed!';
     if (nftBlockContent) nftBlockContent.style.display = 'none';
 
-    // Zobrazit sekci na pozadí
     if (ownedSection) {
         ownedSection.style.display = 'block';
         const pageShareBtn = document.getElementById('shareBtn');
@@ -237,6 +238,19 @@ async function handlePaidClaim(ethProvider, wallet) {
              pageShareBtn.className = 'share-btn';
              pageShareBtn.onclick = shareSuccess;
         }
+    }
+
+    // === ZOBRAZENÍ LINKU NA EXPLORER (OPRAVENO PRO SDK) ===
+    const txSection = document.getElementById('txLinkSection');
+    const viewLinkBtn = document.getElementById('view-nft-link');
+
+    if (txSection && viewLinkBtn && mintTx) {
+        txSection.style.display = 'block';
+        // Nastavíme chování tlačítka pro otevření URL přes SDK
+        viewLinkBtn.onclick = (e) => {
+            e.preventDefault(); // Pro jistotu, kdyby to byl <a href>
+            sdk.actions.openUrl(`https://basescan.org/tx/${mintTx}`);
+        };
     }
 
     mintBtn.textContent = 'NFT Claimed!';
@@ -259,7 +273,6 @@ async function handlePaidClaim(ethProvider, wallet) {
       console.error('Update claimed_nft error:', error);
     }
 
-    // === ZMĚNA: Místo textového modalu ukážeme rovnou NFT modal ===
     showNftModal();
 
   } catch (e) {
@@ -271,11 +284,7 @@ async function handlePaidClaim(ethProvider, wallet) {
   }
 }
 
-// === POMOCNÉ FUNKCE PRO MODALY ===
-
-window.openExplorer = (url) => {
-    sdk.actions.openUrl(url);
-};
+// === POMOCNÉ FUNKCE ===
 
 function showModal(type, msg) {
     const old = document.querySelector('.custom-modal-overlay');
@@ -288,14 +297,13 @@ function showModal(type, msg) {
     let modalClass = 'modal-warning';
 
     if (type === 'success') {
-        title = 'CONGRATULATIONS!'; // Pro NFT modal to sedí
+        title = 'CONGRATULATIONS!';
         modalClass = 'modal-success';
     } else if (type === 'danger') {
         title = 'ERROR';
         modalClass = 'modal-danger';
     }
 
-    // Umožníme vložení HTML do body
     overlay.innerHTML = `
         <div class="custom-modal-content ${modalClass}">
             <div class="modal-header">
@@ -317,51 +325,11 @@ function showModal(type, msg) {
     });
 }
 
-async function shareSuccess() {
-    const shareData = {
-        title: 'BaseCamp Graduate',
-        text: 'I just completed the BaseCamp curriculum and minted my graduation NFT! 🏕️🎓\n\nStart your journey too: https://learnbase.quest',
-        // U některých Androidů/WebView je lepší poslat URL rovnou v textu,
-        // samostatné pole 'url' někdy zlobí.
-        // url: 'https://learnbase.quest'
-    };
-
-    // 1. Zkusíme nativní sdílení (Share Sheet)
-    if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
-        try {
-            await navigator.share(shareData);
-            // Pokud to projde, končíme. Uživatel úspěšně sdílel.
-            return;
-        } catch (err) {
-            // Pokud uživatel menu sám zavřel (AbortError), nic neděláme.
-            if (err.name === 'AbortError') {
-                console.log('Share menu closed by user.');
-                return;
-            }
-            // Pokud je to jiná chyba, pokračujeme k fallbacku (clipboard)
-            console.error('Share API failed, falling back to clipboard:', err);
-        }
-    }
-
-    // 2. Fallback - Kopírování do schránky (když selže menu nebo jsme na desktopu)
-    try {
-        await navigator.clipboard.writeText(shareData.text);
-
-        showModal('success', `
-            <div style="text-align: center;">
-                <p><strong>Link copied to clipboard!</strong></p>
-                <p style="margin-top: 8px; font-size: 13px;">Native sharing is not supported on this device/browser.<br>You can paste it manually.</p>
-            </div>
-        `);
-    } catch (clipboardErr) {
-        // 3. Fallback pro Desktop (pokud je blokován zápis do schránky)
-        console.error('Clipboard failed:', clipboardErr);
-
-        showModal('success', `
-            <div style="text-align: center;">
-                <p><strong>Copy the link manually:</strong></p>
-                <textarea readonly style="width: 100%; height: 80px; margin-top: 10px; padding: 8px; border-radius: 8px; border: 1px solid #ccc; font-size: 13px;">${shareData.text}</textarea>
-            </div>
-        `);
-    }
+// === VYLEPŠENÁ FUNKCE PRO SDÍLENÍ (SDK) ===
+function shareSuccess() {
+    // Toto otevře nativní Farcaster Composer s předvyplněným textem a odkazem
+    sdk.actions.composeCast({
+        text: 'I just completed the BaseCamp curriculum and minted my graduation NFT! 🏕️🎓 \n\nStart your journey too:',
+        embeds: ['https://learnbase.quest']
+    });
 }
