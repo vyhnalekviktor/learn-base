@@ -9,6 +9,7 @@ const USDC = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913';
 
 document.addEventListener('DOMContentLoaded', async () => {
   try {
+    // Inicializace SDK
     await sdk.actions.ready();
 
     let wallet = null;
@@ -76,13 +77,39 @@ async function loadProgressFromCache(wallet, ethProvider) {
     const ownedSection = document.getElementById('ownedNftSection');
 
     if (claimedNft) {
+      // Skryjeme sekci pro mintování
       if (nftSection) {
         nftSection.classList.remove('locked');
         nftSection.classList.add('claimed');
       }
       if (nftBlockTitle) nftBlockTitle.textContent = 'Already claimed!';
       if (nftBlockContent) nftBlockContent.style.display = 'none';
-      if (ownedSection) ownedSection.style.display = 'block';
+
+      // Zobrazíme sekci "Your NFT"
+      if (ownedSection) {
+          ownedSection.style.display = 'block';
+
+          const pageShareBtn = document.getElementById('shareBtn');
+          if (pageShareBtn) {
+            pageShareBtn.style.display = 'inline-flex';
+            pageShareBtn.className = 'share-btn';
+            // SVG ikona
+            pageShareBtn.innerHTML = `
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
+                    <polyline points="16 6 12 2 8 6"></polyline>
+                    <line x1="12" y1="2" x2="12" y2="15"></line>
+                </svg>
+                Share to Feed
+            `;
+            // ZDE JE OPRAVA: Voláme novou funkci pro Farcaster Compose
+            pageShareBtn.onclick = shareSuccess;
+          }
+      }
+
+      // Automaticky otevřít modal při vstupu, pokud už má hotovo
+      // (Můžete to zakomentovat, pokud to má vyskočit jen ihned po mintu)
+      showNftModal();
 
     } else if (isEligibleToMint) {
       if (nftSection) nftSection.classList.remove('locked');
@@ -111,7 +138,40 @@ function updateBar(prefix, percent) {
     if (text) text.textContent = `${percent}%`;
 }
 
-// === HANDLER PRO MINT (S MODALY) ===
+// === SPECIÁLNÍ MODAL PRO NFT A SHARE ===
+function showNftModal() {
+    const content = `
+        <div class="modal-text-center">
+            <img src="../../images/nft1.png" alt="Your NFT" class="modal-nft-image">
+            <h3 style="margin-bottom: 8px;">Welcome to the Club!</h3>
+            <p style="color: #666; margin-bottom: 20px; font-size: 14px;">
+                You've completed the journey.
+                Say "gm" to your new community and show them your badge!
+            </p>
+            <div class="share-btn-container">
+                <button id="modalShareBtn" class="share-btn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
+                        <polyline points="16 6 12 2 8 6"></polyline>
+                        <line x1="12" y1="2" x2="12" y2="15"></line>
+                    </svg>
+                    Share to Feed
+                </button>
+            </div>
+        </div>
+    `;
+
+    showModal('success', content);
+
+    // Navázání eventu na tlačítko v modalu
+    setTimeout(() => {
+        const btn = document.getElementById('modalShareBtn');
+        if (btn) btn.onclick = shareSuccess;
+    }, 100);
+}
+
+
+// === HANDLER PRO MINT ===
 async function handlePaidClaim(ethProvider, wallet) {
   const mintBtn = document.getElementById('mintNftBtn');
 
@@ -129,7 +189,6 @@ async function handlePaidClaim(ethProvider, wallet) {
                 params: [{ chainId: BASE_CHAIN_ID_HEX }],
             });
          } catch (e) {
-             // Nahrazen alert za modal
              showModal('danger', "Please switch to Base Mainnet manually in your wallet.");
              return;
          }
@@ -170,7 +229,29 @@ async function handlePaidClaim(ethProvider, wallet) {
     }
     if (nftBlockTitle) nftBlockTitle.textContent = 'Already claimed!';
     if (nftBlockContent) nftBlockContent.style.display = 'none';
-    if (ownedSection) ownedSection.style.display = 'block';
+
+    if (ownedSection) {
+        ownedSection.style.display = 'block';
+        const pageShareBtn = document.getElementById('shareBtn');
+        if (pageShareBtn) {
+             pageShareBtn.style.display = 'inline-flex';
+             pageShareBtn.className = 'share-btn';
+             pageShareBtn.onclick = shareSuccess;
+        }
+    }
+
+    // === ZOBRAZENÍ LINKU NA EXPLORER (OPRAVENO PRO SDK) ===
+    const txSection = document.getElementById('txLinkSection');
+    const viewLinkBtn = document.getElementById('view-nft-link');
+
+    if (txSection && viewLinkBtn && mintTx) {
+        txSection.style.display = 'block';
+        // Nastavíme chování tlačítka pro otevření URL přes SDK
+        viewLinkBtn.onclick = (e) => {
+            e.preventDefault(); // Pro jistotu, kdyby to byl <a href>
+            sdk.actions.openUrl(`https://basescan.org/tx/${mintTx}`);
+        };
+    }
 
     mintBtn.textContent = 'NFT Claimed!';
 
@@ -192,37 +273,20 @@ async function handlePaidClaim(ethProvider, wallet) {
       console.error('Update claimed_nft error:', error);
     }
 
-    // === SUCCESS MODAL (Místo alertu) ===
-    showModal('success', `
-        <strong>NFT Minted Successfully!</strong><br><br>
-        Transaction Hash:<br>
-        <span style="font-size:11px; color:#888;">${mintTx.slice(0, 10)}...${mintTx.slice(-8)}</span>
-        <br><br>
-        <button onclick="window.openExplorer('https://basescan.org/tx/${mintTx}')"
-              class="modal-btn" style="background: #0052FF; color: white; border: none;">
-        View on BaseScan
-      </button>
-    `);
+    showNftModal();
 
   } catch (e) {
     console.error(e);
     const msg = (e.message || e).toString();
-    // === ERROR MODAL (Místo alertu) ===
     showModal('danger', `Mint failed:<br>${msg.length > 80 ? "Transaction failed / rejected" : msg}`);
     mintBtn.disabled = false;
     mintBtn.textContent = "Mint Completion NFT";
   }
 }
 
-// === POMOCNÉ FUNKCE PRO MODALY ===
-
-// Funkce volaná z tlačítka v Modalu
-window.openExplorer = (url) => {
-    sdk.actions.openUrl(url);
-};
+// === POMOCNÉ FUNKCE ===
 
 function showModal(type, msg) {
-    // Odstranit starý, pokud existuje
     const old = document.querySelector('.custom-modal-overlay');
     if (old) old.remove();
 
@@ -240,7 +304,6 @@ function showModal(type, msg) {
         modalClass = 'modal-danger';
     }
 
-    // HTML struktura odpovídá stylům v landing.css
     overlay.innerHTML = `
         <div class="custom-modal-content ${modalClass}">
             <div class="modal-header">
@@ -257,8 +320,16 @@ function showModal(type, msg) {
 
     document.body.appendChild(overlay);
 
-    // Kliknutí mimo zavře modal
     overlay.addEventListener('click', (e) => {
         if (e.target === overlay) overlay.remove();
+    });
+}
+
+function shareSuccess() {
+    const appUrl = 'https://learnbase.quest';
+
+    sdk.actions.composeCast({
+        text: 'gm Base! 🔵\n\nJust leveled up my onchain skills. If you are a beginner looking for a safe, hands-on start, BaseCamp is the way.\n\nStart your journey here: 👇',
+        embeds: [appUrl]
     });
 }

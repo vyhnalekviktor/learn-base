@@ -1,31 +1,31 @@
 {
   "accountAssociation": {
-    "header": "eyJmaWQiOjE1NzgxNTgsInR5cGUiOiJjdXN0b2R5Iiwia2V5IjoiMHhFYTlkMjdmZTE1NTcyMThFRTdCQjlkODBBNzYzODJmNDdGNUU5MTVFIn0",
-    "payload": "eyJkb21haW4iOiJsZWFybi1iYXNlLW11LnZlcmNlbC5hcHAifQ",
-    "signature": "7ksObKknmIRlqltzdn3790+39u+SfOXeeEGemefvaCtXpnKeCg/yvg+w/FJbjcsJEMx0rUoQ+w3FOiuIvMiyTRs="
+    "header": "eyJmaWQiOjE1NzgxNTgsInR5cGUiOiJhdXRoIiwia2V5IjoiMHhGZEZCNjg3ZGJiNTU3MzRGODkyNjI5MDc3OEJmRDhmNTBFRGY0ZTM1In0",
+    "payload": "eyJkb21haW4iOiJsZWFybmJhc2UucXVlc3QifQ",
+    "signature": "xCzlwlkYIdMWstCmiLH/3uhjl8Eqy36ze43nLly+pe5x+VFjYMN54HP1NBR1OucHFH7+ZBVZRPohGqRj90sGXxs="
   },
   "miniapp": {
     "version": "1",
     "name": "BaseCamp",
-    "homeUrl": "https://learn-base-mu.vercel.app/index.html",
-    "iconUrl": "https://learn-base-mu.vercel.app/images/icon.png",
-    "splashImageUrl": "https://learn-base-mu.vercel.app/images/splash.png",
+    "homeUrl": "https://learnbase.quest/index.html",
+    "iconUrl": "https://learnbase.quest/images/icon.png",
+    "splashImageUrl": "https://learnbase.quest/images/splash.png",
     "splashBackgroundColor": "#0052FF",
     "subtitle": "Learn Base",
     "description":  "Learn Base blockchain hands-on! Practice testnet operations, study theory, and avoid common scams.",
-    "screenshotUrls": ["https://learn-base-mu.vercel.app/images/screen1.png","https://learn-base-mu.vercel.app/images/screen2.png","https://learn-base-mu.vercel.app/images/screen3.png"],
+    "screenshotUrls": ["https://learnbase.quest/images/screen1.png","https://learnbase.quest/images/screen2.png","https://learnbase.quest/images/screen3.png"],
     "primaryCategory": "education",
     "tags": ["education", "base", "learn", "productivity", "beginner"],
-    "heroImageUrl": "https://learn-base-mu.vercel.app/images/basecamp-hero-og-v1.png",
+    "heroImageUrl": "https://learnbase.quest/images/basecamp-hero-og-v1.png",
     "tagline": "Learn Base the easy way!",
     "ogTitle": "BaseCamp Learning",
     "ogDescription": "Learn Base blockchain hands-on! Practice testnet operations, study theory, and avoid common scams.",
-    "ogImageUrl": "https://learn-base-mu.vercel.app/images/basecamp-hero-og-v1.png",
+    "ogImageUrl": "https://learnbase.quest/images/basecamp-hero-og-v1.png",
     "author.display_name": "vikiase.base.eth",
     "buttonTitle": "Start learning",
     "noindex": true,
-    "imageUrl": "https://learn-base-mu.vercel.app/images/basecamp-hero-og-v1.png",
-    "castShareUrl": "https://learn-base-mu.vercel.app/"
+    "imageUrl": "https://learnbase.quest/images/basecamp-hero-og-v1.png",
+    "castShareUrl": "https://learnbase.quest/"
   }
 }
 
