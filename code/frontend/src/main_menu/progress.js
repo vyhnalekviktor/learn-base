@@ -325,11 +325,14 @@ function showModal(type, msg) {
     });
 }
 
-// === VYLEPŠENÁ FUNKCE PRO SDÍLENÍ (SDK) ===
 function shareSuccess() {
-    // Toto otevře nativní Farcaster Composer s předvyplněným textem a odkazem
+    const nftImageUrl = 'https://learnbase.quest/images/nft1.png';
+    const appUrl = 'https://learnbase.quest';
+
     sdk.actions.composeCast({
-        text: 'I just completed the BaseCamp curriculum and minted my graduation NFT! 🏕️🎓 \n\nStart your journey too:',
-        embeds: ['https://learnbase.quest']
+        // Text lákající ostatní
+        text: 'Just leveled up my onchain knowledge! 🧠⚡️\n\nI completed the BaseCamp curriculum - from theory to real practice. The best place to start your journey on Base.\n\nStart learning here:',
+
+        embeds: [nftImageUrl, appUrl]
     });
 }
