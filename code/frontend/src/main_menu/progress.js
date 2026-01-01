@@ -143,10 +143,10 @@ function showNftModal() {
     const content = `
         <div class="modal-text-center">
             <img src="../../images/nft1.png" alt="Your NFT" class="modal-nft-image">
-            <h3 style="margin-bottom: 8px;">You are a Graduate!</h3>
+            <h3 style="margin-bottom: 8px;">Welcome to the Club!</h3>
             <p style="color: #666; margin-bottom: 20px; font-size: 14px;">
-                Congratulations on completing the BaseCamp curriculum.
-                Show off your badge to the world!
+                You've completed the journey.
+                Say "gm" to your new community and show them your badge!
             </p>
             <div class="share-btn-container">
                 <button id="modalShareBtn" class="share-btn">
