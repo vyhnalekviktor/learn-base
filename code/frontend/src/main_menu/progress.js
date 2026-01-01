@@ -317,36 +317,51 @@ function showModal(type, msg) {
     });
 }
 
-// === FUNKCE PRO SDÍLENÍ (MODALS ONLY, NO ALERT) ===
 async function shareSuccess() {
     const shareData = {
         title: 'BaseCamp Graduate',
-        text: 'I just completed the BaseCamp curriculum and minted my graduation NFT! 🏕️🎓 \n\nStart your journey too:',
-        url: 'https://learnbase.quest'
+        text: 'I just completed the BaseCamp curriculum and minted my graduation NFT! 🏕️🎓\n\nStart your journey too: https://learnbase.quest',
+        // U některých Androidů/WebView je lepší poslat URL rovnou v textu,
+        // samostatné pole 'url' někdy zlobí.
+        // url: 'https://learnbase.quest'
     };
 
-    // 1. Nativní sdílení
-    if (navigator.share) {
+    // 1. Zkusíme nativní sdílení (Share Sheet)
+    if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
         try {
             await navigator.share(shareData);
+            // Pokud to projde, končíme. Uživatel úspěšně sdílel.
             return;
         } catch (err) {
-            console.log('Share canceled or failed:', err);
+            // Pokud uživatel menu sám zavřel (AbortError), nic neděláme.
+            if (err.name === 'AbortError') {
+                console.log('Share menu closed by user.');
+                return;
+            }
+            // Pokud je to jiná chyba, pokračujeme k fallbacku (clipboard)
+            console.error('Share API failed, falling back to clipboard:', err);
         }
     }
 
-    // 2. Fallback - Kopírování do schránky (BEZ ALERTU)
+    // 2. Fallback - Kopírování do schránky (když selže menu nebo jsme na desktopu)
     try {
-        await navigator.clipboard.writeText(`${shareData.text} ${shareData.url}`);
+        await navigator.clipboard.writeText(shareData.text);
 
         showModal('success', `
             <div style="text-align: center;">
                 <p><strong>Link copied to clipboard!</strong></p>
-                <p style="margin-top: 8px; font-size: 13px;">You can now paste it manually to your feed.</p>
+                <p style="margin-top: 8px; font-size: 13px;">Native sharing is not supported on this device/browser.<br>You can paste it manually.</p>
             </div>
         `);
+    } catch (clipboardErr) {
+        // 3. Fallback pro Desktop (pokud je blokován zápis do schránky)
+        console.error('Clipboard failed:', clipboardErr);
 
-    } catch (err) {
-        console.error('Failed to copy:', err);
+        showModal('success', `
+            <div style="text-align: center;">
+                <p><strong>Copy the link manually:</strong></p>
+                <textarea readonly style="width: 100%; height: 80px; margin-top: 10px; padding: 8px; border-radius: 8px; border: 1px solid #ccc; font-size: 13px;">${shareData.text}</textarea>
+            </div>
+        `);
     }
 }
