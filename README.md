@@ -45,7 +45,7 @@ User can send USDC on mainnet to the creator as a "Thank You" in the section 'Su
 
 ## How to run?
 #### 1. Use the Base app for interacting with miniApps as it is designed (recommended)
-#### 2. Visit https://learn-base-mu.vercel.app/
+#### 2. Visit https://learnbase.quest/
 - does not work as intended
 - I am still working on good demo outside of miniApp
 
