@@ -327,10 +327,14 @@ function showModal(type, msg) {
 
 function shareSuccess() {
     const appUrl = 'https://learnbase.quest';
-    const shareUrl = 'https://learnbase.quest/images/share_success.png';
+    const shareUrl = 'https://learnbase.quest/images/share_success.jpg';
 
     sdk.actions.composeCast({
-        text: 'gm Base! 🔵\n\nJust leveled up my onchain skills. If you are a beginner looking for a safe, hands-on start, BaseCamp is the way.\n\nStart your journey here: 👇',
-        embeds: [shareUrl, appUrl]
+        // 1. Změna: Odkaz vložíme přímo na konec textu (${appUrl})
+        text: `gm Base! 🔵\n\nJust leveled up my onchain skills. If you are a beginner looking for a safe, hands-on start, BaseCamp is the way.\n\nStart your journey here: ${appUrl}`,
+
+        // 2. Změna: Do embeds dáme JEN obrázek.
+        // Když je tam sám, Warpcast ho roztáhne na plnou šířku a nebude ho ořezávat.
+        embeds: [shareUrl]
     });
 }
