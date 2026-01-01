@@ -327,7 +327,7 @@ function showModal(type, msg) {
 
 function shareSuccess() {
     const appUrl = 'https://learnbase.quest';
-    const shareUrl = 'https://learnbase.quest/images/share_success.jpg';
+    const shareUrl = 'https://learnbase.quest/images/share_success.png';
 
     sdk.actions.composeCast({
         // 1. Změna: Odkaz vložíme přímo na konec textu (${appUrl})
