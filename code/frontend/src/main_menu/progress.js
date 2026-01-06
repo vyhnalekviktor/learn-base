@@ -171,17 +171,13 @@ function showNftModal() {
 }
 
 
-// === NOVÝ HANDLER PRO "SEND & VERIFY" MODEL ===
+// === NOVÝ HANDLER PRO "SEND & VERIFY" MODEL (S KONTROLOU ZŮSTATKŮ) ===
 async function handlePaidClaim(ethProvider, wallet) {
   const mintBtn = document.getElementById('mintNftBtn');
 
   // --- KONFIGURACE ---
-  // SEM DEJ SVOU ADRESU PENĚŽENKY (kam ti mají chodit peníze)
   const ADMIN_WALLET = "0x5b9aCe009440c286E9A236f90118343fc61Ee48F";
-
-  // SEM DEJ ADRESU NOVÉHO KONTRAKTU (jen pro info / explorer)
   const NFT_CONTRACT = "0x23CAe5684d49c9145b60e888Be3139Fc17411553";
-
   const USDC_ADDRESS = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913'; // Base Mainnet USDC
   const PRICE_WEI = 2000000n; // 2 USDC (přesně!)
 
@@ -191,6 +187,30 @@ async function handlePaidClaim(ethProvider, wallet) {
     // 1. Setup Providera
     const provider = new BrowserProvider(ethProvider);
     const signer = await provider.getSigner();
+    const userAddress = await signer.getAddress(); // Získáme adresu uživatele
+
+    // --- BEZPEČNOSTNÍ KONTROLA ZŮSTATKŮ ---
+    // (Tím předejdeme chybě "missing revert data")
+
+    // A) Kontrola ETH na Gas
+    const ethBalance = await provider.getBalance(userAddress);
+    // Pokud má 0 ETH, transakce by okamžitě selhala
+    if (ethBalance === 0n) {
+        throw new Error("You have 0 ETH on Base network. You need a small amount of ETH to pay for gas fees (approx $0.05).");
+    }
+
+    // B) Kontrola USDC
+    const usdcAbiCheck = ['function balanceOf(address owner) view returns (uint256)'];
+    const usdcCheckContract = new Contract(USDC_ADDRESS, usdcAbiCheck, provider);
+    const usdcBalance = await usdcCheckContract.balanceOf(userAddress);
+
+    if (usdcBalance < PRICE_WEI) {
+        // Převedeme BigInt na čitelné číslo (např. 1.5)
+        const currentUsdc = ethers.formatUnits(usdcBalance, 6);
+        throw new Error(`Insufficient USDC. Price is 2.0 USDC, but you have only ${currentUsdc} USDC.`);
+    }
+
+    // --- KONEC KONTROLY, POKRAČUJEME ---
 
     // Kontrola sítě (Base Mainnet)
     const network = await provider.getNetwork();
@@ -210,7 +230,7 @@ async function handlePaidClaim(ethProvider, wallet) {
     mintBtn.textContent = "Processing Payment...";
     mintBtn.disabled = true;
 
-    // 2. KROK A: Obyčejný převod USDC (Žádný Approve, žádný Suspicious Token!)
+    // 2. KROK A: Obyčejný převod USDC
     const usdcAbi = ['function transfer(address to, uint256 amount) external returns (bool)'];
     const usdcContract = new Contract(USDC_ADDRESS, usdcAbi, signer);
 
@@ -224,13 +244,12 @@ async function handlePaidClaim(ethProvider, wallet) {
     // 3. KROK B: Voláme Backend, aby nám poslal NFT
     mintBtn.textContent = "Minting NFT...";
 
-    // Volání tvého nového endpointu
     const response = await fetch(`${API_BASE}/api/buy-nft`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
             wallet: wallet,
-            tx_hash: tx.hash // Posíláme hash platby pro ověření
+            tx_hash: tx.hash
         })
     });
 
@@ -243,7 +262,7 @@ async function handlePaidClaim(ethProvider, wallet) {
     // 4. Hotovo!
     mintBtn.textContent = "NFT Delivered!";
 
-    // Update UI (skrytí tlačítka, zobrazení success)
+    // Update UI
     const nftSection = document.getElementById('nftSection');
     const nftBlockTitle = document.getElementById('nftBlockTitle');
     const nftBlockContent = document.getElementById('nftBlockContent');
@@ -273,9 +292,7 @@ async function handlePaidClaim(ethProvider, wallet) {
         };
     }
 
-    // Databáze update (pro jistotu i z frontendu)
     if (window.BaseCampTheme) window.BaseCampTheme.updateLocalProgress('claimed_nft', true);
-
     showNftModal();
 
   } catch (e) {
@@ -284,8 +301,16 @@ async function handlePaidClaim(ethProvider, wallet) {
     mintBtn.textContent = "Mint Completion NFT";
 
     let msg = (e.message || e).toString();
-    if (msg.includes("user rejected")) msg = "Transaction cancelled.";
-    showModal('danger', `Process failed:<br>${msg.substring(0, 80)}`);
+
+    // Fallback: kdyby přece jen něco proklouzlo a hodilo tu divnou chybu
+    if (msg.includes("missing revert data")) {
+        msg = "Transaction failed. Likely insufficient ETH for gas fees.";
+    }
+    if (msg.includes("user rejected")) {
+        msg = "Transaction cancelled.";
+    }
+
+    showModal('danger', `Mint failed:<br>${msg.substring(0, 120)}`);
   }
 }
 
