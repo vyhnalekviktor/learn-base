@@ -171,82 +171,72 @@ function showNftModal() {
 }
 
 
-// === OPRAVENÝ HANDLER (Network Switch PRVNÍ) ===
+// === OPRAVENÝ HANDLER PODLE "SUPPORT ME" FLOW ===
 async function handlePaidClaim(ethProvider, wallet) {
   const mintBtn = document.getElementById('mintNftBtn');
 
-  // !!! ZKONTROLUJ ADRESY !!!
+  // KONFIGURACE
   const ADMIN_WALLET = "0x5b9aCe009440c286E9A236f90118343fc61Ee48F";
-  const NFT_CONTRACT = "0x23CAe5684d49c9145b60e888Be3139Fc17411553";
-
   const USDC_ADDRESS = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913';
-  const PRICE_WEI = 2000000n;
+  const PRICE_HEX = "0x1e8480"; // 2000000 v HEX (2 USDC)
+  const BASE_CHAIN_ID = '0x2105'; // 8453
 
   try {
-    const { ethers, BrowserProvider, Contract } = await import('https://esm.sh/ethers@6.9.0');
+    const { ethers, BrowserProvider } = await import('https://esm.sh/ethers@6.9.0');
 
-    // 1. Autorizace
+    mintBtn.textContent = "Checking Wallet...";
+    mintBtn.disabled = true;
+
+    // 1. AUTORIZACE
     await ethProvider.request({ method: 'eth_requestAccounts' });
 
-    // 2. Setup Providera
-    const provider = new BrowserProvider(ethProvider);
-    const signer = await provider.getSigner();
+    // 2. KONTROLA A PŘEPNUTÍ SÍTĚ (Raw RPC)
+    const currentChainId = await ethProvider.request({ method: 'eth_chainId' });
 
-    // --- 3. KROK: PŘEPNUTÍ SÍTĚ (MUSÍ BÝT HNED TADY!) ---
-    // Než sáhneme na USDC kontrakt, musíme být na Base
-    const network = await provider.getNetwork();
-    if (network.chainId !== 8453n) { // 8453 = Base Mainnet
+    if (currentChainId !== BASE_CHAIN_ID) {
          try {
             await ethProvider.request({
                 method: 'wallet_switchEthereumChain',
-                params: [{ chainId: '0x2105' }], // 8453 hex
+                params: [{ chainId: BASE_CHAIN_ID }],
             });
-            // Počkáme chvilku, než se síť skutečně přehodí
+            // Malá pauza pro načtení sítě
             await new Promise(r => setTimeout(r, 1000));
-
-            // Pro jistotu obnovíme providera po změně sítě
-            // (Některé peněženky to vyžadují)
          } catch (e) {
-             showModal('danger', "Prosím přepni peněženku na síť Base Mainnet.");
-             return;
+             throw new Error("Přepni prosím peněženku na Base Mainnet manuálně.");
          }
     }
 
-    // Získáme adresu uživatele
-    const userAddress = await signer.getAddress();
+    // 3. PŘÍPRAVA DAT (Transfer 2 USDC)
+    // Použijeme Ethers jen na zakódování dat (bezpečné)
+    const iface = new ethers.Interface(['function transfer(address to, uint256 amount)']);
+    const data = iface.encodeFunctionData('transfer', [ADMIN_WALLET, 2000000n]);
 
-    // --- 4. KONTROLA ZŮSTATKŮ (Teď už bezpečně na Base) ---
-    const ethBalance = await provider.getBalance(userAddress);
-    if (ethBalance === 0n) {
-        throw new Error("Máš 0 ETH na síti Base. Potřebuješ alespoň pár centů na poplatky (gas).");
-    }
+    // 4. ODESLÁNÍ TRANSAKCE (Raw - jako v supportMe.js)
+    // Tím obejdeme Ethers estimateGas a necháme to na peněžence
+    mintBtn.textContent = "Pay 2 USDC...";
 
-    const usdcAbiCheck = ['function balanceOf(address owner) view returns (uint256)'];
-    // Musíme znovu vytvořit kontrakt s providerem, který je určitě na Base
-    const usdcCheckContract = new Contract(USDC_ADDRESS, usdcAbiCheck, signer);
+    const txHash = await ethProvider.request({
+      method: 'eth_sendTransaction',
+      params: [{
+        from: wallet,
+        to: USDC_ADDRESS,
+        data: data,
+        value: '0x0' // 0 ETH
+      }]
+    });
 
-    // Tady to padalo - teď už by nemělo
-    const usdcBalance = await usdcCheckContract.balanceOf(userAddress);
-
-    if (usdcBalance < PRICE_WEI) {
-         const currentUsdc = ethers.formatUnits(usdcBalance, 6);
-         throw new Error(`Nemáš dostatek USDC. Cena je 2.0, ty máš ${currentUsdc}.`);
-    }
-
-    // --- 5. VLASTNÍ PLATBA ---
-    mintBtn.textContent = "Processing Payment...";
-    mintBtn.disabled = true;
-
-    const usdcAbi = ['function transfer(address to, uint256 amount) external returns (bool)'];
-    const usdcContract = new Contract(USDC_ADDRESS, usdcAbi, signer);
-
-    console.log("Sending USDC to:", ADMIN_WALLET);
-    const tx = await usdcContract.transfer(ADMIN_WALLET, PRICE_WEI);
+    // 5. ČEKÁNÍ NA POTVRZENÍ
+    // Teď teprve vytvoříme providera, abychom měli jistotu, že je na Base
+    const provider = new BrowserProvider(ethProvider);
 
     mintBtn.textContent = "Verifying Payment...";
-    await tx.wait();
+    const receipt = await provider.waitForTransaction(txHash);
 
-    // --- 6. VOLÁNÍ BACKENDU ---
+    if (receipt.status !== 1) {
+        throw new Error("Transakce selhala na blockchainu.");
+    }
+
+    // 6. VOLÁNÍ BACKENDU (MINT)
     mintBtn.textContent = "Minting NFT...";
 
     const response = await fetch(`${API_BASE}/api/buy-nft`, {
@@ -254,7 +244,7 @@ async function handlePaidClaim(ethProvider, wallet) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
             wallet: wallet,
-            tx_hash: tx.hash
+            tx_hash: txHash
         })
     });
 
@@ -264,6 +254,7 @@ async function handlePaidClaim(ethProvider, wallet) {
         throw new Error(result.detail || "Server mint failed");
     }
 
+    // 7. HOTOVO
     mintBtn.textContent = "NFT Delivered!";
 
     // UI Update
@@ -286,6 +277,18 @@ async function handlePaidClaim(ethProvider, wallet) {
     }
 
     if (window.BaseCampTheme) window.BaseCampTheme.updateLocalProgress('claimed_nft', true);
+
+    // Link na explorer
+    const txSection = document.getElementById('txLinkSection');
+    const viewLinkBtn = document.getElementById('view-nft-link');
+    if (txSection && viewLinkBtn && result.mint_tx) {
+        txSection.style.display = 'block';
+        viewLinkBtn.onclick = (e) => {
+            e.preventDefault();
+            sdk.actions.openUrl(`https://basescan.org/tx/${result.mint_tx}`);
+        };
+    }
+
     showNftModal();
 
   } catch (e) {
@@ -294,12 +297,7 @@ async function handlePaidClaim(ethProvider, wallet) {
     mintBtn.textContent = "Mint Completion NFT";
 
     let msg = (e.message || e).toString();
-    if (msg.includes("user rejected")) msg = "Transakce zrušena uživatelem.";
-
-    // Ošetření chybějící revert data (kdyby náhodou)
-    if (msg.includes("missing revert data")) {
-       msg = "Chyba komunikace se sítí. Zkontroluj, zda jsi na Base Mainnetu.";
-    }
+    if (msg.includes("user rejected")) msg = "Transakce zrušena.";
 
     showModal('danger', `Process failed:<br>${msg.substring(0, 100)}`);
   }
