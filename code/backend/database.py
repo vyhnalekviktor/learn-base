@@ -1,4 +1,6 @@
 import os
+
+from sqlalchemy import null
 from supabase import create_client, Client
 from dotenv import load_dotenv
 
@@ -18,7 +20,8 @@ def init_user_info(wallet: str) :
         "completed_practice": False,
         "completed_security": False,
         "completed_all": False,
-        "claimed_nft": False
+        "claimed_nft": False,
+        "last_drip": None
     }
     response = supabase.table("USER_INFO").insert(user_info).execute()
     return response.data

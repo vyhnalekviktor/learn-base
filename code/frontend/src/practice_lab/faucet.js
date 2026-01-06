@@ -82,18 +82,66 @@ async function initWalletDisplay() {
 }
 
 // 4. HANDLERY
-async function openEthFaucet() {
-  await addProgress();
-  sdk.actions.openUrl('https://www.alchemy.com/faucets/base-sepolia');
-}
-
 async function openUsdcFaucet() {
   await addProgress();
   sdk.actions.openUrl('https://faucet.circle.com');
 }
 
+// NOVÁ FUNKCE: CLAIM ETH Z VLASTNÍHO FAUCETU
+async function claimEthFaucet() {
+    const btn = document.getElementById('claimEthBtn');
+    const status = document.getElementById('ethStatus');
+
+    // UI Loading state
+    btn.disabled = true;
+    btn.textContent = "Processing...";
+    status.style.display = "none";
+    status.style.color = "#cbd5e1";
+
+    const wallet = await getWallet();
+    if (!wallet) {
+        btn.disabled = false;
+        btn.textContent = "Get 0.0001 ETH";
+        alert("Please connect your wallet first!");
+        return;
+    }
+
+    try {
+        const res = await fetch(`${API_BASE}/api/testnet/drip-eth`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ wallet: wallet }),
+        });
+
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+            // Úspěch
+            btn.textContent = "Sent!";
+            status.style.display = "block";
+            status.style.color = "#4ade80"; // Zelená
+            status.innerHTML = `Success! Tx: <a href='https://sepolia.basescan.org/tx/${data.tx_hash}' target='_blank' style='color:#4ade80; text-decoration:underline;'>View on BaseScan</a>`;
+            await addProgress(); // Označíme krok jako hotový
+        } else {
+            // Chyba (Cooldown, prázdný faucet, atd.)
+            btn.disabled = false;
+            btn.textContent = "Get 0.0001 ETH";
+            status.style.display = "block";
+            status.style.color = "#f87171"; // Červená
+            status.textContent = data.detail || data.msg || "Faucet failed. Try again later.";
+        }
+    } catch (e) {
+        console.error(e);
+        btn.disabled = false;
+        btn.textContent = "Get 0.0001 ETH";
+        status.style.display = "block";
+        status.style.color = "#f87171";
+        status.textContent = "Network error.";
+    }
+}
+
 window.toggleAccordion = toggleAccordion;
-window.openEthFaucet = openEthFaucet;
+window.claimEthFaucet = claimEthFaucet; // Exportováno pro použití v HTML
 window.openUsdcFaucet = openUsdcFaucet;
 
 document.addEventListener('DOMContentLoaded', initWalletDisplay);
