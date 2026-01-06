@@ -133,7 +133,7 @@ def mint_nft_to_user(user_address):
         signed_tx = w3.eth.account.sign_transaction(tx, PRIVATE_KEY)
 
         # Odeslání do sítě
-        tx_hash = w3.eth.send_raw_transaction(signed_tx.rawTransaction)
+        tx_hash = w3.eth.send_raw_transaction(signed_tx.raw_transaction)
 
         # Čekání na potvrzení (aby backend vrátil success až když je hotovo)
         receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
