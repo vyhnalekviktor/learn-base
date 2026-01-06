@@ -106,25 +106,29 @@ def verify_mainnet_transaction(address_from, tx_hash, token, amount):
 def mint_nft_to_user(user_address):
     """
     Tato funkce zavolá smart kontrakt a pošle NFT uživateli.
-    Gas platí admin (ty), uživatel neplatí nic (už zaplatil USDC bokem).
+    OPRAVA: Dynamická cena gasu a vyšší limit.
     """
     if not PRIVATE_KEY or not NFT_CONTRACT_ADDRESS:
         return {"success": False, "msg": "Chybí konfigurace serveru (PK nebo Address)"}
 
     try:
         # Inicializace kontraktu
-        # w3 objekt už v souboru máš definovaný nahoře
         contract = w3.eth.contract(address=Web3.to_checksum_address(NFT_CONTRACT_ADDRESS), abi=NFT_ABI)
 
         # Admin účet z privátního klíče
         admin_account = Account.from_key(PRIVATE_KEY)
 
-        # Sestavení transakce
+        # 1. Zjistíme aktuální cenu gasu na síti Base
+        current_gas_price = w3.eth.gas_price
+
+        # Přidáme malou rezervu (např. 10%), aby transakce nezůstala viset
+        adjusted_gas_price = int(current_gas_price * 1.1)
+
+        # 2. Sestavení transakce s dynamickou cenou
         tx = contract.functions.airdrop(user_address).build_transaction({
             'chainId': 8453,  # Base Mainnet
-            'gas': 200000,  # Odhad, airdrop je levný
-            'maxPriorityFeePerGas': w3.to_wei('0.05', 'gwei'),
-            'maxFeePerGas': w3.to_wei('0.05', 'gwei'),
+            'gas': 500000,  # Zvednuto z 200k na 500k (bezpečnostní rezerva)
+            'gasPrice': adjusted_gas_price,  # Použijeme aktuální cenu sítě
             'nonce': w3.eth.get_transaction_count(admin_account.address),
             'from': admin_account.address
         })
@@ -132,16 +136,20 @@ def mint_nft_to_user(user_address):
         # Podpis transakce
         signed_tx = w3.eth.account.sign_transaction(tx, PRIVATE_KEY)
 
-        # Odeslání do sítě
-        tx_hash = w3.eth.send_raw_transaction(signed_tx.raw_transaction)
+        # Odeslání do sítě (v7 fix: raw_transaction)
+        raw_tx = getattr(signed_tx, 'raw_transaction', None)
+        if raw_tx is None:
+            raw_tx = getattr(signed_tx, 'rawTransaction', signed_tx[0])
 
-        # Čekání na potvrzení (aby backend vrátil success až když je hotovo)
+        tx_hash = w3.eth.send_raw_transaction(raw_tx)
+
+        # Čekání na potvrzení
         receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
 
         if receipt.status == 1:
             return {"success": True, "tx_hash": tx_hash.hex()}
         else:
-            return {"success": False, "msg": "Mint transakce selhala na blockchainu"}
+            return {"success": False, "msg": "Mint transakce selhala na blockchainu (Reverted)"}
 
     except Exception as e:
         print(f"Mint Error: {e}")
