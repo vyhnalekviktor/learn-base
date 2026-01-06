@@ -275,28 +275,48 @@ async def drip_eth(request: Request):
     if not wallet:
         raise HTTPException(status_code=400, detail="No wallet provided!")
 
-    last_drip = database.get_field("USER_INFO", "last_drip", wallet)
+    # --- 1. KROK: KONTROLA COOLDOWNU ---
+    raw_drip_time = database.get_field("USER_INFO", "last_drip", wallet)
 
-    # B) KONTROLA COOLDOWNU (48 HODIN)
-    if last_drip:
+    if raw_drip_time:
         now = datetime.now(timezone.utc)
 
+        # Ošetření vstupu (str vs datetime)
+        if isinstance(raw_drip_time, str):
+            clean_time_str = raw_drip_time.replace(" ", "T")
+            last_drip = datetime.fromisoformat(clean_time_str)
+        elif hasattr(raw_drip_time, 'combine'):
+            last_drip = datetime.combine(raw_drip_time, datetime.min.time())
+        else:
+            last_drip = raw_drip_time
+
+        # Ujištění se o časové zóně
         if last_drip.tzinfo is None:
             last_drip = last_drip.replace(tzinfo=timezone.utc)
 
         if now - last_drip < timedelta(hours=48):
-            # Spočítáme, kolik zbývá
-            diff = (last_drip + timedelta(hours=48)) - now
-            hours_left = int(diff.total_seconds() // 3600)
+            cooldown_end = last_drip + timedelta(hours=48)
+            diff = cooldown_end - now
+            hours_left = max(0, int(diff.total_seconds())) // 3600
             return {"success": False, "msg": f"Cooldown active! Wait {hours_left}h more."}
 
-    # C) ODESLÁNÍ ETH
+    bot_eth_balance = database.get_field("MY_WALLET", "balance-ETH", MM_WALLET)
+    if bot_eth_balance is None:
+        bot_eth_balance = 0.0
+
+    if bot_eth_balance < 0.0001:
+        return {"success": False, "msg": "Faucet is currently empty (Internal Limit)."}
+
     result = functions_testnet.drip_testnet_eth(wallet)
 
     if not result.get("success"):
         raise HTTPException(status_code=500, detail=result.get("msg"))
 
-    new_time = datetime.now(timezone.utc)
+    new_time = str(datetime.now(timezone.utc))
+
     database.update_field("USER_INFO", "last_drip", wallet, new_time)
+
+    new_balance = float(bot_eth_balance) - 0.0001
+    database.update_field("MY_WALLET", "balance-ETH", MM_WALLET, new_balance)
 
     return result
