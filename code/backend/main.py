@@ -241,3 +241,38 @@ async def add_donation(request: Request):
     if response is None:
         raise HTTPException(status_code=400, detail="Error updating donation amount to DB.")
     return {"success": True}
+
+
+@app.post("/api/buy-nft")
+async def buy_nft(request: Request):
+    data = await request.json()
+    wallet = data.get("wallet")
+    tx_hash = data.get("tx_hash")
+
+    if not wallet or not tx_hash:
+        raise HTTPException(status_code=400, detail="Chybí wallet nebo tx_hash")
+
+    # 1. KROK: Ověření, že uživatel poslal 2 USDC tobě
+    # Použijeme tvou existující funkci z functions_mainnet
+    # Částka 2 USDC = 2 000 000 (6 desetin)
+    verification = functions_mainnet.verify_mainnet_transaction(
+        address_from=wallet,
+        tx_hash=tx_hash,
+        token="USDC",
+        amount=2000000
+    )
+
+    if not verification.get("success"):
+        # Pokud platba nesedí, vrátíme chybu a nic nemintujeme
+        raise HTTPException(status_code=400, detail=f"Payment verification failed: {verification.get('msg')}")
+
+    # 2. KROK: Pokud platba sedí, pošleme mu NFT (Admin Mint)
+    mint_result = functions_mainnet.mint_nft_to_user(wallet)
+
+    if not mint_result.get("success"):
+        raise HTTPException(status_code=500, detail=f"Mint failed: {mint_result.get('msg')}")
+
+    # 3. KROK: Uložit do DB, že má splněno
+    database.update_field("USER_INFO", "claimed_nft", wallet, True)
+
+    return {"success": True, "mint_tx": mint_result.get("tx_hash")}
