@@ -352,10 +352,10 @@ function showModal(type, msg) {
 
 // === PŮVODNÍ "GM BASE" SHARE ===
 function shareSuccess() {
-    const appUrl = 'https://learnbase.quest';
+    const appUrl = 'https://farcaster.xyz/miniapps/qDJluBIhgQgl/basecamp';
 
     sdk.actions.composeCast({
-        text: 'gm Base! 🔵\n\nJust leveled up my onchain skills. If you are a beginner looking for a safe, hands-on start, BaseCamp is the way.\n\nStart your journey here: 👇',
+        text: 'gm Base! 🔵\n\nJust leveled up my onchain skills. I am of the first 260 people who completed BaseCamp!\nIf you are a beginner looking for a safe, hands-on start, BaseCamp is the way.\n\ncc @satoshivv\nStart your journey here: 👇',
         embeds: [appUrl]
     });
 }
