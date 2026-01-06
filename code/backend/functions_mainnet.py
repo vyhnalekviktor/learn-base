@@ -1,6 +1,7 @@
 from web3 import Web3
 import os
 from dotenv import load_dotenv
+from eth_account import Account
 
 load_dotenv()
 
@@ -9,7 +10,18 @@ RPC_URL = "https://base.publicnode.com"
 USDC_ADDRESS = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"
 
 w3 = Web3(Web3.HTTPProvider(RPC_URL))
-MY_WALLET = os.getenv("MY_WALLET")
+MY_WALLET = os.getenv("MM_WALLET")
+PRIVATE_KEY = os.getenv("PRIVATE_KEY")
+NFT_CONTRACT_ADDRESS = os.getenv("BATCH1_NFT_ADDRESS")
+
+# Minimalistické ABI jen pro funkci airdrop
+NFT_ABI = [{
+    "inputs": [{"internalType": "address", "name": "to", "type": "address"}],
+    "name": "airdrop",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+}]
 
 #USDC transaction requirements
 USDC_ABI = [
@@ -68,6 +80,10 @@ def verify_mainnet_transaction(address_from, tx_hash, token, amount):
                     if event['args']['from'].lower() != address_from.lower():
                         return {"success": False, "msg": "Sender mismatch"}
 
+                    if event['args']['value'] < int(amount):
+                        return {"success": False,
+                                "msg": f"Insufficient amount: sent {event['args']['value']}, expected {amount}"}
+
                     found = True
                     break
 
@@ -84,4 +100,57 @@ def verify_mainnet_transaction(address_from, tx_hash, token, amount):
             "block": receipt["blockNumber"]
         }
     except Exception as e:
+        return {"success": False, "msg": str(e)}
+
+
+def mint_nft_to_user(user_address):
+    """
+    Tato funkce zavolá smart kontrakt a pošle NFT uživateli.
+    OPRAVA: Dynamická cena gasu a vyšší limit.
+    """
+    if not PRIVATE_KEY or not NFT_CONTRACT_ADDRESS:
+        return {"success": False, "msg": "Chybí konfigurace serveru (PK nebo Address)"}
+
+    try:
+        # Inicializace kontraktu
+        contract = w3.eth.contract(address=Web3.to_checksum_address(NFT_CONTRACT_ADDRESS), abi=NFT_ABI)
+
+        # Admin účet z privátního klíče
+        admin_account = Account.from_key(PRIVATE_KEY)
+
+        # 1. Zjistíme aktuální cenu gasu na síti Base
+        current_gas_price = w3.eth.gas_price
+
+        # Přidáme malou rezervu (např. 10%), aby transakce nezůstala viset
+        adjusted_gas_price = int(current_gas_price * 1.1)
+
+        # 2. Sestavení transakce s dynamickou cenou
+        tx = contract.functions.airdrop(user_address).build_transaction({
+            'chainId': 8453,  # Base Mainnet
+            'gas': 500000,  # Zvednuto z 200k na 500k (bezpečnostní rezerva)
+            'gasPrice': adjusted_gas_price,  # Použijeme aktuální cenu sítě
+            'nonce': w3.eth.get_transaction_count(admin_account.address),
+            'from': admin_account.address
+        })
+
+        # Podpis transakce
+        signed_tx = w3.eth.account.sign_transaction(tx, PRIVATE_KEY)
+
+        # Odeslání do sítě (v7 fix: raw_transaction)
+        raw_tx = getattr(signed_tx, 'raw_transaction', None)
+        if raw_tx is None:
+            raw_tx = getattr(signed_tx, 'rawTransaction', signed_tx[0])
+
+        tx_hash = w3.eth.send_raw_transaction(raw_tx)
+
+        # Čekání na potvrzení
+        receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
+
+        if receipt.status == 1:
+            return {"success": True, "tx_hash": tx_hash.hex()}
+        else:
+            return {"success": False, "msg": "Mint transakce selhala na blockchainu (Reverted)"}
+
+    except Exception as e:
+        print(f"Mint Error: {e}")
         return {"success": False, "msg": str(e)}

@@ -241,3 +241,38 @@ async def add_donation(request: Request):
     if response is None:
         raise HTTPException(status_code=400, detail="Error updating donation amount to DB.")
     return {"success": True}
+
+
+@app.post("/api/buy-nft")
+async def buy_nft(request: Request):
+    data = await request.json()
+    wallet = data.get("wallet")
+    # Hash si uložíme jen pro logy/zpětnou kontrolu, kdyby něco nesedělo
+    tx_hash = data.get("tx_hash")
+
+    if not wallet:
+        raise HTTPException(status_code=400, detail="Chybí wallet address")
+
+    # --- 1. KROK: KONTROLA NÁROKU (Security) --
+    # Neověřujeme platbu na blockchainu (to řeší frontend),
+    # ale musíme si být jistí, že uživatel kurz skutečně dokončil.
+
+    # Zkontrolujeme sloupec 'completed_all' v tabulce 'USER_INFO'
+    is_completed = database.get_field("USER_INFO", "completed_all", wallet)
+
+    # Pokud v DB není, nebo je False/None -> Chyba
+    if not is_completed:
+        raise HTTPException(status_code=400, detail="Nemáš splněný celý kurz (completed_all is False).")
+
+    # --- 2. KROK: ADMIN MINT ---
+    # Uživatel má hotovo, posíláme NFT (server platí gas)
+    mint_result = functions_mainnet.mint_nft_to_user(wallet)
+
+    if not mint_result.get("success"):
+        raise HTTPException(status_code=500, detail=f"Mint selhal: {mint_result.get('msg')}")
+
+    # --- 3. KROK: UPDATE DB ---
+    # Poznačíme, že NFT už má
+    database.update_field("USER_INFO", "claimed_nft", wallet, True)
+
+    return {"success": True, "mint_tx": mint_result.get("tx_hash")}

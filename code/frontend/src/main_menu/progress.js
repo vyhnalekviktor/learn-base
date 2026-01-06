@@ -3,9 +3,9 @@ import sdk from 'https://esm.sh/@farcaster/miniapp-sdk';
 const API_BASE = 'https://learn-base-backend.vercel.app';
 const BASE_CHAIN_ID_HEX = '0x2105'; // Base Mainnet
 
-// Adresy pro Mint
-const NFT_CONTRACT = '0xE0F8cb7B89DB4619B21526AC70786444dd9d2f0f';
-const USDC = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913';
+// ADRESA KONTRAKTU
+const NFT_CONTRACT = '0x23CAe5684d49c9145b60e888Be3139Fc17411553';
+const USDC_ADDRESS = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913';
 
 document.addEventListener('DOMContentLoaded', async () => {
   try {
@@ -49,7 +49,7 @@ async function loadProgressFromCache(wallet, ethProvider) {
     const { info, progress } = data;
     const p = progress;
 
-    // 1. Graphs
+    // 1. Graphs logic
     const theoryParts = [p.theory1, p.theory2, p.theory3, p.theory4, p.theory5];
     const theoryPercent = Math.round((theoryParts.filter(Boolean).length / 5) * 100);
     updateBar('theory', theoryPercent);
@@ -67,6 +67,8 @@ async function loadProgressFromCache(wallet, ethProvider) {
     const allPracticeDone = baseParts.every(val => val === true);
     const allSecurityDone = securityParts.every(val => val === true);
     const isEligibleToMint = allTheoryDone && allPracticeDone && allSecurityDone;
+
+    // KONTROLA CLAIMED
     const claimedNft = info && info.claimed_nft === true;
 
     // 3. UI Updates
@@ -76,16 +78,24 @@ async function loadProgressFromCache(wallet, ethProvider) {
     const mintBtn = document.getElementById('mintNftBtn');
     const ownedSection = document.getElementById('ownedNftSection');
 
+    // TLAČÍTKO NA EXPLORER
+    const txSection = document.getElementById('txLinkSection');
+    const viewLinkBtn = document.getElementById('view-nft-link');
+
     if (claimedNft) {
-      // Skryjeme sekci pro mintování
+      // === STAV: JIŽ MÁ NFT ===
+
       if (nftSection) {
         nftSection.classList.remove('locked');
         nftSection.classList.add('claimed');
       }
+
       if (nftBlockTitle) nftBlockTitle.textContent = 'Already claimed!';
+
+      // Skryjeme tlačítko pro nákup
       if (nftBlockContent) nftBlockContent.style.display = 'none';
 
-      // Zobrazíme sekci "Your NFT"
+      // Zobrazíme sekci "Your NFT" a Share tlačítko
       if (ownedSection) {
           ownedSection.style.display = 'block';
 
@@ -93,7 +103,6 @@ async function loadProgressFromCache(wallet, ethProvider) {
           if (pageShareBtn) {
             pageShareBtn.style.display = 'inline-flex';
             pageShareBtn.className = 'share-btn';
-            // SVG ikona
             pageShareBtn.innerHTML = `
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
@@ -102,16 +111,24 @@ async function loadProgressFromCache(wallet, ethProvider) {
                 </svg>
                 Share to Feed
             `;
-            // ZDE JE OPRAVA: Voláme novou funkci pro Farcaster Compose
             pageShareBtn.onclick = shareSuccess;
           }
       }
 
-      // Automaticky otevřít modal při vstupu, pokud už má hotovo
-      // (Můžete to zakomentovat, pokud to má vyskočit jen ihned po mintu)
+      // Nastavení odkazu na Basescan (Token Contract)
+      if (txSection && viewLinkBtn) {
+        txSection.style.display = 'block';
+        viewLinkBtn.onclick = (e) => {
+            e.preventDefault();
+            sdk.actions.openUrl(`https://basescan.org/token/${NFT_CONTRACT}`);
+        };
+      }
+
+      // Zobrazit Modal (pokud chceme upozornit)
       showNftModal();
 
     } else if (isEligibleToMint) {
+      // === STAV: MŮŽE SI KOUPIT ===
       if (nftSection) nftSection.classList.remove('locked');
       if (mintBtn) {
           mintBtn.disabled = false;
@@ -122,6 +139,7 @@ async function loadProgressFromCache(wallet, ethProvider) {
           };
       }
     } else {
+      // === STAV: NEMÁ HOTOVO ===
       if (mintBtn) {
           mintBtn.disabled = true;
           if (!allTheoryDone) mintBtn.textContent = "Finish Theory First";
@@ -138,8 +156,11 @@ function updateBar(prefix, percent) {
     if (text) text.textContent = `${percent}%`;
 }
 
-// === SPECIÁLNÍ MODAL PRO NFT A SHARE ===
+// === MODAL PRO NFT A SHARE ===
 function showNftModal() {
+    // Kontrola, zda už modal neexistuje
+    if (document.querySelector('.custom-modal-overlay')) return;
+
     const content = `
         <div class="modal-text-center">
             <img src="../../images/nft1.png" alt="Your NFT" class="modal-nft-image">
@@ -163,7 +184,6 @@ function showNftModal() {
 
     showModal('success', content);
 
-    // Navázání eventu na tlačítko v modalu
     setTimeout(() => {
         const btn = document.getElementById('modalShareBtn');
         if (btn) btn.onclick = shareSuccess;
@@ -171,61 +191,83 @@ function showNftModal() {
 }
 
 
-// === HANDLER PRO MINT ===
+// === HANDLER PRO MINT (BACKEND VERZE) ===
 async function handlePaidClaim(ethProvider, wallet) {
   const mintBtn = document.getElementById('mintNftBtn');
+  const ADMIN_WALLET = "0x5b9aCe009440c286E9A236f90118343fc61Ee48F";
+  const BASE_CHAIN_ID = '0x2105'; // 8453 (Base Mainnet)
 
   try {
     const { ethers } = await import('https://esm.sh/ethers@6.9.0');
-    const accounts = await ethProvider.request({ method: 'eth_requestAccounts' });
-    const userWallet = accounts[0];
 
-    // 1. Kontrola Sítě
-    let chainId = await ethProvider.request({ method: 'eth_chainId' });
-    if (chainId !== BASE_CHAIN_ID_HEX) {
+    mintBtn.textContent = "Checking Wallet...";
+    mintBtn.disabled = true;
+
+    // 1. AUTORIZACE + SÍŤ
+    await ethProvider.request({ method: 'eth_requestAccounts' });
+    const currentChainId = await ethProvider.request({ method: 'eth_chainId' });
+
+    if (currentChainId !== BASE_CHAIN_ID) {
          try {
             await ethProvider.request({
                 method: 'wallet_switchEthereumChain',
-                params: [{ chainId: BASE_CHAIN_ID_HEX }],
+                params: [{ chainId: BASE_CHAIN_ID }],
             });
+            await new Promise(r => setTimeout(r, 1000));
          } catch (e) {
-             showModal('danger', "Please switch to Base Mainnet manually in your wallet.");
-             return;
+             throw new Error("Switch wallet to Base Mainnet.");
          }
     }
 
-    mintBtn.textContent = "Processing...";
-    mintBtn.disabled = true;
+    // 2. PŘÍPRAVA TRANSAKCE
+    const iface = new ethers.Interface(['function transfer(address to, uint256 amount)']);
+    const data = iface.encodeFunctionData('transfer', [ADMIN_WALLET, 2000000n]);
 
-    const usdcIface = new ethers.Interface(['function approve(address spender, uint256 amount) external returns (bool)']);
-    const badgeIface = new ethers.Interface(['function mintWithUSDC() external']);
-    const price = 2000000n; // 2 USDC
+    mintBtn.textContent = "Pay 2 USDC...";
 
-    // 2. Approve
-    const approveData = usdcIface.encodeFunctionData('approve', [NFT_CONTRACT, price]);
-    await ethProvider.request({
-        method: 'eth_sendTransaction',
-        params: [{ from: userWallet, to: USDC, data: approveData }],
+    // 3. ODESLÁNÍ TRANSAKCE
+    const txHash = await ethProvider.request({
+      method: 'eth_sendTransaction',
+      params: [{
+        from: wallet,
+        to: USDC_ADDRESS,
+        data: data,
+        value: '0x0'
+      }]
     });
 
-    await new Promise(r => setTimeout(r, 2000));
+    if (!txHash) throw new Error("Transaction was not submitted.");
 
-    // 3. Mint
-    const mintData = badgeIface.encodeFunctionData('mintWithUSDC', []);
-    const mintTx = await ethProvider.request({
-        method: 'eth_sendTransaction',
-        params: [{ from: userWallet, to: NFT_CONTRACT, data: mintData }],
+    // 4. VOLÁNÍ BACKENDU
+    mintBtn.textContent = "Minting NFT...";
+
+    const response = await fetch(`${API_BASE}/api/buy-nft`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            wallet: wallet,
+            tx_hash: txHash
+        })
     });
 
-    // 4. Update UI
+    const result = await response.json();
+
+    if (!response.ok || !result.success) {
+        throw new Error(result.detail || "Server mint failed");
+    }
+
+    // 5. UPDATE UI PO ÚSPĚCHU
+    mintBtn.textContent = "NFT Delivered!";
+
+    // UI Update - stejné jako v loadProgress
     const nftSection = document.getElementById('nftSection');
     const nftBlockTitle = document.getElementById('nftBlockTitle');
     const nftBlockContent = document.getElementById('nftBlockContent');
     const ownedSection = document.getElementById('ownedNftSection');
 
     if (nftSection) {
-      nftSection.classList.remove('locked');
-      nftSection.classList.add('claimed');
+        nftSection.classList.remove('locked');
+        nftSection.classList.add('claimed');
     }
     if (nftBlockTitle) nftBlockTitle.textContent = 'Already claimed!';
     if (nftBlockContent) nftBlockContent.style.display = 'none';
@@ -235,56 +277,39 @@ async function handlePaidClaim(ethProvider, wallet) {
         const pageShareBtn = document.getElementById('shareBtn');
         if (pageShareBtn) {
              pageShareBtn.style.display = 'inline-flex';
-             pageShareBtn.className = 'share-btn';
              pageShareBtn.onclick = shareSuccess;
         }
     }
 
-    // === ZOBRAZENÍ LINKU NA EXPLORER (OPRAVENO PRO SDK) ===
+    if (window.BaseCampTheme) window.BaseCampTheme.updateLocalProgress('claimed_nft', true);
+
+    // Zobrazení Explorer Linku (Contract)
     const txSection = document.getElementById('txLinkSection');
     const viewLinkBtn = document.getElementById('view-nft-link');
-
-    if (txSection && viewLinkBtn && mintTx) {
+    if (txSection && viewLinkBtn) {
         txSection.style.display = 'block';
-        // Nastavíme chování tlačítka pro otevření URL přes SDK
         viewLinkBtn.onclick = (e) => {
-            e.preventDefault(); // Pro jistotu, kdyby to byl <a href>
-            sdk.actions.openUrl(`https://basescan.org/tx/${mintTx}`);
+            e.preventDefault();
+            sdk.actions.openUrl(`https://basescan.org/token/${NFT_CONTRACT}`);
         };
     }
 
-    mintBtn.textContent = 'NFT Claimed!';
-
-    // 5. DB Update
-    try {
-      if (window.BaseCampTheme) window.BaseCampTheme.updateLocalProgress('claimed_nft', true);
-
-      await fetch(`${API_BASE}/api/database/update_field`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          wallet: wallet,
-          table_name: 'USER_INFO',
-          field_name: 'claimed_nft',
-          value: true
-        })
-      });
-    } catch (error) {
-      console.error('Update claimed_nft error:', error);
-    }
-
+    // Zobrazení Modalu
     showNftModal();
 
   } catch (e) {
     console.error(e);
-    const msg = (e.message || e).toString();
-    showModal('danger', `Mint failed:<br>${msg.length > 80 ? "Transaction failed / rejected" : msg}`);
     mintBtn.disabled = false;
     mintBtn.textContent = "Mint Completion NFT";
+
+    let msg = (e.message || e).toString();
+    if (msg.includes("user rejected")) msg = "Transaction rejected by user.";
+
+    showModal('danger', `Process failed:<br>${msg.substring(0, 100)}`);
   }
 }
 
-// === POMOCNÉ FUNKCE ===
+// === OBECNÝ MODAL (SUCCESS/ERROR) ===
 
 function showModal(type, msg) {
     const old = document.querySelector('.custom-modal-overlay');
@@ -325,6 +350,7 @@ function showModal(type, msg) {
     });
 }
 
+// === PŮVODNÍ "GM BASE" SHARE ===
 function shareSuccess() {
     const appUrl = 'https://learnbase.quest';
 
