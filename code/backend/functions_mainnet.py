@@ -10,7 +10,7 @@ RPC_URL = "https://base.publicnode.com"
 USDC_ADDRESS = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"
 
 w3 = Web3(Web3.HTTPProvider(RPC_URL))
-MY_WALLET = os.getenv("MY_WALLET")
+MY_WALLET = os.getenv("MM_WALLET")
 PRIVATE_KEY = os.getenv("PRIVATE_KEY")
 NFT_CONTRACT_ADDRESS = os.getenv("BATCH1_NFT_ADDRESS")
 
