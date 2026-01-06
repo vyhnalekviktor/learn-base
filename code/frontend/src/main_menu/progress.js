@@ -3,8 +3,8 @@ import sdk from 'https://esm.sh/@farcaster/miniapp-sdk';
 const API_BASE = 'https://learn-base-backend.vercel.app';
 const BASE_CHAIN_ID_HEX = '0x2105'; // Base Mainnet
 
-// Adresy pro Mint
-const NFT_CONTRACT = '0xE0F8cb7B89DB4619B21526AC70786444dd9d2f0f';
+// NOVÁ ADRESA KONTRAKTU
+const NFT_CONTRACT = '0x23CAe5684d49c9145b60e888Be3139Fc17411553';
 const USDC = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913';
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -67,25 +67,32 @@ async function loadProgressFromCache(wallet, ethProvider) {
     const allPracticeDone = baseParts.every(val => val === true);
     const allSecurityDone = securityParts.every(val => val === true);
     const isEligibleToMint = allTheoryDone && allPracticeDone && allSecurityDone;
+
+    // ZDE JE KONTROLA CLAIMED
     const claimedNft = info && info.claimed_nft === true;
 
     // 3. UI Updates
     const nftSection = document.getElementById('nftSection');
     const nftBlockTitle = document.getElementById('nftBlockTitle');
-    const nftBlockContent = document.getElementById('nftBlockContent');
+    const nftBlockContent = document.getElementById('nftBlockContent'); // Tady je tlačítko Buy
     const mintBtn = document.getElementById('mintNftBtn');
     const ownedSection = document.getElementById('ownedNftSection');
 
     if (claimedNft) {
-      // Skryjeme sekci pro mintování
+      // === STAV: JIŽ MÁ NFT ===
+      // Upravíme vzhled karty
       if (nftSection) {
         nftSection.classList.remove('locked');
         nftSection.classList.add('claimed');
       }
+
+      // Změníme nadpis na "Already claimed!"
       if (nftBlockTitle) nftBlockTitle.textContent = 'Already claimed!';
+
+      // Skryjeme tlačítko pro nákup (Buy for 2 USDC)
       if (nftBlockContent) nftBlockContent.style.display = 'none';
 
-      // Zobrazíme sekci "Your NFT"
+      // Zobrazíme sekci "Your NFT" a Share tlačítko
       if (ownedSection) {
           ownedSection.style.display = 'block';
 
@@ -93,7 +100,6 @@ async function loadProgressFromCache(wallet, ethProvider) {
           if (pageShareBtn) {
             pageShareBtn.style.display = 'inline-flex';
             pageShareBtn.className = 'share-btn';
-            // SVG ikona
             pageShareBtn.innerHTML = `
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
@@ -102,16 +108,15 @@ async function loadProgressFromCache(wallet, ethProvider) {
                 </svg>
                 Share to Feed
             `;
-            // ZDE JE OPRAVA: Voláme novou funkci pro Farcaster Compose
             pageShareBtn.onclick = shareSuccess;
           }
       }
 
-      // Automaticky otevřít modal při vstupu, pokud už má hotovo
-      // (Můžete to zakomentovat, pokud to má vyskočit jen ihned po mintu)
-      showNftModal();
+      // Volitelně: Můžeme rovnou ukázat modal, pokud chceme připomenout úspěch
+      // showNftModal();
 
     } else if (isEligibleToMint) {
+      // === STAV: MŮŽE SI KOUPIT ===
       if (nftSection) nftSection.classList.remove('locked');
       if (mintBtn) {
           mintBtn.disabled = false;
@@ -122,6 +127,7 @@ async function loadProgressFromCache(wallet, ethProvider) {
           };
       }
     } else {
+      // === STAV: NEMÁ HOTOVO ===
       if (mintBtn) {
           mintBtn.disabled = true;
           if (!allTheoryDone) mintBtn.textContent = "Finish Theory First";
@@ -138,7 +144,7 @@ function updateBar(prefix, percent) {
     if (text) text.textContent = `${percent}%`;
 }
 
-// === SPECIÁLNÍ MODAL PRO NFT A SHARE ===
+// === MODAL PRO NFT A SHARE ===
 function showNftModal() {
     const content = `
         <div class="modal-text-center">
@@ -163,7 +169,6 @@ function showNftModal() {
 
     showModal('success', content);
 
-    // Navázání eventu na tlačítko v modalu
     setTimeout(() => {
         const btn = document.getElementById('modalShareBtn');
         if (btn) btn.onclick = shareSuccess;
@@ -208,9 +213,6 @@ async function handlePaidClaim(ethProvider, wallet) {
     mintBtn.textContent = "Pay 2 USDC...";
 
     // 3. ODESLÁNÍ TRANSAKCE (Fire & Forget)
-    // Pokud uživatel klikne "Confirm", dostaneme hash.
-    // Pokud klikne "Reject", spadne to do catch bloku.
-    // Nečekáme na "mining" (wait), stačí nám, že to odešlo.
     const txHash = await ethProvider.request({
       method: 'eth_sendTransaction',
       params: [{
@@ -224,7 +226,6 @@ async function handlePaidClaim(ethProvider, wallet) {
     if (!txHash) throw new Error("Transakce nebyla odeslána.");
 
     // 4. OKAMŽITÉ VOLÁNÍ BACKENDU
-    // Máme hash = platba je na cestě. Voláme o NFT.
     mintBtn.textContent = "Minting NFT...";
 
     const response = await fetch(`${API_BASE}/api/buy-nft`, {
@@ -232,14 +233,13 @@ async function handlePaidClaim(ethProvider, wallet) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
             wallet: wallet,
-            tx_hash: txHash // Posíláme jen pro info
+            tx_hash: txHash
         })
     });
 
     const result = await response.json();
 
     if (!response.ok || !result.success) {
-        // Pokud backend vrátí chybu (např. user nemá hotový kurz), zobrazíme ji
         throw new Error(result.detail || "Server mint failed");
     }
 
@@ -267,14 +267,18 @@ async function handlePaidClaim(ethProvider, wallet) {
 
     if (window.BaseCampTheme) window.BaseCampTheme.updateLocalProgress('claimed_nft', true);
 
-    // Link na explorer
+    // --- ZMĚNA: STATIC LINK NA KONTRAKT ---
     const txSection = document.getElementById('txLinkSection');
     const viewLinkBtn = document.getElementById('view-nft-link');
-    if (txSection && viewLinkBtn && result.mint_tx) {
+
+    // Zobrazíme sekci, i když nemáme ID transakce (protože odkazujeme na kontrakt)
+    if (txSection && viewLinkBtn) {
         txSection.style.display = 'block';
+
         viewLinkBtn.onclick = (e) => {
             e.preventDefault();
-            sdk.actions.openUrl(`https://basescan.org/tx/${result.mint_tx}`);
+            // Odkaz přímo na Token Kontrakt (kolekci)
+            sdk.actions.openUrl(`https://basescan.org/token/${NFT_CONTRACT}`);
         };
     }
 
@@ -334,7 +338,7 @@ function showModal(type, msg) {
 }
 
 function shareSuccess() {
-    const appUrl = 'https://learnbase.quest';
+    const appUrl = 'https://farcaster.xyz/miniapps/qDJluBIhgQgl/basecamp';
 
     sdk.actions.composeCast({
         text: 'gm Base! 🔵\n\nJust leveled up my onchain skills. If you are a beginner looking for a safe, hands-on start, BaseCamp is the way.\n\nStart your journey here: 👇',
