@@ -215,7 +215,7 @@ async function handlePaidClaim(ethProvider, wallet) {
             });
             await new Promise(r => setTimeout(r, 1000));
          } catch (e) {
-             throw new Error("Prosím přepni peněženku na Base Mainnet.");
+             throw new Error("Switch wallet to Base Mainnet.");
          }
     }
 
@@ -236,7 +236,7 @@ async function handlePaidClaim(ethProvider, wallet) {
       }]
     });
 
-    if (!txHash) throw new Error("Transakce nebyla odeslána.");
+    if (!txHash) throw new Error("Transaction was not submitted.");
 
     // 4. VOLÁNÍ BACKENDU
     mintBtn.textContent = "Minting NFT...";
@@ -303,7 +303,7 @@ async function handlePaidClaim(ethProvider, wallet) {
     mintBtn.textContent = "Mint Completion NFT";
 
     let msg = (e.message || e).toString();
-    if (msg.includes("user rejected")) msg = "Transakce zrušena.";
+    if (msg.includes("user rejected")) msg = "Transaction rejected by user.";
 
     showModal('danger', `Process failed:<br>${msg.substring(0, 100)}`);
   }
