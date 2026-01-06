@@ -253,7 +253,7 @@ async def buy_nft(request: Request):
     if not wallet:
         raise HTTPException(status_code=400, detail="Chybí wallet address")
 
-    # --- 1. KROK: KONTROLA NÁROKU (Security) ---
+    # --- 1. KROK: KONTROLA NÁROKU (Security) --
     # Neověřujeme platbu na blockchainu (to řeší frontend),
     # ale musíme si být jistí, že uživatel kurz skutečně dokončil.
 
