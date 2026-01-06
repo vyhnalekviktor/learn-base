@@ -171,48 +171,46 @@ function showNftModal() {
 }
 
 
-// === NOVÝ HANDLER PRO "SEND & VERIFY" MODEL (S KONTROLOU ZŮSTATKŮ) ===
+// === OPRAVENÝ HANDLER S AUTORIZACÍ ===
 async function handlePaidClaim(ethProvider, wallet) {
   const mintBtn = document.getElementById('mintNftBtn');
 
-  // --- KONFIGURACE ---
+  // !!! ZKONTROLUJ, ŽE TU MÁŠ SVÉ SKUTEČNÉ ADRESY !!!
   const ADMIN_WALLET = "0x5b9aCe009440c286E9A236f90118343fc61Ee48F";
   const NFT_CONTRACT = "0x23CAe5684d49c9145b60e888Be3139Fc17411553";
-  const USDC_ADDRESS = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913'; // Base Mainnet USDC
-  const PRICE_WEI = 2000000n; // 2 USDC (přesně!)
+
+  const USDC_ADDRESS = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913';
+  const PRICE_WEI = 2000000n;
 
   try {
     const { ethers, BrowserProvider, Contract } = await import('https://esm.sh/ethers@6.9.0');
 
-    // 1. Setup Providera
+    // --- 1. OPRAVA: VYŽÁDAT PŘÍSTUP K ÚČTŮM (FIX ERROR 4100) ---
+    // Bez tohoto řádku si peněženka myslí, že nejsi autorizovaný
+    await ethProvider.request({ method: 'eth_requestAccounts' });
+
+    // 2. Setup Providera
     const provider = new BrowserProvider(ethProvider);
     const signer = await provider.getSigner();
-    const userAddress = await signer.getAddress(); // Získáme adresu uživatele
+    const userAddress = await signer.getAddress();
 
-    // --- BEZPEČNOSTNÍ KONTROLA ZŮSTATKŮ ---
-    // (Tím předejdeme chybě "missing revert data")
-
-    // A) Kontrola ETH na Gas
+    // --- KONTROLA ZŮSTATKŮ ---
     const ethBalance = await provider.getBalance(userAddress);
-    // Pokud má 0 ETH, transakce by okamžitě selhala
     if (ethBalance === 0n) {
-        throw new Error("You have 0 ETH on Base network. You need a small amount of ETH to pay for gas fees (approx $0.05).");
+        throw new Error("Máš 0 ETH na síti Base. Potřebuješ alespoň pár centů na poplatky (gas).");
     }
 
-    // B) Kontrola USDC
     const usdcAbiCheck = ['function balanceOf(address owner) view returns (uint256)'];
     const usdcCheckContract = new Contract(USDC_ADDRESS, usdcAbiCheck, provider);
     const usdcBalance = await usdcCheckContract.balanceOf(userAddress);
 
     if (usdcBalance < PRICE_WEI) {
-        // Převedeme BigInt na čitelné číslo (např. 1.5)
-        const currentUsdc = ethers.formatUnits(usdcBalance, 6);
-        throw new Error(`Insufficient USDC. Price is 2.0 USDC, but you have only ${currentUsdc} USDC.`);
+         // Převedeme BigInt na čitelné číslo
+         const currentUsdc = ethers.formatUnits(usdcBalance, 6);
+         throw new Error(`Nemáš dostatek USDC. Cena je 2.0, ty máš ${currentUsdc}.`);
     }
 
-    // --- KONEC KONTROLY, POKRAČUJEME ---
-
-    // Kontrola sítě (Base Mainnet)
+    // --- KONTROLA SÍTĚ ---
     const network = await provider.getNetwork();
     if (network.chainId !== 8453n) {
          try {
@@ -222,7 +220,7 @@ async function handlePaidClaim(ethProvider, wallet) {
             });
             await new Promise(r => setTimeout(r, 1000));
          } catch (e) {
-             showModal('danger', "Please switch to Base Mainnet manually.");
+             showModal('danger', "Přepni si prosím peněženku na Base Mainnet.");
              return;
          }
     }
@@ -230,18 +228,18 @@ async function handlePaidClaim(ethProvider, wallet) {
     mintBtn.textContent = "Processing Payment...";
     mintBtn.disabled = true;
 
-    // 2. KROK A: Obyčejný převod USDC
+    // --- 3. PLATBA ---
     const usdcAbi = ['function transfer(address to, uint256 amount) external returns (bool)'];
     const usdcContract = new Contract(USDC_ADDRESS, usdcAbi, signer);
 
-    // Odeslání transakce
+    console.log("Sending USDC to:", ADMIN_WALLET);
+    // Tady by měla vyskočit peněženka k potvrzení
     const tx = await usdcContract.transfer(ADMIN_WALLET, PRICE_WEI);
 
     mintBtn.textContent = "Verifying Payment...";
-    // Čekáme na potvrzení v blockchainu
     await tx.wait();
 
-    // 3. KROK B: Voláme Backend, aby nám poslal NFT
+    // --- 4. MINT (VOLÁNÍ BACKENDU) ---
     mintBtn.textContent = "Minting NFT...";
 
     const response = await fetch(`${API_BASE}/api/buy-nft`, {
@@ -259,16 +257,15 @@ async function handlePaidClaim(ethProvider, wallet) {
         throw new Error(result.detail || "Server mint failed");
     }
 
-    // 4. Hotovo!
     mintBtn.textContent = "NFT Delivered!";
 
-    // Update UI
+    // UI Update (úspěch)
     const nftSection = document.getElementById('nftSection');
     const nftBlockTitle = document.getElementById('nftBlockTitle');
     const nftBlockContent = document.getElementById('nftBlockContent');
     const ownedSection = document.getElementById('ownedNftSection');
 
-    if (nftSection) { nftSection.classList.add('claimed'); }
+    if (nftSection) nftSection.classList.add('claimed');
     if (nftBlockTitle) nftBlockTitle.textContent = 'Already claimed!';
     if (nftBlockContent) nftBlockContent.style.display = 'none';
 
@@ -281,17 +278,6 @@ async function handlePaidClaim(ethProvider, wallet) {
         }
     }
 
-    // Zobrazení odkazu na mint transakci
-    const txSection = document.getElementById('txLinkSection');
-    const viewLinkBtn = document.getElementById('view-nft-link');
-    if (txSection && viewLinkBtn && result.mint_tx) {
-        txSection.style.display = 'block';
-        viewLinkBtn.onclick = (e) => {
-            e.preventDefault();
-            sdk.actions.openUrl(`https://basescan.org/tx/${result.mint_tx}`);
-        };
-    }
-
     if (window.BaseCampTheme) window.BaseCampTheme.updateLocalProgress('claimed_nft', true);
     showNftModal();
 
@@ -301,16 +287,13 @@ async function handlePaidClaim(ethProvider, wallet) {
     mintBtn.textContent = "Mint Completion NFT";
 
     let msg = (e.message || e).toString();
-
-    // Fallback: kdyby přece jen něco proklouzlo a hodilo tu divnou chybu
-    if (msg.includes("missing revert data")) {
-        msg = "Transaction failed. Likely insufficient ETH for gas fees.";
-    }
-    if (msg.includes("user rejected")) {
-        msg = "Transaction cancelled.";
+    if (msg.includes("user rejected")) msg = "Transakce zrušena uživatelem.";
+    // Ošetření té divné chyby, kdyby se ještě objevila
+    if (msg.includes("4100") || msg.includes("authorized")) {
+        msg = "Chyba autorizace peněženky. Zkus stránku obnovit a znovu připojit.";
     }
 
-    showModal('danger', `Mint failed:<br>${msg.substring(0, 120)}`);
+    showModal('danger', `Process failed:<br>${msg.substring(0, 100)}`);
   }
 }
 
