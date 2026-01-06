@@ -171,11 +171,11 @@ function showNftModal() {
 }
 
 
-// === OPRAVENÝ HANDLER S AUTORIZACÍ ===
+// === OPRAVENÝ HANDLER (Network Switch PRVNÍ) ===
 async function handlePaidClaim(ethProvider, wallet) {
   const mintBtn = document.getElementById('mintNftBtn');
 
-  // !!! ZKONTROLUJ, ŽE TU MÁŠ SVÉ SKUTEČNÉ ADRESY !!!
+  // !!! ZKONTROLUJ ADRESY !!!
   const ADMIN_WALLET = "0x5b9aCe009440c286E9A236f90118343fc61Ee48F";
   const NFT_CONTRACT = "0x23CAe5684d49c9145b60e888Be3139Fc17411553";
 
@@ -185,61 +185,68 @@ async function handlePaidClaim(ethProvider, wallet) {
   try {
     const { ethers, BrowserProvider, Contract } = await import('https://esm.sh/ethers@6.9.0');
 
-    // --- 1. OPRAVA: VYŽÁDAT PŘÍSTUP K ÚČTŮM (FIX ERROR 4100) ---
-    // Bez tohoto řádku si peněženka myslí, že nejsi autorizovaný
+    // 1. Autorizace
     await ethProvider.request({ method: 'eth_requestAccounts' });
 
     // 2. Setup Providera
     const provider = new BrowserProvider(ethProvider);
     const signer = await provider.getSigner();
+
+    // --- 3. KROK: PŘEPNUTÍ SÍTĚ (MUSÍ BÝT HNED TADY!) ---
+    // Než sáhneme na USDC kontrakt, musíme být na Base
+    const network = await provider.getNetwork();
+    if (network.chainId !== 8453n) { // 8453 = Base Mainnet
+         try {
+            await ethProvider.request({
+                method: 'wallet_switchEthereumChain',
+                params: [{ chainId: '0x2105' }], // 8453 hex
+            });
+            // Počkáme chvilku, než se síť skutečně přehodí
+            await new Promise(r => setTimeout(r, 1000));
+
+            // Pro jistotu obnovíme providera po změně sítě
+            // (Některé peněženky to vyžadují)
+         } catch (e) {
+             showModal('danger', "Prosím přepni peněženku na síť Base Mainnet.");
+             return;
+         }
+    }
+
+    // Získáme adresu uživatele
     const userAddress = await signer.getAddress();
 
-    // --- KONTROLA ZŮSTATKŮ ---
+    // --- 4. KONTROLA ZŮSTATKŮ (Teď už bezpečně na Base) ---
     const ethBalance = await provider.getBalance(userAddress);
     if (ethBalance === 0n) {
         throw new Error("Máš 0 ETH na síti Base. Potřebuješ alespoň pár centů na poplatky (gas).");
     }
 
     const usdcAbiCheck = ['function balanceOf(address owner) view returns (uint256)'];
-    const usdcCheckContract = new Contract(USDC_ADDRESS, usdcAbiCheck, provider);
+    // Musíme znovu vytvořit kontrakt s providerem, který je určitě na Base
+    const usdcCheckContract = new Contract(USDC_ADDRESS, usdcAbiCheck, signer);
+
+    // Tady to padalo - teď už by nemělo
     const usdcBalance = await usdcCheckContract.balanceOf(userAddress);
 
     if (usdcBalance < PRICE_WEI) {
-         // Převedeme BigInt na čitelné číslo
          const currentUsdc = ethers.formatUnits(usdcBalance, 6);
          throw new Error(`Nemáš dostatek USDC. Cena je 2.0, ty máš ${currentUsdc}.`);
     }
 
-    // --- KONTROLA SÍTĚ ---
-    const network = await provider.getNetwork();
-    if (network.chainId !== 8453n) {
-         try {
-            await ethProvider.request({
-                method: 'wallet_switchEthereumChain',
-                params: [{ chainId: '0x2105' }], // 8453 hex
-            });
-            await new Promise(r => setTimeout(r, 1000));
-         } catch (e) {
-             showModal('danger', "Přepni si prosím peněženku na Base Mainnet.");
-             return;
-         }
-    }
-
+    // --- 5. VLASTNÍ PLATBA ---
     mintBtn.textContent = "Processing Payment...";
     mintBtn.disabled = true;
 
-    // --- 3. PLATBA ---
     const usdcAbi = ['function transfer(address to, uint256 amount) external returns (bool)'];
     const usdcContract = new Contract(USDC_ADDRESS, usdcAbi, signer);
 
     console.log("Sending USDC to:", ADMIN_WALLET);
-    // Tady by měla vyskočit peněženka k potvrzení
     const tx = await usdcContract.transfer(ADMIN_WALLET, PRICE_WEI);
 
     mintBtn.textContent = "Verifying Payment...";
     await tx.wait();
 
-    // --- 4. MINT (VOLÁNÍ BACKENDU) ---
+    // --- 6. VOLÁNÍ BACKENDU ---
     mintBtn.textContent = "Minting NFT...";
 
     const response = await fetch(`${API_BASE}/api/buy-nft`, {
@@ -259,7 +266,7 @@ async function handlePaidClaim(ethProvider, wallet) {
 
     mintBtn.textContent = "NFT Delivered!";
 
-    // UI Update (úspěch)
+    // UI Update
     const nftSection = document.getElementById('nftSection');
     const nftBlockTitle = document.getElementById('nftBlockTitle');
     const nftBlockContent = document.getElementById('nftBlockContent');
@@ -288,9 +295,10 @@ async function handlePaidClaim(ethProvider, wallet) {
 
     let msg = (e.message || e).toString();
     if (msg.includes("user rejected")) msg = "Transakce zrušena uživatelem.";
-    // Ošetření té divné chyby, kdyby se ještě objevila
-    if (msg.includes("4100") || msg.includes("authorized")) {
-        msg = "Chyba autorizace peněženky. Zkus stránku obnovit a znovu připojit.";
+
+    // Ošetření chybějící revert data (kdyby náhodou)
+    if (msg.includes("missing revert data")) {
+       msg = "Chyba komunikace se sítí. Zkontroluj, zda jsi na Base Mainnetu.";
     }
 
     showModal('danger', `Process failed:<br>${msg.substring(0, 100)}`);
