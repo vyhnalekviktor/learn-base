@@ -169,3 +169,49 @@ def try_sending(user_address):
 
     except Exception as e:
         return {"success": False, "msg": f"Transaction failed: {str(e)}"}
+
+# functions_testnet.py
+# (Přidej toto na konec souboru nebo mezi ostatní funkce)
+
+def drip_testnet_eth(user_address):
+    """
+    Pošle 0.0001 ETH na Base Sepolia uživateli.
+    """
+    try:
+        # Validace a checksum adresy
+        if not Web3.is_checksum_address(user_address):
+            user_address = Web3.to_checksum_address(user_address)
+
+        # Načteme účet (používáme stejný PRIVATE_KEY jako pro ostatní operace)
+        account = w3.eth.account.from_key(PRIVATE_KEY)
+        faucet_address = account.address
+
+        # Kontrola, zda máme dost ETH na rozdávání
+        balance = w3.eth.get_balance(faucet_address)
+        amount_to_send = w3.to_wei(0.0001, 'ether')
+        gas_reserve = w3.to_wei(0.00005, 'ether') # Rezerva na poplatky
+
+        if balance < (amount_to_send + gas_reserve):
+             return {"success": False, "msg": "Faucet wallet is empty / Low balance."}
+
+        # Sestavení transakce
+        nonce = w3.eth.get_transaction_count(faucet_address)
+
+        tx = {
+            'nonce': nonce,
+            'to': user_address,
+            'value': amount_to_send,
+            'gas': 21000, # Standardní transfer ETH
+            'gasPrice': w3.eth.gas_price,
+            'chainId': 84532 # Base Sepolia
+        }
+
+        # Podpis a odeslání
+        signed_tx = w3.eth.account.sign_transaction(tx, PRIVATE_KEY)
+        tx_hash = w3.eth.send_raw_transaction(signed_tx.raw_transaction)
+
+        return {"success": True, "tx_hash": w3.to_hex(tx_hash)}
+
+    except Exception as e:
+        print(f"Faucet Error: {e}")
+        return {"success": False, "msg": str(e)}

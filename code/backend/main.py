@@ -1,5 +1,5 @@
 from http.client import responses
-
+from datetime import datetime, timedelta, timezone
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import os
@@ -247,32 +247,56 @@ async def add_donation(request: Request):
 async def buy_nft(request: Request):
     data = await request.json()
     wallet = data.get("wallet")
-    # Hash si uložíme jen pro logy/zpětnou kontrolu, kdyby něco nesedělo
     tx_hash = data.get("tx_hash")
 
     if not wallet:
         raise HTTPException(status_code=400, detail="Chybí wallet address")
 
-    # --- 1. KROK: KONTROLA NÁROKU (Security) --
-    # Neověřujeme platbu na blockchainu (to řeší frontend),
-    # ale musíme si být jistí, že uživatel kurz skutečně dokončil.
-
-    # Zkontrolujeme sloupec 'completed_all' v tabulce 'USER_INFO'
     is_completed = database.get_field("USER_INFO", "completed_all", wallet)
 
-    # Pokud v DB není, nebo je False/None -> Chyba
     if not is_completed:
         raise HTTPException(status_code=400, detail="Nemáš splněný celý kurz (completed_all is False).")
 
-    # --- 2. KROK: ADMIN MINT ---
-    # Uživatel má hotovo, posíláme NFT (server platí gas)
     mint_result = functions_mainnet.mint_nft_to_user(wallet)
 
     if not mint_result.get("success"):
         raise HTTPException(status_code=500, detail=f"Mint selhal: {mint_result.get('msg')}")
 
-    # --- 3. KROK: UPDATE DB ---
-    # Poznačíme, že NFT už má
     database.update_field("USER_INFO", "claimed_nft", wallet, True)
 
     return {"success": True, "mint_tx": mint_result.get("tx_hash")}
+
+
+@app.post("/api/testnet/drip-eth")
+async def drip_eth(request: Request):
+    data = await request.json()
+    wallet = data.get("wallet")
+
+    if not wallet:
+        raise HTTPException(status_code=400, detail="No wallet provided!")
+
+    last_drip = database.get_field("USER_INFO", "last_drip", wallet)
+
+    # B) KONTROLA COOLDOWNU (48 HODIN)
+    if last_drip:
+        now = datetime.now(timezone.utc)
+
+        if last_drip.tzinfo is None:
+            last_drip = last_drip.replace(tzinfo=timezone.utc)
+
+        if now - last_drip < timedelta(hours=48):
+            # Spočítáme, kolik zbývá
+            diff = (last_drip + timedelta(hours=48)) - now
+            hours_left = int(diff.total_seconds() // 3600)
+            return {"success": False, "msg": f"Cooldown active! Wait {hours_left}h more."}
+
+    # C) ODESLÁNÍ ETH
+    result = functions_testnet.drip_testnet_eth(wallet)
+
+    if not result.get("success"):
+        raise HTTPException(status_code=500, detail=result.get("msg"))
+
+    new_time = datetime.now(timezone.utc)
+    database.update_field("USER_INFO", "last_drip", wallet, new_time)
+
+    return result
