@@ -171,14 +171,13 @@ function showNftModal() {
 }
 
 
-// === FINÁLNÍ OPTIMISTICKÁ VERZE (Polling) ===
 async function handlePaidClaim(ethProvider, wallet) {
   const mintBtn = document.getElementById('mintNftBtn');
 
   // KONFIGURACE
   const ADMIN_WALLET = "0x5b9aCe009440c286E9A236f90118343fc61Ee48F";
   const USDC_ADDRESS = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913';
-  const BASE_CHAIN_ID = '0x2105'; // 8453
+  const BASE_CHAIN_ID = '0x2105'; // 8453 (Base Mainnet)
 
   try {
     const { ethers } = await import('https://esm.sh/ethers@6.9.0');
@@ -186,11 +185,10 @@ async function handlePaidClaim(ethProvider, wallet) {
     mintBtn.textContent = "Checking Wallet...";
     mintBtn.disabled = true;
 
-    // 1. AUTORIZACE
+    // 1. AUTORIZACE + SÍŤ
     await ethProvider.request({ method: 'eth_requestAccounts' });
-
-    // 2. KONTROLA SÍTĚ (Raw RPC)
     const currentChainId = await ethProvider.request({ method: 'eth_chainId' });
+
     if (currentChainId !== BASE_CHAIN_ID) {
          try {
             await ethProvider.request({
@@ -199,19 +197,20 @@ async function handlePaidClaim(ethProvider, wallet) {
             });
             await new Promise(r => setTimeout(r, 1000));
          } catch (e) {
-             throw new Error("Přepni prosím peněženku na Base Mainnet manuálně.");
+             throw new Error("Prosím přepni peněženku na Base Mainnet.");
          }
     }
 
-    // 3. PŘÍPRAVA TRANSAKCE
+    // 2. PŘÍPRAVA DAT (Transfer 2 USDC)
     const iface = new ethers.Interface(['function transfer(address to, uint256 amount)']);
     const data = iface.encodeFunctionData('transfer', [ADMIN_WALLET, 2000000n]);
 
-    // 4. ODESLÁNÍ (Fire & Forget)
     mintBtn.textContent = "Pay 2 USDC...";
 
-    // Tady vyskočí peněženka. Jakmile uživatel potvrdí, dostaneme Hash.
-    // Nečekáme na "mined" stav v prohlížeči!
+    // 3. ODESLÁNÍ TRANSAKCE (Fire & Forget)
+    // Pokud uživatel klikne "Confirm", dostaneme hash.
+    // Pokud klikne "Reject", spadne to do catch bloku.
+    // Nečekáme na "mining" (wait), stačí nám, že to odešlo.
     const txHash = await ethProvider.request({
       method: 'eth_sendTransaction',
       params: [{
@@ -224,48 +223,27 @@ async function handlePaidClaim(ethProvider, wallet) {
 
     if (!txHash) throw new Error("Transakce nebyla odeslána.");
 
-    // 5. POLLING LOOP (Dotazování Backendu)
-    // Místo čekání na providera rovnou zkoušíme, jestli už backend platbu vidí.
-    mintBtn.textContent = "Finalizing...";
+    // 4. OKAMŽITÉ VOLÁNÍ BACKENDU
+    // Máme hash = platba je na cestě. Voláme o NFT.
+    mintBtn.textContent = "Minting NFT...";
 
-    let attempts = 0;
-    const maxAttempts = 20; // Zkoušíme to cca 40 sekund (20 * 2s)
-    let success = false;
-    let result = null;
+    const response = await fetch(`${API_BASE}/api/buy-nft`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            wallet: wallet,
+            tx_hash: txHash // Posíláme jen pro info
+        })
+    });
 
-    while (attempts < maxAttempts && !success) {
-        try {
-            // Počkáme 2 sekundy mezi pokusy (Base má bloky 2s, tak akorát)
-            await new Promise(r => setTimeout(r, 2000));
+    const result = await response.json();
 
-            const response = await fetch(`${API_BASE}/api/buy-nft`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    wallet: wallet,
-                    tx_hash: txHash
-                })
-            });
-
-            // Pokud backend vrátí 200 OK, máme hotovo
-            if (response.ok) {
-                result = await response.json();
-                if (result.success) {
-                    success = true;
-                }
-            }
-        } catch (err) {
-            // Ignorujeme chyby sítě při pollingu a zkusíme to znovu
-            console.log("Waiting for block...", err);
-        }
-        attempts++;
+    if (!response.ok || !result.success) {
+        // Pokud backend vrátí chybu (např. user nemá hotový kurz), zobrazíme ji
+        throw new Error(result.detail || "Server mint failed");
     }
 
-    if (!success) {
-        throw new Error("Nepodařilo se ověřit platbu včas. Zkontroluj Etherscan, zda platba odešla.");
-    }
-
-    // 6. HOTOVO
+    // 5. HOTOVO
     mintBtn.textContent = "NFT Delivered!";
 
     // UI Update
@@ -292,7 +270,7 @@ async function handlePaidClaim(ethProvider, wallet) {
     // Link na explorer
     const txSection = document.getElementById('txLinkSection');
     const viewLinkBtn = document.getElementById('view-nft-link');
-    if (txSection && viewLinkBtn && result && result.mint_tx) {
+    if (txSection && viewLinkBtn && result.mint_tx) {
         txSection.style.display = 'block';
         viewLinkBtn.onclick = (e) => {
             e.preventDefault();

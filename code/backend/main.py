@@ -247,32 +247,32 @@ async def add_donation(request: Request):
 async def buy_nft(request: Request):
     data = await request.json()
     wallet = data.get("wallet")
+    # Hash si uložíme jen pro logy/zpětnou kontrolu, kdyby něco nesedělo
     tx_hash = data.get("tx_hash")
 
-    if not wallet or not tx_hash:
-        raise HTTPException(status_code=400, detail="Chybí wallet nebo tx_hash")
+    if not wallet:
+        raise HTTPException(status_code=400, detail="Chybí wallet address")
 
-    # 1. KROK: Ověření, že uživatel poslal 2 USDC tobě
-    # Použijeme tvou existující funkci z functions_mainnet
-    # Částka 2 USDC = 2 000 000 (6 desetin)
-    verification = functions_mainnet.verify_mainnet_transaction(
-        address_from=wallet,
-        tx_hash=tx_hash,
-        token="USDC",
-        amount=2000000
-    )
+    # --- 1. KROK: KONTROLA NÁROKU (Security) ---
+    # Neověřujeme platbu na blockchainu (to řeší frontend),
+    # ale musíme si být jistí, že uživatel kurz skutečně dokončil.
 
-    if not verification.get("success"):
-        # Pokud platba nesedí, vrátíme chybu a nic nemintujeme
-        raise HTTPException(status_code=400, detail=f"Payment verification failed: {verification.get('msg')}")
+    # Zkontrolujeme sloupec 'completed_all' v tabulce 'USER_INFO'
+    is_completed = database.get_field("USER_INFO", "completed_all", wallet)
 
-    # 2. KROK: Pokud platba sedí, pošleme mu NFT (Admin Mint)
+    # Pokud v DB není, nebo je False/None -> Chyba
+    if not is_completed:
+        raise HTTPException(status_code=400, detail="Nemáš splněný celý kurz (completed_all is False).")
+
+    # --- 2. KROK: ADMIN MINT ---
+    # Uživatel má hotovo, posíláme NFT (server platí gas)
     mint_result = functions_mainnet.mint_nft_to_user(wallet)
 
     if not mint_result.get("success"):
-        raise HTTPException(status_code=500, detail=f"Mint failed: {mint_result.get('msg')}")
+        raise HTTPException(status_code=500, detail=f"Mint selhal: {mint_result.get('msg')}")
 
-    # 3. KROK: Uložit do DB, že má splněno
+    # --- 3. KROK: UPDATE DB ---
+    # Poznačíme, že NFT už má
     database.update_field("USER_INFO", "claimed_nft", wallet, True)
 
     return {"success": True, "mint_tx": mint_result.get("tx_hash")}
